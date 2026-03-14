@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Diagnotica HMS — Radiology Information System</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --brand:#1A5EAB;--brand-dark:#0F3F78;--brand-light:#E8F1FB;--brand-mid:#2E7DD6;
+  --accent:#00C0A3;--accent-lt:#E0F9F5;--accent-dark:#007A68;
+  --warn:#F59E0B;--warn-lt:#FEF3C7;--warn-dark:#92400E;
+  --danger:#EF4444;--danger-lt:#FEE2E2;
+  --success:#10B981;--success-lt:#D1FAE5;--success-dark:#065F46;
+  --purple:#7C3AED;--purple-lt:#EDE9FE;
+  --teal:#0891B2;--teal-lt:#E0F2FE;
+  --gray-900:#0D1117;--gray-800:#161B22;--gray-700:#21262D;--gray-600:#30363D;
+  --gray-400:#8B949E;--gray-200:#C9D1D9;
+  --text-1:#0F1C2E;--text-2:#3A4D63;--text-3:#7A8FA6;
+  --border:#DDE6F0;--bg:#F0F5FB;--surface:#FFFFFF;--surface-2:#F7FAFD;
+  --radius:10px;--radius-lg:16px;
+  --shadow:0 1px 4px rgba(26,94,171,.08),0 4px 16px rgba(26,94,171,.06);
+  --shadow-lg:0 8px 32px rgba(26,94,171,.14);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-1);min-height:100vh;font-size:14px;}
+
+/* TOPBAR */
+.topbar{background:var(--brand-dark);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:52px;position:sticky;top:0;z-index:100;}
+.logo-wrap{display:flex;align-items:center;gap:10px;}
+.logo-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#00C0A3,#2E7DD6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;}
+.logo-text{color:#fff;font-size:15px;font-weight:600;}
+.logo-sub{color:#8BAFD4;font-size:11px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.t-chip{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#D4E8FF;border-radius:6px;padding:5px 12px;font-size:12px;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;}
+.t-chip:hover{background:rgba(255,255,255,.18);}
+.user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border-radius:20px;padding:4px 12px 4px 4px;}
+.user-av{width:26px;height:26px;border-radius:50%;background:var(--purple);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+
+/* SHELL */
+.shell{display:flex;height:calc(100vh - 52px);overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:196px;background:var(--surface);border-right:1px solid var(--border);padding:14px 0;flex-shrink:0;overflow-y:auto;}
+.sb-label{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;padding:8px 14px 4px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:var(--radius);margin:0 8px 2px;cursor:pointer;color:var(--text-2);font-size:13px;transition:all .15s;position:relative;}
+.nav-item:hover{background:var(--brand-light);color:var(--brand);}
+.nav-item.active{background:var(--brand-light);color:var(--brand);font-weight:500;}
+.nav-item.active::before{content:'';position:absolute;left:-4px;top:6px;bottom:6px;width:3px;background:var(--brand);border-radius:0 3px 3px 0;}
+.nb{margin-left:auto;font-size:10px;font-weight:700;border-radius:10px;padding:1px 6px;color:#fff;}
+.nb.b{background:var(--brand);}
+.nb.g{background:var(--success);}
+.nb.r{background:var(--danger);}
+.nb.w{background:var(--warn);color:var(--warn-dark);}
+.nb.p{background:var(--purple);}
+
+/* MAIN */
+.main{flex:1;overflow:hidden;display:grid;grid-template-rows:auto 1fr;background:var(--bg);}
+
+/* STATS STRIP */
+.stats-strip{background:linear-gradient(135deg,var(--brand-dark),#1563B8);padding:14px 24px;display:flex;gap:0;align-items:center;flex-shrink:0;}
+.ss-item{text-align:center;min-width:90px;}
+.ss-val{font-size:22px;font-weight:700;color:#fff;line-height:1;}
+.ss-label{font-size:10px;color:#8BAFD4;margin-top:3px;text-transform:uppercase;letter-spacing:.05em;}
+.ss-sep{width:1px;background:rgba(255,255,255,.1);margin:0 14px;height:30px;}
+
+/* THREE-PANE LAYOUT */
+.three-pane{display:grid;grid-template-columns:300px 1fr 300px;height:100%;overflow:hidden;}
+
+/* LEFT PANE — WORKLIST */
+.pane-left{border-right:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface);overflow:hidden;}
+.pane-header{padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface-2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.pane-title{font-size:13px;font-weight:600;color:var(--text-1);display:flex;align-items:center;gap:7px;}
+.pane-body{flex:1;overflow-y:auto;padding:10px;}
+
+/* WORKLIST ITEM */
+.wl-item{border-radius:var(--radius);border:1.5px solid var(--border);margin-bottom:7px;cursor:pointer;transition:all .15s;overflow:hidden;position:relative;}
+.wl-item:hover{border-color:var(--brand);box-shadow:var(--shadow);}
+.wl-item.active-study{border-color:var(--brand);background:var(--brand-light);}
+.wl-stripe{height:3px;}
+.wl-s-stat{background:var(--danger);}
+.wl-s-urgent{background:var(--warn);}
+.wl-s-routine{background:var(--success);}
+.wl-s-done{background:var(--accent);}
+.wl-inner{padding:10px 12px;}
+.wl-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:5px;}
+.wl-name{font-size:13px;font-weight:600;}
+.wl-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;}
+.wb-stat{background:var(--danger-lt);color:var(--danger);}
+.wb-urgent{background:var(--warn-lt);color:var(--warn-dark);}
+.wb-routine{background:var(--success-lt);color:var(--success);}
+.wb-done{background:var(--accent-lt);color:var(--accent-dark);}
+.wb-reported{background:var(--purple-lt);color:var(--purple);}
+.wl-modality{font-size:11px;color:var(--text-2);margin-bottom:3px;}
+.wl-meta{font-size:11px;color:var(--text-3);font-family:'DM Mono',monospace;}
+.wl-footer{display:flex;align-items:center;justify-content:space-between;margin-top:6px;}
+.wl-accession{font-size:10px;font-family:'DM Mono',monospace;color:var(--text-3);}
+.wl-time{font-size:10px;color:var(--text-3);}
+
+/* MODALITY FILTER */
+.mod-filters{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px;}
+.mod-f{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;border:1.5px solid var(--border);cursor:pointer;transition:all .13s;color:var(--text-2);}
+.mod-f:hover{border-color:var(--brand);color:var(--brand);}
+.mod-f.active{background:var(--brand);color:#fff;border-color:var(--brand);}
+
+/* CENTER PANE — VIEWER */
+.pane-center{display:flex;flex-direction:column;background:var(--gray-900);overflow:hidden;}
+.viewer-toolbar{background:var(--gray-800);border-bottom:1px solid var(--gray-600);padding:8px 16px;display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap;}
+.vt-group{display:flex;gap:3px;align-items:center;}
+.vt-sep{width:1px;height:24px;background:var(--gray-600);margin:0 4px;}
+.vt-btn{padding:5px 10px;border-radius:6px;border:1px solid var(--gray-600);background:var(--gray-700);color:var(--gray-200);font-family:inherit;font-size:11px;font-weight:500;cursor:pointer;transition:all .13s;display:flex;align-items:center;gap:4px;}
+.vt-btn:hover{background:var(--gray-600);color:#fff;}
+.vt-btn.active{background:var(--brand);border-color:var(--brand);color:#fff;}
+.vt-label{font-size:10px;color:var(--gray-400);margin:0 4px;}
+
+/* VIEWER AREA */
+.viewer-area{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;padding:2px;overflow:hidden;}
+.viewer-cell{background:var(--gray-800);border-radius:4px;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:crosshair;}
+.viewer-cell.main-view{grid-column:1;grid-row:1/3;}
+.viewer-cell canvas{display:block;max-width:100%;max-height:100%;}
+.viewer-overlay{position:absolute;top:8px;left:8px;right:8px;pointer-events:none;}
+.vo-corner{position:absolute;font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,.7);line-height:1.5;}
+.vo-tl{top:8px;left:8px;}
+.vo-tr{top:8px;right:8px;text-align:right;}
+.vo-bl{bottom:8px;left:8px;}
+.vo-br{bottom:8px;right:8px;text-align:right;}
+.viewer-crosshair{position:absolute;pointer-events:none;opacity:.5;}
+.view-label{position:absolute;top:6px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.5);color:rgba(255,255,255,.7);font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;letter-spacing:.06em;}
+.wl-bar{background:var(--gray-800);border-top:1px solid var(--gray-600);padding:6px 14px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.wl-bar-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--gray-400);}
+.wl-bar-val{font-family:'DM Mono',monospace;color:var(--gray-200);}
+
+/* SERIES THUMBNAILS */
+.series-strip{background:var(--gray-800);border-top:1px solid var(--gray-600);padding:6px 10px;display:flex;gap:6px;overflow-x:auto;flex-shrink:0;}
+.series-thumb{width:60px;height:60px;border-radius:6px;background:var(--gray-700);border:2px solid var(--gray-600);flex-shrink:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:border-color .13s;position:relative;}
+.series-thumb:hover{border-color:var(--brand-mid);}
+.series-thumb.active{border-color:var(--brand);}
+.st-label{font-size:9px;color:var(--gray-400);margin-top:2px;text-align:center;}
+.st-count{position:absolute;bottom:3px;right:4px;font-size:9px;color:var(--gray-400);font-family:'DM Mono',monospace;}
+
+/* RIGHT PANE — REPORT */
+.pane-right{border-left:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface);overflow:hidden;}
+.report-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface-2);flex-shrink:0;}
+.rt-btn{flex:1;padding:10px 6px;border:none;background:none;font-family:inherit;font-size:12px;font-weight:500;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;text-align:center;}
+.rt-btn:hover{color:var(--text-1);}
+.rt-btn.active{color:var(--brand);border-bottom-color:var(--brand);}
+.tab-pane{display:none;flex:1;overflow-y:auto;}
+.tab-pane.active{display:flex;flex-direction:column;}
+
+/* REPORT EDITOR */
+.rp-section{padding:12px 14px;border-bottom:1px solid var(--border);}
+.rp-section-title{font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;}
+.rp-textarea{width:100%;border:1.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text-1);background:var(--surface-2);outline:none;resize:vertical;line-height:1.7;transition:border-color .15s;}
+.rp-textarea:focus{border-color:var(--brand);background:#fff;}
+.rp-field{margin-bottom:8px;}
+.rp-label{font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:4px;}
+.rp-input,.rp-select{width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:12px;color:var(--text-1);background:var(--surface-2);outline:none;transition:border-color .15s;}
+.rp-input:focus,.rp-select:focus{border-color:var(--brand);background:#fff;}
+
+/* REPORT FOOTER */
+.report-footer{border-top:1px solid var(--border);padding:10px 14px;background:var(--surface-2);display:flex;flex-direction:column;gap:8px;flex-shrink:0;}
+
+/* SCHEDULE */
+.schedule-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;padding:12px;}
+.sg-header{text-align:center;font-size:10px;font-weight:700;color:var(--text-3);padding:4px;text-transform:uppercase;letter-spacing:.05em;}
+.sg-slot{border-radius:6px;padding:5px 4px;font-size:10px;cursor:pointer;transition:all .13s;border:1px solid var(--border);text-align:center;}
+.sg-slot:hover{border-color:var(--brand);}
+.sg-slot.booked-xr{background:#EFF6FF;border-color:#BFDBFE;color:var(--brand);}
+.sg-slot.booked-ct{background:#FEF3C7;border-color:#FDE68A;color:var(--warn-dark);}
+.sg-slot.booked-mri{background:#EDE9FE;border-color:#C4B5FD;color:var(--purple);}
+.sg-slot.booked-us{background:#D1FAE5;border-color:#6EE7B7;color:var(--success-dark);}
+.sg-slot.booked-nm{background:#FEE2E2;border-color:#FCA5A5;color:var(--danger);}
+.sg-slot.free{background:var(--surface-2);}
+.sg-slot.blocked{background:var(--bg);color:var(--text-3);cursor:not-allowed;}
+.sg-time{font-weight:700;display:block;}
+.sg-modality{font-size:9px;display:block;margin-top:1px;}
+.sg-patient{font-size:9px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* PACS */
+.pacs-node{border-radius:var(--radius-lg);border:1.5px solid var(--border);padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s;}
+.pacs-node:hover{border-color:var(--brand);background:var(--brand-light);}
+.pacs-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.pacs-name{font-size:13px;font-weight:600;}
+.pacs-meta{font-size:11px;color:var(--text-3);}
+.pacs-dot{width:8px;height:8px;border-radius:50%;margin-left:auto;flex-shrink:0;}
+.online-dot{background:var(--success);box-shadow:0 0 0 3px rgba(16,185,129,.2);}
+.warn-dot{background:var(--warn);animation:dotPulse 2s infinite;}
+.offline-dot-c{background:var(--danger);}
+@keyframes dotPulse{0%,100%{box-shadow:0 0 0 3px rgba(245,158,11,.2);}50%{box-shadow:0 0 0 6px rgba(245,158,11,.06);}}
+.pacs-stats{display:flex;gap:6px;margin-top:4px;}
+.ps-chip{font-size:10px;padding:2px 7px;border-radius:5px;font-weight:600;}
+
+/* BTN */
+.btn{padding:7px 14px;border-radius:var(--radius);border:none;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .15s;}
+.btn-primary{background:var(--brand);color:#fff;}
+.btn-primary:hover{background:var(--brand-dark);}
+.btn-success{background:var(--success);color:#fff;}
+.btn-success:hover{background:#059669;}
+.btn-outline{background:var(--surface);color:var(--brand);border:1px solid var(--brand);}
+.btn-outline:hover{background:var(--brand-light);}
+.btn-purple{background:var(--purple);color:#fff;}
+.btn-sm{padding:4px 10px;font-size:11px;}
+.btn-warn{background:var(--warn);color:var(--warn-dark);}
+.btn-danger{background:var(--danger);color:#fff;}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:600;}
+.bd-blue{background:var(--brand-light);color:var(--brand);}
+.bd-green{background:var(--success-lt);color:var(--success);}
+.bd-warn{background:var(--warn-lt);color:var(--warn-dark);}
+.bd-red{background:var(--danger-lt);color:var(--danger);}
+.bd-purple{background:var(--purple-lt);color:var(--purple);}
+.bd-teal{background:var(--accent-lt);color:var(--accent-dark);}
+.bd-gray{background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--brand-dark);color:#fff;padding:12px 20px;border-radius:var(--radius);font-size:13px;font-weight:500;z-index:999;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* MODAL */
+.modal-backdrop{position:fixed;inset:0;background:rgba(15,28,46,.5);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-backdrop.show{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:520px;max-width:94vw;max-height:90vh;overflow-y:auto;transform:translateY(20px) scale(.97);transition:transform .25s cubic-bezier(.34,1.4,.64,1);}
+.modal-backdrop.show .modal{transform:none;}
+.modal-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);}
+.modal-title{font-size:15px;font-weight:700;}
+.modal-close{width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.modal-body{padding:20px;}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+.fl{font-size:11px;font-weight:600;color:var(--text-2);}
+.fi,.fs{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;color:var(--text-1);background:var(--surface-2);outline:none;transition:border-color .15s;}
+.fi:focus,.fs:focus{border-color:var(--brand);background:#fff;}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo-wrap">
+    <div class="logo-mark">Dx</div>
+    <div><div class="logo-text">Diagnotica HMS</div><div class="logo-sub">Radiology Information System (RIS)</div></div>
+  </div>
+  <div class="topbar-right">
+    <div class="t-chip">🟢 PACS Online</div>
+    <div class="t-chip" onclick="openModal('schedule')">📅 Schedule Study</div>
+    <div class="t-chip" onclick="showToast('Opening DICOM upload...','📤')">📤 Upload DICOM</div>
+    <div class="t-chip" onclick="showToast('Worklist refreshed','🔄')">🔄 Refresh Worklist</div>
+    <div class="user-chip">
+      <div class="user-av">KR</div>
+      <span style="color:#D4E8FF;font-size:12px;">Dr. Kiran — Radiologist</span>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-label">Radiology</div>
+  <div class="nav-item active">🩻 Worklist <span class="nb b">18</span></div>
+  <div class="nav-item">📅 Schedule</div>
+  <div class="nav-item">📝 Reports <span class="nb w">5</span></div>
+  <div class="nav-item">🔴 Urgent <span class="nb r">3</span></div>
+  <div class="nav-item">✅ Completed <span class="nb g">42</span></div>
+  <div class="sb-label">Modalities</div>
+  <div class="nav-item">🩻 X-Ray <span class="nb b">8</span></div>
+  <div class="nav-item">🔬 CT Scan <span class="nb b">4</span></div>
+  <div class="nav-item">🧲 MRI <span class="nb b">3</span></div>
+  <div class="nav-item">🔊 Ultrasound <span class="nb g">6</span></div>
+  <div class="nav-item">☢ Nuclear Med</div>
+  <div class="sb-label">Integration</div>
+  <div class="nav-item">🖥 PACS Status</div>
+  <div class="nav-item">📡 HL7 / DICOM</div>
+  <div class="nav-item">📊 RIS Analytics</div>
+  <div class="nav-item">🖨 Report Print</div>
+</nav>
+
+<div class="main">
+
+  <!-- STATS STRIP -->
+  <div class="stats-strip">
+    <div class="ss-item"><div class="ss-val">67</div><div class="ss-label">Studies Today</div></div>
+    <div class="ss-sep"></div>
+    <div class="ss-item"><div class="ss-val" style="color:#FCD34D;">18</div><div class="ss-label">Pending Read</div></div>
+    <div class="ss-sep"></div>
+    <div class="ss-item"><div class="ss-val" style="color:#FCA5A5;">3</div><div class="ss-label">STAT / Urgent</div></div>
+    <div class="ss-sep"></div>
+    <div class="ss-item"><div class="ss-val" style="color:#6EF0DC;">42</div><div class="ss-label">Reported</div></div>
+    <div class="ss-sep"></div>
+    <div class="ss-item"><div class="ss-val" style="color:#C4B5FD;">5</div><div class="ss-label">Draft Reports</div></div>
+    <div class="ss-sep"></div>
+    <div class="ss-item"><div class="ss-val">52 min</div><div class="ss-label">Avg Report TAT</div></div>
+    <div class="ss-sep"></div>
+    <div class="ss-item"><div class="ss-val" style="color:#6EF0DC;">4</div><div class="ss-label">Machines Online</div></div>
+    <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+      <span class="badge bd-green" style="font-size:12px;">🟢 PACS Connected</span>
+      <span class="badge bd-blue" style="font-size:12px;">📡 HL7 Active</span>
+    </div>
+  </div>
+
+  <!-- THREE-PANE VIEWER -->
+  <div class="three-pane">
+
+    <!-- LEFT: WORKLIST -->
+    <div class="pane-left">
+      <div class="pane-header">
+        <div class="pane-title">🗂 Worklist</div>
+        <div style="display:flex;gap:5px;">
+          <button class="btn btn-outline btn-sm" onclick="openModal('schedule')">＋ Schedule</button>
+          <button class="btn btn-sm" style="background:var(--surface-2);border:1px solid var(--border);color:var(--text-2);" onclick="showToast('Worklist filtered','🔍')">🔍</button>
+        </div>
+      </div>
+      <div class="pane-body">
+        <div class="mod-filters">
+          <div class="mod-f active" onclick="filterMod(this,'all')">All</div>
+          <div class="mod-f" onclick="filterMod(this,'xr')">XR</div>
+          <div class="mod-f" onclick="filterMod(this,'ct')">CT</div>
+          <div class="mod-f" onclick="filterMod(this,'mri')">MRI</div>
+          <div class="mod-f" onclick="filterMod(this,'us')">US</div>
+        </div>
+        <div id="worklist"></div>
+      </div>
+    </div>
+
+    <!-- CENTER: DICOM VIEWER -->
+    <div class="pane-center">
+      <!-- TOOLBAR -->
+      <div class="viewer-toolbar">
+        <div class="vt-group">
+          <span class="vt-label">W/L</span>
+          <button class="vt-btn active" onclick="setPreset(this,'Soft Tissue')">Soft Tissue</button>
+          <button class="vt-btn" onclick="setPreset(this,'Lung')">Lung</button>
+          <button class="vt-btn" onclick="setPreset(this,'Bone')">Bone</button>
+          <button class="vt-btn" onclick="setPreset(this,'Brain')">Brain</button>
+        </div>
+        <div class="vt-sep"></div>
+        <div class="vt-group">
+          <button class="vt-btn active" onclick="setTool(this,'WL')" title="Window/Level">☀</button>
+          <button class="vt-btn" onclick="setTool(this,'PAN')" title="Pan">✥</button>
+          <button class="vt-btn" onclick="setTool(this,'ZOOM')" title="Zoom">🔍</button>
+          <button class="vt-btn" onclick="setTool(this,'RULER')" title="Measure">📏</button>
+          <button class="vt-btn" onclick="setTool(this,'ANNO')" title="Annotate">✏</button>
+          <button class="vt-btn" onclick="setTool(this,'ROI')" title="ROI">⬡</button>
+        </div>
+        <div class="vt-sep"></div>
+        <div class="vt-group">
+          <button class="vt-btn" onclick="showToast('Layout: 1×1','🔲')">1×1</button>
+          <button class="vt-btn active" onclick="showToast('Layout: 2×2','🔲')">2×2</button>
+          <button class="vt-btn" onclick="showToast('Layout: 1×3','🔲')">1×3</button>
+        </div>
+        <div class="vt-sep"></div>
+        <div class="vt-group">
+          <button class="vt-btn" onclick="showToast('Image inverted','🔄')">Inv</button>
+          <button class="vt-btn" onclick="showToast('Image reset','↺')">↺ Reset</button>
+          <button class="vt-btn" onclick="showToast('MPR view loading...','🖥')">MPR</button>
+          <button class="vt-btn" onclick="showToast('3D rendering...','🎲')">3D</button>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:4px;">
+          <button class="vt-btn" onclick="showToast('Key images saved','🔑')">🔑 Key Images</button>
+          <button class="vt-btn" onclick="showToast('DICOM exported','📤')">📤 Export</button>
+        </div>
+      </div>
+
+      <!-- IMAGE GRID -->
+      <div class="viewer-area" id="viewer-area">
+        <!-- Main large cell -->
+        <div class="viewer-cell main-view" id="main-cell" onmousemove="updateCoords(event,this)" onclick="showToast('Window: 400 Level: 40','☀')">
+          <canvas id="main-canvas" width="400" height="400"></canvas>
+          <div class="vo-corner vo-tl" id="vt-tl">
+            <div>Ravi Kumar</div>
+            <div>42Y · M · DX-2024-004821</div>
+            <div style="margin-top:2px;color:rgba(255,200,100,.8);">CXR PA VIEW</div>
+          </div>
+          <div class="vo-corner vo-tr">
+            <div>RIS-2024-0842</div>
+            <div>14 Mar 2024 09:28</div>
+            <div style="margin-top:2px;">W: 1500 L: -600</div>
+          </div>
+          <div class="vo-corner vo-bl">
+            <div id="coord-display">X: — Y: —</div>
+            <div id="hu-display">HU: —</div>
+          </div>
+          <div class="vo-corner vo-br">
+            <div>Diagnotica RIS v2.4</div>
+            <div>Zoom: 100%</div>
+          </div>
+          <div class="view-label">PA CHEST</div>
+          <!-- Measurement overlay -->
+          <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;" id="overlay-svg"></svg>
+        </div>
+
+        <!-- Small cells -->
+        <div class="viewer-cell" id="cell2" onclick="showToast('Lateral view selected','🩻')">
+          <canvas id="canvas2" width="180" height="180"></canvas>
+          <div class="vo-corner vo-tl" style="font-size:9px;">LATERAL</div>
+          <div class="view-label" style="font-size:9px;">LATERAL</div>
+        </div>
+        <div class="viewer-cell" id="cell3" onclick="showToast('Zoomed region selected','🔍')">
+          <canvas id="canvas3" width="180" height="180"></canvas>
+          <div class="vo-corner vo-tl" style="font-size:9px;">ZOOM ×2.5</div>
+          <div class="view-label" style="font-size:9px;">DETAIL</div>
+        </div>
+      </div>
+
+      <!-- WINDOW LEVEL BAR -->
+      <div class="wl-bar">
+        <div class="wl-bar-item">Window: <span class="wl-bar-val" id="wl-val">1500</span></div>
+        <div class="wl-bar-item">Level: <span class="wl-bar-val" id="ll-val">-600</span></div>
+        <div class="wl-bar-item">Slice: <span class="wl-bar-val">1/1</span></div>
+        <div class="wl-bar-item">Series: <span class="wl-bar-val">PA Chest · 1 image</span></div>
+        <div class="wl-bar-item" style="margin-left:auto;">Preset: <span class="wl-bar-val" id="preset-val">Lung</span></div>
+      </div>
+
+      <!-- SERIES STRIP -->
+      <div class="series-strip" id="series-strip"></div>
+    </div>
+
+    <!-- RIGHT: REPORT PANEL -->
+    <div class="pane-right">
+      <div class="pane-header">
+        <div class="pane-title">📝 Report Panel</div>
+        <span class="badge bd-warn">Draft</span>
+      </div>
+      <div class="report-tabs">
+        <button class="rt-btn active" onclick="switchRTab('report',this)">📝 Report</button>
+        <button class="rt-btn" onclick="switchRTab('schedule',this)">📅 Schedule</button>
+        <button class="rt-btn" onclick="switchRTab('pacs',this)">🖥 PACS</button>
+      </div>
+
+      <!-- REPORT TAB -->
+      <div class="tab-pane active" id="pane-report">
+        <div class="rp-section">
+          <div style="background:var(--brand-light);border:1px solid #BFDBFE;border-radius:var(--radius);padding:10px 12px;margin-bottom:10px;">
+            <div style="font-size:13px;font-weight:600;">Ravi Kumar <span style="font-weight:400;color:var(--text-3);">42M</span></div>
+            <div style="font-size:11px;color:var(--text-3);margin-top:2px;font-family:'DM Mono',monospace;">RIS-2024-0842 · Acc: ACC-0842</div>
+            <div style="display:flex;gap:6px;margin-top:5px;flex-wrap:wrap;">
+              <span class="badge bd-blue">CXR PA View</span>
+              <span class="badge bd-warn">Routine</span>
+              <span class="badge bd-teal">Ref: Dr. Anand</span>
+            </div>
+          </div>
+          <div class="rp-field">
+            <div class="rp-label">Clinical History</div>
+            <input class="rp-input" value="Hypertension — rule out hypertensive heart disease"/>
+          </div>
+          <div class="rp-field">
+            <div class="rp-label">Technique</div>
+            <input class="rp-input" value="PA view of chest taken in full inspiration in erect posture"/>
+          </div>
+        </div>
+
+        <div class="rp-section" style="flex:1;">
+          <div class="rp-section-title">
+            Findings
+            <button class="btn btn-outline btn-sm" onclick="showToast('AI findings suggestion applied','🤖')" style="font-size:10px;padding:3px 8px;">🤖 AI Assist</button>
+          </div>
+          <textarea class="rp-textarea" id="rp-findings" style="min-height:140px;">Cardiothoracic ratio (CTR): 0.52 — mildly enlarged.
+
+Lung fields: Bilateral lung fields are clear. No consolidation, pleural effusion, or pneumothorax identified.
+
+Hila: Both hila are normal in size and position.
+
+Mediastinum: Mediastinum is central. Aortic knuckle is prominent.
+
+Diaphragm: Both hemidiaphragms are normal. Costophrenic angles are acute bilaterally.
+
+Bony thorax: No rib fractures or lytic lesions identified. Dorsal spine shows mild spondylosis.</textarea>
+        </div>
+
+        <div class="rp-section">
+          <div class="rp-section-title">Impression</div>
+          <textarea class="rp-textarea" id="rp-impression" style="min-height:80px;border-color:var(--warn);">1. Mild cardiomegaly (CTR 0.52) — likely hypertensive heart disease.
+2. Prominent aortic knuckle — aortic unfolding/ectasia.
+3. No acute cardiopulmonary pathology.</textarea>
+        </div>
+
+        <div class="rp-section">
+          <div class="rp-field">
+            <div class="rp-label">Recommendation</div>
+            <input class="rp-input" value="Echocardiogram advised. Cardiology correlation recommended."/>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap;">
+            <select class="rp-select" style="flex:1;">
+              <option>Dr. Kiran R. — Sr. Radiologist</option>
+              <option>Dr. Priya S. — Radiologist</option>
+            </select>
+            <div style="display:flex;gap:4px;">
+              <button class="btn btn-outline btn-sm" onclick="showToast('Report saved as draft','💾')">Save Draft</button>
+              <button class="btn btn-purple btn-sm" onclick="showToast('Addendum added','＋')">Addendum</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="report-footer">
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-outline" style="flex:1;justify-content:center;font-size:12px;" onclick="showToast('Report printing...','🖨')">🖨 Print</button>
+            <button class="btn btn-outline" style="flex:1;justify-content:center;font-size:12px;" onclick="showToast('Report sent to EMR','📤')">📤 To EMR</button>
+          </div>
+          <button class="btn btn-success" style="width:100%;justify-content:center;" onclick="showToast('Report signed and finalized ✓','✅')">✅ Sign &amp; Finalize Report</button>
+          <div style="text-align:center;font-size:11px;color:var(--text-3);">Dr. Kiran R. · 14 Mar 2024 · Digital Signature</div>
+        </div>
+      </div>
+
+      <!-- SCHEDULE TAB -->
+      <div class="tab-pane" id="pane-schedule">
+        <div class="pane-header" style="border-top:none;">
+          <div style="font-size:12px;font-weight:600;color:var(--text-2);">Today — 14 Mar 2024</div>
+          <div style="display:flex;gap:4px;">
+            <button class="btn btn-outline btn-sm" onclick="showToast('Previous day','◀')">◀</button>
+            <button class="btn btn-outline btn-sm" onclick="showToast('Next day','▶')">▶</button>
+          </div>
+        </div>
+        <!-- MODALITY LEGEND -->
+        <div style="display:flex;gap:6px;padding:8px 12px;flex-wrap:wrap;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;background:#EFF6FF;color:var(--brand);border:1px solid #BFDBFE;padding:2px 7px;border-radius:5px;font-weight:600;">XR</span>
+          <span style="font-size:10px;background:#FEF3C7;color:var(--warn-dark);border:1px solid #FDE68A;padding:2px 7px;border-radius:5px;font-weight:600;">CT</span>
+          <span style="font-size:10px;background:#EDE9FE;color:var(--purple);border:1px solid #C4B5FD;padding:2px 7px;border-radius:5px;font-weight:600;">MRI</span>
+          <span style="font-size:10px;background:#D1FAE5;color:var(--success-dark);border:1px solid #6EE7B7;padding:2px 7px;border-radius:5px;font-weight:600;">US</span>
+          <span style="font-size:10px;background:#FEE2E2;color:var(--danger);border:1px solid #FCA5A5;padding:2px 7px;border-radius:5px;font-weight:600;">NM</span>
+        </div>
+        <div id="schedule-grid-container" style="overflow-y:auto;flex:1;"></div>
+      </div>
+
+      <!-- PACS TAB -->
+      <div class="tab-pane" id="pane-pacs">
+        <div style="padding:12px;">
+          <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
+            PACS / DICOM Nodes
+            <button class="btn btn-outline btn-sm" onclick="showToast('Running PACS connectivity test...','📡')">Test All</button>
+          </div>
+          <div id="pacs-nodes"></div>
+          <div style="margin-top:10px;padding:10px 12px;background:var(--accent-lt);border:1px solid #6EE7B7;border-radius:var(--radius);">
+            <div style="font-size:11px;font-weight:600;color:var(--accent-dark);margin-bottom:4px;">📡 HL7 / DICOM Status</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;">
+              <div>HL7 v2.5: <b style="color:var(--success);">Active</b></div>
+              <div>DICOM 3.0: <b style="color:var(--success);">Active</b></div>
+              <div>Last HL7 msg: <b>09:44:12</b></div>
+              <div>Images today: <b>1,842</b></div>
+              <div>Storage used: <b>2.4 TB / 10 TB</b></div>
+              <div>Archive: <b style="color:var(--success);">Synced</b></div>
+            </div>
+          </div>
+          <div style="margin-top:10px;">
+            <div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:6px;">Recent DICOM Events</div>
+            <div id="dicom-log"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /pane-right -->
+  </div><!-- /three-pane -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- SCHEDULE MODAL -->
+<div class="modal-backdrop" id="modal-schedule">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📅 Schedule Radiology Study</div>
+      <button class="modal-close" onclick="closeModal('schedule')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="fgrid">
+        <div class="fg full" style="grid-column:1/-1;">
+          <label class="fl">Patient UHID / Name *</label>
+          <input class="fi" placeholder="Search by UHID or patient name..."/>
+        </div>
+        <div class="fg">
+          <label class="fl">Modality *</label>
+          <select class="fs">
+            <option>X-Ray (XR)</option>
+            <option>CT Scan</option>
+            <option>MRI</option>
+            <option>Ultrasound</option>
+            <option>Nuclear Medicine</option>
+            <option>Mammography</option>
+            <option>Fluoroscopy</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl">Study Type *</label>
+          <select class="fs">
+            <option>Chest PA View</option>
+            <option>Skull AP/Lateral</option>
+            <option>CT Head Plain</option>
+            <option>CT Chest HRCT</option>
+            <option>MRI Brain with Contrast</option>
+            <option>USG Abdomen</option>
+            <option>ECHO 2D Colour Doppler</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl">Scheduled Date *</label>
+          <input class="fi" type="date" value="2024-03-14"/>
+        </div>
+        <div class="fg">
+          <label class="fl">Time Slot *</label>
+          <select class="fs">
+            <option>09:00 AM</option><option>09:30 AM</option><option>10:00 AM</option>
+            <option>10:30 AM</option><option>11:00 AM</option><option>11:30 AM</option>
+            <option>12:00 PM</option><option>02:00 PM</option><option>02:30 PM</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl">Priority</label>
+          <select class="fs"><option>Routine</option><option>Urgent</option><option>STAT</option></select>
+        </div>
+        <div class="fg">
+          <label class="fl">Referring Doctor</label>
+          <select class="fs">
+            <option>Dr. Anand Krishnan</option>
+            <option>Dr. Meera Suresh</option>
+            <option>Dr. Ramesh Iyer</option>
+          </select>
+        </div>
+        <div class="fg" style="grid-column:1/-1;">
+          <label class="fl">Clinical Indication</label>
+          <input class="fi" placeholder="Reason for imaging study..."/>
+        </div>
+        <div class="fg" style="grid-column:1/-1;">
+          <label class="fl">Contrast / Special Instructions</label>
+          <select class="fs">
+            <option>No contrast</option>
+            <option>IV contrast — check creatinine first</option>
+            <option>Oral contrast</option>
+            <option>Gadolinium (MRI)</option>
+            <option>NPO 4 hours prior</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('schedule')">Cancel</button>
+      <button class="btn btn-primary" onclick="closeModal('schedule');showToast('Study scheduled — patient SMS sent ✓','📅')">✅ Confirm Schedule</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span id="toast-icon">✅</span><span id="toast-msg">Done</span></div>
+
+<script>
+// ── WORKLIST DATA ──
+const worklist=[
+  {name:'Mohan Kumar',age:'58M',mod:'CXR',study:'Chest PA + Lateral',acc:'ACC-0847',prio:'stat',prioCls:'wb-stat',stripCls:'wl-s-stat',st:'New',stCls:'wb-stat',time:'09:14',uhid:'ER-2024-0047'},
+  {name:'Lakshmi Devi',age:'34F',mod:'USG',study:'USG Abdomen & Pelvis',acc:'ACC-0846',prio:'urgent',prioCls:'wb-urgent',stripCls:'wl-s-urgent',st:'In Progress',stCls:'wb-urgent',time:'09:20',uhid:'ER-2024-0045'},
+  {name:'Rajan Pillai',age:'67M',mod:'HRCT',study:'CT Chest HRCT',acc:'ACC-0845',prio:'urgent',prioCls:'wb-urgent',stripCls:'wl-s-urgent',st:'Scheduled',stCls:'wb-routine',time:'09:30',uhid:'IPD-4831'},
+  {name:'Ravi Kumar',age:'42M',mod:'CXR',study:'Chest PA View',acc:'ACC-0842',prio:'routine',prioCls:'wb-routine',stripCls:'wl-s-routine',st:'Draft Report',stCls:'wb-reported',time:'09:28',uhid:'DX-2024-004821'},
+  {name:'Meena Krishnan',age:'28F',mod:'MRI',study:'MRI Brain w/ Contrast',acc:'ACC-0841',prio:'routine',prioCls:'wb-routine',stripCls:'wl-s-routine',st:'Reported',stCls:'wb-done',time:'08:45',uhid:'OPD-4828'},
+  {name:'Arjun Patel',age:'55M',mod:'CT',study:'CT Abdomen Plain + Contrast',acc:'ACC-0840',prio:'urgent',prioCls:'wb-urgent',stripCls:'wl-s-urgent',st:'In Progress',stCls:'wb-urgent',time:'08:30',uhid:'IPD-4827'},
+  {name:'Saraswathi',age:'72F',mod:'ECHO',study:'2D Echo + Colour Doppler',acc:'ACC-0839',prio:'routine',prioCls:'wb-routine',stripCls:'wl-s-routine',st:'Reported',stCls:'wb-done',time:'08:15',uhid:'OPD-4826'},
+  {name:'Karthik Rajan',age:'44M',mod:'XR',study:'Knee AP/Lateral — Bilateral',acc:'ACC-0838',prio:'routine',prioCls:'wb-routine',stripCls:'wl-s-routine',st:'Scheduled',stCls:'wb-routine',time:'10:00',uhid:'OPD-4825'},
+  {name:'Priya Sundaram',age:'36F',mod:'USG',study:'USG Obstetric — 2nd Trimester',acc:'ACC-0837',prio:'routine',prioCls:'wb-routine',stripCls:'wl-s-routine',st:'Reported',stCls:'wb-done',time:'07:50',uhid:'OPD-4824'},
+  {name:'Deepak Kumar',age:'48M',mod:'CT',study:'CT Head Plain',acc:'ACC-0836',prio:'stat',prioCls:'wb-stat',stripCls:'wl-s-stat',st:'New',stCls:'wb-stat',time:'10:15',uhid:'ER-2024-0043'},
+];
+
+function renderWorklist(filter='all'){
+  const wl=document.getElementById('worklist');
+  wl.innerHTML='';
+  const filtered=filter==='all'?worklist:worklist.filter(w=>w.mod.toLowerCase().includes(filter)||w.study.toLowerCase().includes(filter));
+  filtered.forEach((w,i)=>{
+    wl.innerHTML+=`<div class="wl-item${i===3?' active-study':''}" onclick="selectStudy(this,'${w.name}','${w.acc}')">
+      <div class="wl-stripe ${w.stripCls}"></div>
+      <div class="wl-inner">
+        <div class="wl-top">
+          <div class="wl-name">${w.name}</div>
+          <span class="wl-badge ${w.stCls}">${w.st}</span>
+        </div>
+        <div class="wl-modality"><b>${w.mod}</b> · ${w.study}</div>
+        <div class="wl-meta">${w.uhid}</div>
+        <div class="wl-footer">
+          <div class="wl-accession">${w.acc}</div>
+          <div class="wl-time">${w.time} · ${w.age}</div>
+        </div>
+      </div>
+    </div>`;
+  });
+}
+renderWorklist();
+
+function filterMod(btn,filter){
+  document.querySelectorAll('.mod-f').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderWorklist(filter);
+}
+
+function selectStudy(el,name,acc){
+  document.querySelectorAll('.wl-item').forEach(i=>i.classList.remove('active-study'));
+  el.classList.add('active-study');
+  document.getElementById('vt-tl').innerHTML=`<div>${name}</div><div>${acc}</div><div style="margin-top:2px;color:rgba(255,200,100,.8);">CXR PA VIEW</div>`;
+  showToast(`Loading ${acc} into viewer...`,'🩻');
+  drawXray('main-canvas',400,400,0.9);
+}
+
+// ── CANVAS XRAY SIMULATION ──
+function drawXray(id,w,h,brightness=0.8){
+  const c=document.getElementById(id);
+  if(!c) return;
+  c.width=w; c.height=h;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,w,h);
+
+  // Chest cavity shape
+  const cx=w/2, cy=h*0.48;
+  // Lung fields
+  const grad1=ctx.createRadialGradient(cx-w*0.18,cy-h*0.05,10,cx-w*0.18,cy-h*0.05,w*0.22);
+  grad1.addColorStop(0,`rgba(180,180,190,${brightness})`);
+  grad1.addColorStop(0.6,`rgba(100,105,115,${brightness*0.7})`);
+  grad1.addColorStop(1,'rgba(20,20,25,0)');
+  ctx.fillStyle=grad1;
+  ctx.beginPath(); ctx.ellipse(cx-w*0.18,cy,w*0.2,h*0.3,0,0,Math.PI*2); ctx.fill();
+
+  const grad2=ctx.createRadialGradient(cx+w*0.18,cy-h*0.05,10,cx+w*0.18,cy-h*0.05,w*0.22);
+  grad2.addColorStop(0,`rgba(175,175,185,${brightness})`);
+  grad2.addColorStop(0.6,`rgba(95,100,110,${brightness*0.7})`);
+  grad2.addColorStop(1,'rgba(20,20,25,0)');
+  ctx.fillStyle=grad2;
+  ctx.beginPath(); ctx.ellipse(cx+w*0.18,cy,w*0.2,h*0.3,0,0,Math.PI*2); ctx.fill();
+
+  // Heart shadow
+  const heartGrad=ctx.createRadialGradient(cx-w*0.04,cy+h*0.02,0,cx-w*0.04,cy+h*0.02,w*0.14);
+  heartGrad.addColorStop(0,`rgba(220,215,210,${brightness})`);
+  heartGrad.addColorStop(0.5,`rgba(160,155,150,${brightness*0.8})`);
+  heartGrad.addColorStop(1,'rgba(40,40,50,0)');
+  ctx.fillStyle=heartGrad;
+  ctx.beginPath(); ctx.ellipse(cx-w*0.04,cy+h*0.04,w*0.13,h*0.18,Math.PI*0.05,0,Math.PI*2); ctx.fill();
+
+  // Spine (central dense line)
+  const spineGrad=ctx.createLinearGradient(cx-6,cy-h*0.3,cx+6,cy-h*0.3);
+  spineGrad.addColorStop(0,'rgba(40,40,40,0)');
+  spineGrad.addColorStop(0.5,`rgba(220,215,200,${brightness*0.9})`);
+  spineGrad.addColorStop(1,'rgba(40,40,40,0)');
+  ctx.fillStyle=spineGrad;
+  ctx.fillRect(cx-5,cy-h*0.32,10,h*0.72);
+
+  // Diaphragm curves
+  ctx.strokeStyle=`rgba(200,195,185,${brightness*0.6})`; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.bezierCurveTo(cx-w*0.35,cy+h*0.22,cx-w*0.1,cy+h*0.3,cx,cy+h*0.27); ctx.stroke();
+  ctx.beginPath(); ctx.bezierCurveTo(cx,cy+h*0.27,cx+w*0.1,cy+h*0.28,cx+w*0.35,cy+h*0.2); ctx.stroke();
+
+  // Ribs
+  ctx.strokeStyle=`rgba(210,205,195,${brightness*0.35})`; ctx.lineWidth=1;
+  for(let i=0;i<7;i++){
+    const ry=cy-h*0.22+i*(h*0.08);
+    ctx.beginPath();
+    ctx.bezierCurveTo(cx-w*0.06,ry,cx-w*0.22,ry-h*0.02,cx-w*0.36,ry+h*0.04);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.bezierCurveTo(cx+w*0.06,ry,cx+w*0.22,ry-h*0.02,cx+w*0.36,ry+h*0.04);
+    ctx.stroke();
+  }
+
+  // Clavicles
+  ctx.strokeStyle=`rgba(220,215,200,${brightness*0.55})`; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(cx-w*0.06,cy-h*0.3); ctx.lineTo(cx-w*0.34,cy-h*0.26); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx+w*0.06,cy-h*0.3); ctx.lineTo(cx+w*0.34,cy-h*0.26); ctx.stroke();
+
+  // Trachea
+  ctx.strokeStyle=`rgba(190,185,175,${brightness*0.4})`; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(cx,cy-h*0.38); ctx.lineTo(cx,cy-h*0.16); ctx.stroke();
+
+  // Cardiomegaly indicator (subtle highlight)
+  ctx.strokeStyle='rgba(255,200,50,0.15)'; ctx.lineWidth=1.5; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.ellipse(cx-w*0.05,cy+h*0.04,w*0.145,h*0.19,Math.PI*0.05,0,Math.PI*2); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Grain / noise
+  for(let n=0;n<w*h*0.025;n++){
+    const px=Math.random()*w; const py=Math.random()*h;
+    const a=Math.random()*0.06;
+    ctx.fillStyle=`rgba(255,255,255,${a})`;
+    ctx.fillRect(px,py,1,1);
+  }
+}
+
+function drawSmallXray(id,w,h){
+  const c=document.getElementById(id);
+  if(!c) return;
+  c.width=w; c.height=h;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#111'; ctx.fillRect(0,0,w,h);
+  // Simplified lateral
+  const cx=w*0.5, cy=h*0.5;
+  const g=ctx.createRadialGradient(cx,cy,5,cx,cy,w*0.4);
+  g.addColorStop(0,'rgba(160,155,145,.7)');
+  g.addColorStop(0.7,'rgba(80,80,90,.4)');
+  g.addColorStop(1,'rgba(10,10,15,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(cx,cy,w*0.38,h*0.4,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(200,195,185,.5)';
+  ctx.fillRect(cx-3,cy-h*0.38,6,h*0.8);
+  for(let n=0;n<w*h*0.03;n++){
+    ctx.fillStyle=`rgba(255,255,255,${Math.random()*.05})`;
+    ctx.fillRect(Math.random()*w,Math.random()*h,1,1);
+  }
+}
+
+// Draw all canvases on load
+setTimeout(()=>{
+  drawXray('main-canvas',400,400,0.88);
+  drawSmallXray('canvas2',180,180);
+  drawSmallXray('canvas3',180,180);
+},100);
+
+// ── COORDINATES OVERLAY ──
+function updateCoords(e,el){
+  const r=el.getBoundingClientRect();
+  const x=Math.round(e.clientX-r.left);
+  const y=Math.round(e.clientY-r.top);
+  const hu=Math.round(-600+Math.random()*200-100);
+  document.getElementById('coord-display').textContent=`X: ${x} Y: ${y}`;
+  document.getElementById('hu-display').textContent=`HU: ${hu}`;
+}
+
+// ── WINDOW/LEVEL PRESETS ──
+const presets={
+  'Soft Tissue':{w:400,l:40},
+  'Lung':{w:1500,l:-600},
+  'Bone':{w:2000,l:300},
+  'Brain':{w:80,l:40},
+};
+function setPreset(btn,name){
+  document.querySelectorAll('.vt-btn').forEach(b=>{if(['Soft Tissue','Lung','Bone','Brain'].includes(b.textContent)) b.classList.remove('active');});
+  btn.classList.add('active');
+  document.getElementById('wl-val').textContent=presets[name].w;
+  document.getElementById('ll-val').textContent=presets[name].l;
+  document.getElementById('preset-val').textContent=name;
+  const b=name==='Lung'?0.88:name==='Bone'?1.0:name==='Brain'?0.6:0.75;
+  drawXray('main-canvas',400,400,b);
+  showToast(`Preset: ${name} — W:${presets[name].w} L:${presets[name].l}`,'☀');
+}
+function setTool(btn,name){
+  document.querySelectorAll('.vt-btn').forEach(b=>{if(['☀','✥','🔍','📏','✏','⬡'].includes(b.textContent)) b.classList.remove('active');});
+  btn.classList.add('active');
+  showToast(`Tool: ${name} active`,'🖱');
+}
+
+// ── SERIES THUMBNAILS ──
+const series=[
+  {label:'PA Chest',count:'1 img',active:true},
+  {label:'Lateral',count:'1 img',active:false},
+  {label:'AP Supine',count:'1 img',active:false},
+  {label:'HRCT',count:'48 img',active:false},
+  {label:'Axial',count:'32 img',active:false},
+  {label:'Coronal',count:'24 img',active:false},
+];
+const ss=document.getElementById('series-strip');
+series.forEach((s,i)=>{
+  const thumb=document.createElement('div');
+  thumb.className='series-thumb'+(s.active?' active':'');
+  thumb.title=s.label;
+  thumb.innerHTML=`<span style="font-size:9px;color:rgba(255,255,255,.5);text-align:center;">${s.label}</span><span class="st-count">${s.count}</span>`;
+  // mini canvas
+  const mc=document.createElement('canvas');
+  mc.style.cssText='width:100%;height:100%;position:absolute;top:0;left:0;opacity:.7;border-radius:4px;';
+  thumb.insertBefore(mc,thumb.firstChild);
+  ss.appendChild(thumb);
+  thumb.addEventListener('click',()=>{
+    document.querySelectorAll('.series-thumb').forEach(t=>t.classList.remove('active'));
+    thumb.classList.add('active');
+    drawXray('main-canvas',400,400,0.7+Math.random()*0.3);
+    showToast(`Series: ${s.label}`,'🩻');
+  });
+  setTimeout(()=>drawSmallXray(mc,56,56),150);
+});
+
+function drawSmallXrayCanvas(c,w,h){
+  if(!c) return;
+  c.width=w; c.height=h;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#111'; ctx.fillRect(0,0,w,h);
+  const g=ctx.createRadialGradient(w/2,h/2,3,w/2,h/2,w*0.4);
+  g.addColorStop(0,'rgba(150,145,135,.7)');
+  g.addColorStop(1,'rgba(10,10,15,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(w/2,h/2,w*.38,h*.4,0,0,Math.PI*2); ctx.fill();
+}
+
+// ── SCHEDULE GRID ──
+const schedData=[
+  {time:'08:00',slots:[{mod:'xr',label:'XR',patient:'Priya S.'},{mod:'free'},{mod:'free'},{mod:'free'},{mod:'xr',label:'XR',patient:'Anand K.'},{mod:'free'}]},
+  {time:'08:30',slots:[{mod:'us',label:'US',patient:'Meena K.'},{mod:'free'},{mod:'ct',label:'CT',patient:'Arjun P.'},{mod:'free'},{mod:'free'},{mod:'mri',label:'MRI',patient:'Meena K.'}]},
+  {time:'09:00',slots:[{mod:'xr',label:'XR',patient:'Ravi K.'},{mod:'free'},{mod:'free'},{mod:'us',label:'US',patient:'Lakshmi D.'},{mod:'free'},{mod:'free'}]},
+  {time:'09:30',slots:[{mod:'blocked'},{mod:'ct',label:'CT',patient:'Rajan P.'},{mod:'free'},{mod:'free'},{mod:'xr',label:'XR',patient:'Deepak K.'},{mod:'free'}]},
+  {time:'10:00',slots:[{mod:'free'},{mod:'free'},{mod:'mri',label:'MRI',patient:'Karthik R.'},{mod:'free'},{mod:'xr',label:'XR',patient:'Saras.'},{mod:'us',label:'US',patient:'Priya D.'}]},
+  {time:'10:30',slots:[{mod:'nm',label:'NM',patient:'Rajan P.'},{mod:'free'},{mod:'free'},{mod:'ct',label:'CT',patient:'Anitha S.'},{mod:'free'},{mod:'free'}]},
+  {time:'11:00',slots:[{mod:'xr',label:'XR',patient:'Vijay A.'},{mod:'free'},{mod:'mri',label:'MRI',patient:'Deepak K.'},{mod:'free'},{mod:'free'},{mod:'free'}]},
+  {time:'02:00',slots:[{mod:'free'},{mod:'ct',label:'CT',patient:'Mohan K.'},{mod:'free'},{mod:'us',label:'US',patient:'Anjali M.'},{mod:'free'},{mod:'free'}]},
+  {time:'02:30',slots:[{mod:'xr',label:'XR',patient:'New slot'},{mod:'free'},{mod:'free'},{mod:'free'},{mod:'nm',label:'NM',patient:'Suresh K.'},{mod:'free'}]},
+];
+const machines=['XR-1','CT-1','MRI-1','US-1','US-2','NM-1'];
+const sgc=document.getElementById('schedule-grid-container');
+let sgHtml=`<div class="schedule-grid" style="grid-template-columns:50px repeat(6,1fr);">
+  <div class="sg-header"></div>
+  ${machines.map(m=>`<div class="sg-header">${m}</div>`).join('')}`;
+schedData.forEach(row=>{
+  sgHtml+=`<div class="sg-header" style="text-align:left;font-family:'DM Mono',monospace;">${row.time}</div>`;
+  row.slots.forEach(s=>{
+    if(s.mod==='free') sgHtml+=`<div class="sg-slot free" onclick="showToast('Booking slot at ${row.time}...','📅')"><span class="sg-time" style="color:var(--text-3);">Free</span></div>`;
+    else if(s.mod==='blocked') sgHtml+=`<div class="sg-slot blocked"><span class="sg-time">—</span></div>`;
+    else sgHtml+=`<div class="sg-slot booked-${s.mod}" onclick="showToast('${s.patient} · ${row.time}','📋')"><span class="sg-time">${s.label}</span><span class="sg-patient">${s.patient}</span></div>`;
+  });
+});
+sgHtml+='</div>';
+sgc.innerHTML=sgHtml;
+
+// ── PACS NODES ──
+const pacsNodes=[
+  {name:'Main PACS Server',model:'Synapse PACS 5.4',icon:'🖥',st:'online',stLabel:'Online',studies:1842,size:'2.4 TB'},
+  {name:'CT Workstation',model:'Aquarius iNtuition',icon:'🔬',st:'online',stLabel:'Connected',studies:284,size:'380 GB'},
+  {name:'MRI Station',model:'OsiriX MD v13',icon:'🧲',st:'online',stLabel:'Active',studies:96,size:'210 GB'},
+  {name:'DR X-Ray Unit',model:'Fujifilm FDR-D-EVO',icon:'🩻',st:'online',stLabel:'Online',studies:1120,size:'820 GB'},
+  {name:'Ultrasound Console',model:'GE Logiq E10',icon:'🔊',st:'warn',stLabel:'Slow Sync',studies:342,size:'180 GB'},
+  {name:'Archive Server',model:'Merge Healthcare',icon:'💾',st:'online',stLabel:'Synced',studies:48920,size:'8.2 TB'},
+  {name:'Teleradiology Node',model:'Ambra Health Cloud',icon:'☁',st:'offline',stLabel:'Offline',studies:0,size:'—'},
+];
+const pn=document.getElementById('pacs-nodes');
+pacsNodes.forEach(p=>{
+  const dotCls=p.st==='online'?'online-dot':p.st==='warn'?'warn-dot':'offline-dot-c';
+  pn.innerHTML+=`<div class="pacs-node" onclick="showToast('${p.name} — ${p.stLabel}','📡')">
+    <div class="pacs-icon" style="background:var(--surface-2);">${p.icon}</div>
+    <div style="flex:1;">
+      <div class="pacs-name">${p.name}</div>
+      <div class="pacs-meta">${p.model}</div>
+      <div class="pacs-stats">
+        <span class="ps-chip" style="background:var(--brand-light);color:var(--brand);">${p.studies.toLocaleString()} studies</span>
+        <span class="ps-chip" style="background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);">${p.size}</span>
+      </div>
+    </div>
+    <div class="pacs-dot ${dotCls}"></div>
+  </div>`;
+});
+
+// ── DICOM LOG ──
+const logs=[
+  {t:'09:44',msg:'STORE — CXR ACC-0847 received from DR-XR1','col':'var(--success)'},
+  {t:'09:40',msg:'STORE — CT ACC-0845 received from CT-WS','col':'var(--success)'},
+  {t:'09:38',msg:'QUERY — Worklist fetch from RIS OK','col':'var(--brand)'},
+  {t:'09:32',msg:'C-FIND — Patient ACC-0842 matched','col':'var(--brand)'},
+  {t:'09:28',msg:'STORE — CXR ACC-0842 received from DR-XR1','col':'var(--success)'},
+  {t:'09:20',msg:'WARN — Ultrasound node sync delay 12s','col':'var(--warn)'},
+  {t:'09:14',msg:'STORE — ER STAT CXR ACC-0847 priority queue','col':'var(--danger)'},
+];
+const dl=document.getElementById('dicom-log');
+logs.forEach(l=>{
+  dl.innerHTML+=`<div style="display:flex;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px;">
+    <span style="font-family:'DM Mono',monospace;color:var(--text-3);min-width:38px;">${l.t}</span>
+    <span style="width:6px;height:6px;border-radius:50%;background:${l.col};flex-shrink:0;margin-top:3px;"></span>
+    <span style="color:var(--text-2);">${l.msg}</span>
+  </div>`;
+});
+
+// ── TABS ──
+function switchRTab(id,btn){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.rt-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pane-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── MODAL ──
+function openModal(id){document.getElementById('modal-'+id).classList.add('show');}
+function closeModal(id){document.getElementById('modal-'+id).classList.remove('show');}
+
+// ── TOAST ──
+let tt;
+function showToast(msg,icon='✅'){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').innerHTML=msg;
+  document.getElementById('toast-icon').textContent=icon;
+  t.classList.add('show');clearTimeout(tt);
+  tt=setTimeout(()=>t.classList.remove('show'),3200);
+}
+</script>
+</body>
+</html>

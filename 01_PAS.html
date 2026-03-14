@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Diagnotica HMS — Patient Administration System</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --brand:       #1A5EAB;
+    --brand-dark:  #0F3F78;
+    --brand-light: #E8F1FB;
+    --brand-mid:   #2E7DD6;
+    --accent:      #00C0A3;
+    --accent-lt:   #E0F9F5;
+    --warn:        #F59E0B;
+    --warn-lt:     #FEF3C7;
+    --danger:      #EF4444;
+    --danger-lt:   #FEE2E2;
+    --success:     #10B981;
+    --success-lt:  #D1FAE5;
+    --text-1:      #0F1C2E;
+    --text-2:      #3A4D63;
+    --text-3:      #7A8FA6;
+    --border:      #DDE6F0;
+    --bg:          #F2F6FB;
+    --surface:     #FFFFFF;
+    --surface-2:   #F7FAFD;
+    --radius:      10px;
+    --radius-lg:   16px;
+    --shadow:      0 1px 4px rgba(26,94,171,.08), 0 4px 16px rgba(26,94,171,.06);
+    --shadow-lg:   0 8px 32px rgba(26,94,171,.12);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text-1);
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--brand-dark);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; height: 52px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-logo { display: flex; align-items: center; gap: 10px; }
+  .logo-mark {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: linear-gradient(135deg,#00C0A3,#2E7DD6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; color: #fff; letter-spacing: -0.5px;
+  }
+  .logo-text { color: #fff; font-size: 15px; font-weight: 600; letter-spacing: 0.2px; }
+  .logo-sub  { color: #8BAFD4; font-size: 11px; font-weight: 400; }
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .topbar-btn {
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+    color: #fff; border-radius: 6px; padding: 5px 12px;
+    font-size: 12px; font-family: inherit; cursor: pointer;
+    display: flex; align-items: center; gap: 6px; transition: background .15s;
+  }
+  .topbar-btn:hover { background: rgba(255,255,255,.18); }
+  .user-chip {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,.08); border-radius: 20px;
+    padding: 4px 12px 4px 4px; cursor: pointer;
+  }
+  .user-avatar {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    font-size: 11px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .user-name { color: #D4E8FF; font-size: 12px; }
+
+  /* ── OFFLINE BANNER ── */
+  .offline-banner {
+    background: var(--warn); color: #78350F;
+    padding: 8px 24px; display: flex; align-items: center; gap: 10px;
+    font-size: 13px; font-weight: 500; position: relative;
+  }
+  .offline-banner.hidden { display: none; }
+  .offline-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: #92400E;
+    animation: pulse-warn 1.4s infinite;
+  }
+  @keyframes pulse-warn {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: .5; transform: scale(1.3); }
+  }
+  .offline-close {
+    margin-left: auto; cursor: pointer; background: none; border: none;
+    color: #92400E; font-size: 18px; line-height: 1; padding: 0 4px;
+  }
+
+  /* ── LAYOUT ── */
+  .layout { display: flex; height: calc(100vh - 52px); overflow: hidden; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 220px; background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 16px 0; flex-shrink: 0; overflow-y: auto;
+  }
+  .sidebar-section { padding: 0 12px; margin-bottom: 6px; }
+  .sidebar-label {
+    font-size: 10px; font-weight: 600; color: var(--text-3);
+    text-transform: uppercase; letter-spacing: .08em;
+    padding: 8px 8px 4px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: var(--radius);
+    cursor: pointer; color: var(--text-2); font-size: 13px;
+    transition: all .15s; position: relative;
+  }
+  .nav-item:hover { background: var(--brand-light); color: var(--brand); }
+  .nav-item.active {
+    background: var(--brand-light); color: var(--brand); font-weight: 500;
+  }
+  .nav-item.active::before {
+    content: ''; position: absolute; left: 0; top: 6px; bottom: 6px;
+    width: 3px; background: var(--brand); border-radius: 0 3px 3px 0;
+  }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+  .badge {
+    margin-left: auto; background: var(--brand); color: #fff;
+    font-size: 10px; font-weight: 600; border-radius: 10px;
+    padding: 1px 6px; min-width: 18px; text-align: center;
+  }
+  .badge.warn { background: var(--warn); color: #78350F; }
+  .badge.danger { background: var(--danger); }
+
+  /* ── MAIN ── */
+  .main { flex: 1; overflow-y: auto; padding: 20px 24px; }
+
+  /* ── PAGE HEADER ── */
+  .page-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .page-title { font-size: 20px; font-weight: 600; color: var(--text-1); }
+  .page-sub { font-size: 13px; color: var(--text-3); margin-top: 2px; }
+  .btn {
+    padding: 8px 16px; border-radius: var(--radius); border: none;
+    font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px; transition: all .15s;
+  }
+  .btn-primary {
+    background: var(--brand); color: #fff;
+    box-shadow: 0 2px 8px rgba(26,94,171,.3);
+  }
+  .btn-primary:hover { background: var(--brand-dark); }
+  .btn-outline {
+    background: var(--surface); color: var(--brand);
+    border: 1px solid var(--brand); 
+  }
+  .btn-outline:hover { background: var(--brand-light); }
+
+  /* ── SEARCH BAR ── */
+  .search-section {
+    background: var(--surface); border-radius: var(--radius-lg);
+    padding: 16px 20px; margin-bottom: 20px;
+    border: 1px solid var(--border); box-shadow: var(--shadow);
+  }
+  .search-label { font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 10px; }
+  .search-row { display: flex; gap: 10px; }
+  .search-wrap {
+    flex: 1; position: relative;
+  }
+  .search-icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--text-3); font-size: 16px; pointer-events: none;
+  }
+  .search-input {
+    width: 100%; padding: 10px 12px 10px 38px;
+    border: 1.5px solid var(--border); border-radius: var(--radius);
+    font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text-1);
+    background: var(--surface-2); outline: none; transition: border-color .15s;
+  }
+  .search-input:focus { border-color: var(--brand); background: #fff; }
+  .search-input::placeholder { font-family: 'DM Sans', sans-serif; color: var(--text-3); }
+  .search-filter {
+    padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--radius);
+    font-family: inherit; font-size: 13px; color: var(--text-2);
+    background: var(--surface-2); outline: none; cursor: pointer; min-width: 140px;
+  }
+  .search-filter:focus { border-color: var(--brand); }
+
+  /* ── STATS ROW ── */
+  .stats-row {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--surface); border-radius: var(--radius-lg);
+    padding: 16px; border: 1px solid var(--border);
+    box-shadow: var(--shadow); position: relative; overflow: hidden;
+  }
+  .stat-card::after {
+    content: ''; position: absolute; right: -12px; bottom: -12px;
+    width: 60px; height: 60px; border-radius: 50%;
+    background: currentColor; opacity: .05;
+  }
+  .stat-label { font-size: 11px; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+  .stat-val { font-size: 28px; font-weight: 600; line-height: 1; margin-bottom: 4px; }
+  .stat-sub { font-size: 11px; color: var(--text-3); }
+  .stat-card.blue  { color: var(--brand);   } .stat-card.blue .stat-val  { color: var(--brand); }
+  .stat-card.green { color: var(--success); } .stat-card.green .stat-val { color: var(--success); }
+  .stat-card.warn  { color: var(--warn);    } .stat-card.warn .stat-val  { color: var(--warn); }
+  .stat-card.teal  { color: var(--accent);  } .stat-card.teal .stat-val  { color: var(--accent); }
+
+  /* ── TABS ── */
+  .tabs-row { display: flex; gap: 4px; margin-bottom: 16px; background: var(--surface-2); border-radius: var(--radius); padding: 4px; border: 1px solid var(--border); display: inline-flex; }
+  .tab-btn {
+    padding: 7px 20px; border-radius: 7px; border: none;
+    font-family: inherit; font-size: 13px; font-weight: 500;
+    cursor: pointer; color: var(--text-2); background: transparent; transition: all .15s;
+  }
+  .tab-btn.active {
+    background: var(--brand); color: #fff;
+    box-shadow: 0 2px 8px rgba(26,94,171,.25);
+  }
+  .tab-btn:not(.active):hover { background: var(--border); }
+
+  /* ── CONTENT GRID ── */
+  .content-grid { display: grid; grid-template-columns: 1fr 340px; gap: 16px; }
+
+  /* ── REGISTRATION FORM ── */
+  .card {
+    background: var(--surface); border-radius: var(--radius-lg);
+    border: 1px solid var(--border); box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 14px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--surface-2);
+  }
+  .card-title { font-size: 14px; font-weight: 600; color: var(--text-1); display: flex; align-items: center; gap: 8px; }
+  .card-body { padding: 20px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1/-1; }
+  .form-label { font-size: 11px; font-weight: 600; color: var(--text-2); letter-spacing: .04em; }
+  .form-input, .form-select {
+    padding: 9px 12px; border: 1.5px solid var(--border); border-radius: var(--radius);
+    font-family: inherit; font-size: 13px; color: var(--text-1);
+    background: var(--surface-2); outline: none; transition: border-color .15s;
+    width: 100%;
+  }
+  .form-input:focus, .form-select:focus { border-color: var(--brand); background: #fff; }
+  .abha-field { position: relative; }
+  .abha-badge {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: var(--success-lt); color: var(--success);
+    font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px;
+  }
+
+  /* ── PATIENT CARD ── */
+  .patient-card {
+    background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand) 100%);
+    border-radius: var(--radius-lg); padding: 20px; color: #fff;
+    position: relative; overflow: hidden; margin-bottom: 16px;
+  }
+  .patient-card::before {
+    content: ''; position: absolute;
+    right: -30px; top: -30px; width: 120px; height: 120px;
+    border-radius: 50%; background: rgba(255,255,255,.06);
+  }
+  .patient-card::after {
+    content: ''; position: absolute;
+    right: 30px; bottom: -40px; width: 90px; height: 90px;
+    border-radius: 50%; background: rgba(0,192,163,.15);
+  }
+  .pc-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
+  .pc-avatar {
+    width: 48px; height: 48px; border-radius: 12px;
+    background: rgba(255,255,255,.15); border: 2px solid rgba(255,255,255,.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 600;
+  }
+  .pc-status {
+    background: rgba(0,192,163,.25); color: #6EF0DC;
+    border: 1px solid rgba(0,192,163,.4);
+    font-size: 10px; font-weight: 600; padding: 3px 10px; border-radius: 10px;
+  }
+  .pc-name { font-size: 18px; font-weight: 600; margin-bottom: 2px; }
+  .pc-uhid { font-family: 'DM Mono', monospace; font-size: 11px; color: #A8C9EE; letter-spacing: .06em; margin-bottom: 12px; }
+  .pc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pc-field label { font-size: 10px; color: #A8C9EE; font-weight: 500; display: block; margin-bottom: 2px; }
+  .pc-field span { font-size: 13px; font-weight: 500; }
+  .abha-chip {
+    margin-top: 14px; padding: 10px 14px;
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+    border-radius: var(--radius); display: flex; align-items: center; gap: 10px;
+  }
+  .abha-icon {
+    width: 28px; height: 28px; border-radius: 7px;
+    background: var(--accent); display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+  .abha-label { font-size: 10px; color: #A8C9EE; }
+  .abha-val { font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: .04em; }
+
+  /* ── BED GRID ── */
+  .bed-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; padding: 4px; }
+  .bed-item {
+    aspect-ratio: 1; border-radius: var(--radius); border: 1.5px solid var(--border);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 600; cursor: pointer; transition: all .15s;
+    position: relative;
+  }
+  .bed-item:hover { transform: scale(1.05); }
+  .bed-num { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 600; }
+  .bed-item.available { background: var(--success-lt); border-color: #6EE7B7; color: var(--success); }
+  .bed-item.occupied  { background: var(--danger-lt);  border-color: #FCA5A5; color: var(--danger); }
+  .bed-item.reserved  { background: var(--warn-lt);    border-color: #FCD34D; color: #92400E; }
+  .bed-item.cleaning  { background: #EDE9FE; border-color: #C4B5FD; color: #5B21B6; }
+  .bed-legend { display: flex; gap: 12px; padding: 10px 0 4px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-2); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 3px; }
+
+  /* ── RECENT PATIENTS ── */
+  .patient-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+    cursor: pointer; transition: background .12s;
+  }
+  .patient-row:last-child { border-bottom: none; }
+  .patient-row:hover { background: var(--brand-light); margin: 0 -20px; padding: 10px 20px; border-radius: var(--radius); }
+  .pr-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--brand-light); color: var(--brand);
+    font-size: 13px; font-weight: 600; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pr-name { font-size: 13px; font-weight: 500; }
+  .pr-uhid { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-3); }
+  .pr-right { margin-left: auto; text-align: right; }
+  .type-badge {
+    font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px;
+    margin-bottom: 3px; display: inline-block;
+  }
+  .type-opd { background: var(--brand-light); color: var(--brand); }
+  .type-ipd { background: var(--success-lt); color: var(--success); }
+  .type-er  { background: var(--danger-lt); color: var(--danger); }
+  .pr-time  { font-size: 11px; color: var(--text-3); }
+
+  /* ── WARD SELECTOR ── */
+  .ward-tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+  .ward-tab {
+    padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border);
+    font-size: 11px; font-weight: 500; cursor: pointer; transition: all .15s;
+    color: var(--text-2); background: var(--surface-2);
+  }
+  .ward-tab.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+
+  /* ── ER TRIAGE PREVIEW ── */
+  .triage-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; border-radius: var(--radius);
+    margin-bottom: 6px; border: 1px solid transparent;
+  }
+  .triage-row.esi1 { background: #FEE2E2; border-color: #FCA5A5; }
+  .triage-row.esi2 { background: var(--warn-lt); border-color: #FCD34D; }
+  .triage-row.esi3 { background: var(--brand-light); border-color: #93C5FD; }
+  .esi-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .esi1 .esi-dot { background: var(--danger); }
+  .esi2 .esi-dot { background: var(--warn); }
+  .esi3 .esi-dot { background: var(--brand); }
+  .triage-name { font-size: 13px; font-weight: 500; flex: 1; }
+  .wait-time { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-2); }
+
+  /* ── FORM TAB CONTENT ── */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--brand-dark); color: #fff;
+    padding: 12px 20px; border-radius: var(--radius);
+    font-size: 13px; font-weight: 500; z-index: 999;
+    box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 10px;
+    transform: translateY(80px); opacity: 0;
+    transition: all .3s cubic-bezier(.34,1.56,.64,1);
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast-icon { font-size: 18px; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <div class="logo-mark">Dx</div>
+    <div>
+      <div class="logo-text">Diagnotica HMS</div>
+      <div class="logo-sub">Patient Administration System</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <button class="topbar-btn" onclick="toggleOffline()">
+      <span id="offline-btn-icon">🌐</span>
+      <span id="offline-btn-txt">Online</span>
+    </button>
+    <button class="topbar-btn">🔔 <span id="notif-count" style="background:var(--danger);color:#fff;border-radius:10px;padding:0 5px;font-size:10px;">3</span></button>
+    <div class="user-chip">
+      <div class="user-avatar">RS</div>
+      <span class="user-name">Receptionist — Dr. Priya</span>
+    </div>
+  </div>
+</div>
+
+<!-- OFFLINE BANNER -->
+<div class="offline-banner hidden" id="offline-banner">
+  <div class="offline-dot"></div>
+  ⚠ Working Offline — Data is being saved locally. Will sync when connection restores.
+  <span style="font-family:'DM Mono',monospace; margin-left:8px; font-size:12px;">42 records queued</span>
+  <button class="offline-close" onclick="toggleOffline()">×</button>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Patient Admin</div>
+      <div class="nav-item active"><span class="nav-icon">🏥</span> Registration <span class="badge">12</span></div>
+      <div class="nav-item"><span class="nav-icon">📋</span> Appointments <span class="badge warn">5</span></div>
+      <div class="nav-item"><span class="nav-icon">🛏️</span> Bed Management</div>
+      <div class="nav-item"><span class="nav-icon">🔄</span> Transfers</div>
+      <div class="nav-item"><span class="nav-icon">🚪</span> Discharge</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Quick Access</div>
+      <div class="nav-item"><span class="nav-icon">🚨</span> Emergency (ER) <span class="badge danger">2</span></div>
+      <div class="nav-item"><span class="nav-icon">💊</span> OPD Queue</div>
+      <div class="nav-item"><span class="nav-icon">🧾</span> Billing</div>
+      <div class="nav-item"><span class="nav-icon">📑</span> Insurance / TPA</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Reports</div>
+      <div class="nav-item"><span class="nav-icon">📊</span> Daily Census</div>
+      <div class="nav-item"><span class="nav-icon">📈</span> Occupancy Report</div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div>
+        <div class="page-title">Patient Administration System</div>
+        <div class="page-sub">Manage registrations, beds, and patient flow — Chennai General · Ward A&B</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline" onclick="showToast('Aadhaar e-KYC launched','🔐')">🆔 Aadhaar e-KYC</button>
+        <button class="btn btn-primary" onclick="showToast('New patient form opened','✅')">＋ New Patient</button>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-card blue">
+        <div class="stat-label">Today Registrations</div>
+        <div class="stat-val">127</div>
+        <div class="stat-sub">↑ 14 since morning</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Beds Available</div>
+        <div class="stat-val">34</div>
+        <div class="stat-sub">of 120 total</div>
+      </div>
+      <div class="stat-card warn">
+        <div class="stat-label">OPD Waiting</div>
+        <div class="stat-val">18</div>
+        <div class="stat-sub">Avg wait: 22 min</div>
+      </div>
+      <div class="stat-card teal">
+        <div class="stat-label">ER Active Cases</div>
+        <div class="stat-val">7</div>
+        <div class="stat-sub">2 critical · 5 stable</div>
+      </div>
+    </div>
+
+    <!-- UHID SEARCH -->
+    <div class="search-section">
+      <div class="search-label">🔍 Patient Lookup</div>
+      <div class="search-row">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input class="search-input" id="uhid-search" placeholder="Search by UHID · Patient Name · Mobile · ABHA ID..." oninput="handleSearch(this.value)"/>
+        </div>
+        <select class="search-filter">
+          <option>All Types</option>
+          <option>OPD</option>
+          <option>IPD</option>
+          <option>Emergency</option>
+        </select>
+        <select class="search-filter">
+          <option>All Wards</option>
+          <option>General Ward A</option>
+          <option>ICU</option>
+          <option>Paediatrics</option>
+          <option>Maternity</option>
+        </select>
+        <button class="btn btn-primary" onclick="showToast('Search executed','🔍')">Search</button>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs-row" id="main-tabs">
+      <button class="tab-btn active" onclick="switchTab('opd',this)">🏥 OPD Registration</button>
+      <button class="tab-btn" onclick="switchTab('ipd',this)">🛏 IPD Admission</button>
+      <button class="tab-btn" onclick="switchTab('er',this)">🚨 ER / Emergency</button>
+      <button class="tab-btn" onclick="switchTab('beds',this)">📋 Bed Allocation</button>
+      <button class="tab-btn" onclick="switchTab('recent',this)">🕐 Recent Patients</button>
+    </div>
+
+    <!-- CONTENT GRID -->
+    <div class="content-grid">
+
+      <!-- LEFT: FORM / CONTENT -->
+      <div>
+
+        <!-- OPD TAB -->
+        <div class="tab-content active card" id="tab-opd">
+          <div class="card-header">
+            <div class="card-title">🏥 OPD Patient Registration</div>
+            <span style="font-size:11px;color:var(--text-3);">Token #: OPD-2024-0128</span>
+          </div>
+          <div class="card-body">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">First Name *</label>
+                <input class="form-input" placeholder="e.g. Ravi" type="text"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Last Name *</label>
+                <input class="form-input" placeholder="e.g. Shankar" type="text"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Date of Birth *</label>
+                <input class="form-input" type="date"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Gender *</label>
+                <select class="form-select">
+                  <option>Male</option><option>Female</option><option>Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Mobile Number *</label>
+                <input class="form-input" placeholder="+91 98765 43210" type="tel"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Blood Group</label>
+                <select class="form-select">
+                  <option>--Select--</option>
+                  <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+                  <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
+                </select>
+              </div>
+              <div class="form-group full">
+                <label class="form-label">ABHA / Health ID (Optional)</label>
+                <div class="abha-field">
+                  <input class="form-input" placeholder="14-digit ABHA Number" type="text" id="abha-input" oninput="checkAbha(this.value)"/>
+                  <span class="abha-badge" id="abha-badge" style="display:none;">✓ Verified</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Consulting Doctor *</label>
+                <select class="form-select">
+                  <option>Dr. Anand Krishnan — General</option>
+                  <option>Dr. Meera Suresh — Cardiology</option>
+                  <option>Dr. Ramesh Iyer — Orthopaedics</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Visit Type</label>
+                <select class="form-select">
+                  <option>New Patient</option>
+                  <option>Follow-up</option>
+                  <option>Review</option>
+                </select>
+              </div>
+              <div class="form-group full">
+                <label class="form-label">Chief Complaint</label>
+                <input class="form-input" placeholder="Brief description of symptoms..."/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Insurance / TPA</label>
+                <select class="form-select">
+                  <option>None / Self-Pay</option>
+                  <option>Star Health</option>
+                  <option>PMJAY / Ayushman</option>
+                  <option>New India Assurance</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Aadhaar (Last 4 digits)</label>
+                <input class="form-input" placeholder="XXXX" maxlength="4" type="text"/>
+              </div>
+            </div>
+            <div style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end;">
+              <button class="btn btn-outline">Save Draft</button>
+              <button class="btn btn-primary" onclick="showToast('Patient registered! Token OPD-2024-0128 generated','✅')">Register Patient →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- IPD TAB -->
+        <div class="tab-content card" id="tab-ipd">
+          <div class="card-header">
+            <div class="card-title">🛏 IPD Admission Form</div>
+            <span style="font-size:11px;color:var(--text-3);">Admission #: IPD-2024-0042</span>
+          </div>
+          <div class="card-body">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Patient UHID (Existing) *</label>
+                <input class="form-input" placeholder="UHID-XXXXXX or search"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Admission Date *</label>
+                <input class="form-input" type="datetime-local"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Ward *</label>
+                <select class="form-select">
+                  <option>General Ward A</option>
+                  <option>General Ward B</option>
+                  <option>ICU</option>
+                  <option>Paediatrics</option>
+                  <option>Maternity</option>
+                  <option>Surgical Ward</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Bed Number *</label>
+                <select class="form-select">
+                  <option>A-05 (Available)</option>
+                  <option>A-09 (Available)</option>
+                  <option>B-03 (Available)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Admitting Doctor *</label>
+                <select class="form-select">
+                  <option>Dr. Anand Krishnan</option>
+                  <option>Dr. Meera Suresh</option>
+                  <option>Dr. Ramesh Iyer</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Admission Type</label>
+                <select class="form-select">
+                  <option>Elective</option>
+                  <option>Emergency</option>
+                  <option>Referral</option>
+                  <option>Transfer</option>
+                </select>
+              </div>
+              <div class="form-group full">
+                <label class="form-label">Diagnosis / Reason for Admission</label>
+                <input class="form-input" placeholder="Primary diagnosis or presenting complaint..."/>
+              </div>
+              <div class="form-group full">
+                <label class="form-label">Special Instructions / Diet</label>
+                <input class="form-input" placeholder="e.g. Diabetic diet, No NSAIDs, Oxygen support..."/>
+              </div>
+            </div>
+            <div style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end;">
+              <button class="btn btn-outline">Print Wristband</button>
+              <button class="btn btn-primary" onclick="showToast('Patient admitted to Bed A-05!','🛏')">Confirm Admission →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ER TAB -->
+        <div class="tab-content card" id="tab-er">
+          <div class="card-header">
+            <div class="card-title">🚨 Emergency Registration</div>
+            <span style="background:var(--danger-lt);color:var(--danger);font-size:11px;font-weight:600;padding:3px 10px;border-radius:10px;">LIVE — 7 Active Cases</span>
+          </div>
+          <div class="card-body">
+            <div style="margin-bottom:14px;">
+              <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px;">Current ER Triage Queue</div>
+              <div class="triage-row esi1">
+                <div class="esi-dot"></div>
+                <div>
+                  <div class="triage-name">Mohan Kumar, 58M</div>
+                  <div style="font-size:11px;color:#7F1D1D;">ESI 1 — Chest Pain / Suspected MI</div>
+                </div>
+                <div class="wait-time">0 min</div>
+                <span style="background:var(--danger);color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;">CRITICAL</span>
+              </div>
+              <div class="triage-row esi2">
+                <div class="esi-dot"></div>
+                <div>
+                  <div class="triage-name">Lakshmi Devi, 34F</div>
+                  <div style="font-size:11px;color:#78350F;">ESI 2 — Severe Abdominal Pain</div>
+                </div>
+                <div class="wait-time">8 min</div>
+                <span style="background:var(--warn);color:#78350F;font-size:10px;padding:2px 8px;border-radius:10px;">URGENT</span>
+              </div>
+              <div class="triage-row esi3">
+                <div class="esi-dot"></div>
+                <div>
+                  <div class="triage-name">Arjun Raj, 22M</div>
+                  <div style="font-size:11px;color:#1E3A5F;">ESI 3 — Fracture Suspected (Wrist)</div>
+                </div>
+                <div class="wait-time">24 min</div>
+                <span style="background:var(--brand-light);color:var(--brand);font-size:10px;padding:2px 8px;border-radius:10px;">STABLE</span>
+              </div>
+            </div>
+            <div style="border-top:1px solid var(--border);padding-top:14px;">
+              <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:10px;">Register New Emergency Patient</div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">Patient Name / Unknown</label>
+                  <input class="form-input" placeholder="Name or 'Unknown Male'"/>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Approx. Age</label>
+                  <input class="form-input" placeholder="e.g. 45" type="number"/>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">ESI Level *</label>
+                  <select class="form-select">
+                    <option>ESI 1 — Resuscitation</option>
+                    <option>ESI 2 — Emergent</option>
+                    <option selected>ESI 3 — Urgent</option>
+                    <option>ESI 4 — Less Urgent</option>
+                    <option>ESI 5 — Non-Urgent</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">MLC / Medico-Legal Case</label>
+                  <select class="form-select">
+                    <option>No</option>
+                    <option>Yes — Accident</option>
+                    <option>Yes — Assault</option>
+                    <option>Yes — Poisoning</option>
+                  </select>
+                </div>
+                <div class="form-group full">
+                  <label class="form-label">Chief Complaint / Presenting Problem</label>
+                  <input class="form-input" placeholder="Brief description of emergency..."/>
+                </div>
+              </div>
+              <div style="margin-top:14px;display:flex;gap:10px;justify-content:flex-end;">
+                <button class="btn btn-primary" style="background:var(--danger);box-shadow:0 2px 8px rgba(239,68,68,.4);" onclick="showToast('Emergency patient registered! ESI tag printed','🚨')">🚨 Register Emergency</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BED ALLOCATION TAB -->
+        <div class="tab-content card" id="tab-beds">
+          <div class="card-header">
+            <div class="card-title">🛏 Bed Allocation Map</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:12px;color:var(--success);font-weight:600;">34 Available</span>
+              <span style="font-size:12px;color:var(--text-3);">/ 120 Total</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="ward-tabs" id="ward-tabs">
+              <div class="ward-tab active" onclick="switchWard(this,'A')">General Ward A</div>
+              <div class="ward-tab" onclick="switchWard(this,'B')">General Ward B</div>
+              <div class="ward-tab" onclick="switchWard(this,'ICU')">ICU</div>
+              <div class="ward-tab" onclick="switchWard(this,'P')">Paediatrics</div>
+              <div class="ward-tab" onclick="switchWard(this,'M')">Maternity</div>
+            </div>
+            <div class="bed-grid" id="bed-grid"></div>
+            <div class="bed-legend">
+              <div class="legend-item"><div class="legend-dot" style="background:var(--success);"></div> Available</div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--danger);"></div> Occupied</div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--warn);"></div> Reserved</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#8B5CF6;"></div> Cleaning</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RECENT PATIENTS TAB -->
+        <div class="tab-content card" id="tab-recent">
+          <div class="card-header">
+            <div class="card-title">🕐 Recent Registrations</div>
+            <span style="font-size:12px;color:var(--text-3);">Today · 127 patients</span>
+          </div>
+          <div class="card-body" style="padding:12px 20px;">
+            <div id="recent-list"></div>
+          </div>
+        </div>
+
+      </div><!-- /LEFT -->
+
+      <!-- RIGHT: PATIENT CARD + QUICK INFO -->
+      <div>
+
+        <!-- PATIENT CARD -->
+        <div class="patient-card">
+          <div class="pc-top">
+            <div class="pc-avatar">RK</div>
+            <span class="pc-status">● ACTIVE — OPD</span>
+          </div>
+          <div class="pc-name">Ravi Kumar</div>
+          <div class="pc-uhid">UHID : DX-2024-004821</div>
+          <div class="pc-grid">
+            <div class="pc-field"><label>Age / Gender</label><span>42 Y · Male</span></div>
+            <div class="pc-field"><label>Blood Group</label><span>O Positive</span></div>
+            <div class="pc-field"><label>Mobile</label><span>98765 43210</span></div>
+            <div class="pc-field"><label>Token No.</label><span>OPD-0127</span></div>
+          </div>
+          <div class="abha-chip">
+            <div class="abha-icon">🔗</div>
+            <div>
+              <div class="abha-label">ABHA Health ID</div>
+              <div class="abha-val">98-1234-5678-0042</div>
+            </div>
+            <div style="margin-left:auto;background:rgba(0,192,163,.25);color:#6EF0DC;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:600;">✓ Linked</div>
+          </div>
+        </div>
+
+        <!-- APPOINTMENT SUMMARY -->
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-header">
+            <div class="card-title">📋 Today's Appointments</div>
+            <span style="font-size:12px;color:var(--brand);font-weight:500;cursor:pointer;">View All</span>
+          </div>
+          <div class="card-body" style="padding:12px 16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+              <div>
+                <div style="font-size:13px;font-weight:500;">Dr. Anand — General OPD</div>
+                <div style="font-size:11px;color:var(--text-3);">09:00 AM · 18 booked</div>
+              </div>
+              <span style="background:var(--success-lt);color:var(--success);font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;">Running</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+              <div>
+                <div style="font-size:13px;font-weight:500;">Dr. Meera — Cardiology</div>
+                <div style="font-size:11px;color:var(--text-3);">11:00 AM · 9 booked</div>
+              </div>
+              <span style="background:var(--warn-lt);color:#92400E;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;">Waiting</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;">
+              <div>
+                <div style="font-size:13px;font-weight:500;">Dr. Ramesh — Ortho</div>
+                <div style="font-size:11px;color:var(--text-3);">02:00 PM · 12 booked</div>
+              </div>
+              <span style="background:var(--brand-light);color:var(--brand);font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;">Upcoming</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- QUICK ACTIONS -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">⚡ Quick Actions</div></div>
+          <div class="card-body" style="padding:12px 16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <button class="btn btn-outline" style="font-size:12px;justify-content:center;" onclick="showToast('Printing token...','🖨')">🖨 Print Token</button>
+            <button class="btn btn-outline" style="font-size:12px;justify-content:center;" onclick="showToast('Wristband sent to printer','🏷')">🏷 Wristband</button>
+            <button class="btn btn-outline" style="font-size:12px;justify-content:center;" onclick="showToast('SMS reminder sent','📱')">📱 Send SMS</button>
+            <button class="btn btn-outline" style="font-size:12px;justify-content:center;" onclick="showToast('ABHA link initiated','🔗')">🔗 Link ABHA</button>
+            <button class="btn btn-outline" style="font-size:12px;justify-content:center;grid-column:1/-1;" onclick="showToast('Transferring patient...','🔄')">🔄 Transfer Patient</button>
+          </div>
+        </div>
+
+      </div><!-- /RIGHT -->
+    </div><!-- /content-grid -->
+
+  </main>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toast-icon">✅</span>
+  <span id="toast-msg">Action completed</span>
+</div>
+
+<script>
+// ── TAB SWITCHING ──
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── WARD / BED GRID ──
+const wardData = {
+  A:   { beds: 20, states: [1,1,0,1,0,0,1,0,1,1,0,1,1,0,1,0,1,1,0,1] },
+  B:   { beds: 20, states: [0,0,1,0,1,0,0,1,1,0,0,0,1,1,0,1,0,0,1,1] },
+  ICU: { beds: 10, states: [0,1,0,0,1,0,1,1,2,0] },
+  P:   { beds: 15, states: [1,0,1,1,0,0,1,0,0,1,1,0,3,1,0] },
+  M:   { beds: 12, states: [0,1,0,0,1,2,0,0,1,0,0,1] }
+};
+const stateClass = ['occupied','available','reserved','cleaning'];
+const stateLabel = ['Occupied','Available','Reserved','Cleaning'];
+
+function renderBeds(ward) {
+  const data = wardData[ward];
+  const grid = document.getElementById('bed-grid');
+  grid.innerHTML = '';
+  data.states.forEach((s,i) => {
+    const n = (i+1).toString().padStart(2,'0');
+    const el = document.createElement('div');
+    el.className = 'bed-item ' + stateClass[s];
+    el.title = ward + '-' + n + ' · ' + stateLabel[s];
+    el.innerHTML = `<div class="bed-num">${ward}-${n}</div><div style="font-size:9px;margin-top:2px;">${stateLabel[s]}</div>`;
+    el.onclick = () => {
+      if(s===1) showToast(`Bed ${ward}-${n} selected for assignment`, '🛏');
+      else showToast(`Bed ${ward}-${n} is ${stateLabel[s]}`, '⚠️');
+    };
+    grid.appendChild(el);
+  });
+}
+
+function switchWard(el, ward) {
+  document.querySelectorAll('.ward-tab').forEach(w => w.classList.remove('active'));
+  el.classList.add('active');
+  renderBeds(ward);
+}
+
+renderBeds('A');
+
+// ── RECENT PATIENTS ──
+const patients = [
+  { name: 'Priya Sundaram',    uhid: 'DX-2024-004830', type: 'opd',  time: '09:42 AM', init: 'PS' },
+  { name: 'Karthik Rajan',     uhid: 'DX-2024-004829', type: 'ipd',  time: '09:31 AM', init: 'KR' },
+  { name: 'Meenakshi Nair',    uhid: 'DX-2024-004828', type: 'opd',  time: '09:20 AM', init: 'MN' },
+  { name: 'Vijay Anand',       uhid: 'DX-2024-004827', type: 'er',   time: '09:05 AM', init: 'VA' },
+  { name: 'Sita Ramachandran', uhid: 'DX-2024-004826', type: 'opd',  time: '08:55 AM', init: 'SR' },
+  { name: 'Deepak Kumar',      uhid: 'DX-2024-004825', type: 'ipd',  time: '08:40 AM', init: 'DK' },
+  { name: 'Anitha Selvam',     uhid: 'DX-2024-004824', type: 'opd',  time: '08:28 AM', init: 'AS' },
+];
+const rl = document.getElementById('recent-list');
+patients.forEach(p => {
+  rl.innerHTML += `
+    <div class="patient-row" onclick="showToast('Loading ${p.name} profile...','👤')">
+      <div class="pr-avatar">${p.init}</div>
+      <div>
+        <div class="pr-name">${p.name}</div>
+        <div class="pr-uhid">${p.uhid}</div>
+      </div>
+      <div class="pr-right">
+        <div class="type-badge type-${p.type}">${p.type.toUpperCase()}</div>
+        <div class="pr-time">${p.time}</div>
+      </div>
+    </div>`;
+});
+
+// ── ABHA CHECK ──
+function checkAbha(v) {
+  const b = document.getElementById('abha-badge');
+  b.style.display = (v.replace(/-/g,'').length >= 14) ? 'block' : 'none';
+}
+
+// ── SEARCH ──
+function handleSearch(v) {
+  if(v.length > 2) showToast(`Searching for "${v}"...`, '🔍');
+}
+
+// ── OFFLINE TOGGLE ──
+let offline = false;
+function toggleOffline() {
+  offline = !offline;
+  document.getElementById('offline-banner').classList.toggle('hidden', !offline);
+  document.getElementById('offline-btn-icon').textContent = offline ? '⚡' : '🌐';
+  document.getElementById('offline-btn-txt').textContent  = offline ? 'Offline' : 'Online';
+}
+
+// ── TOAST ──
+let toastTimer;
+function showToast(msg, icon='✅') {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  document.getElementById('toast-icon').textContent = icon;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>

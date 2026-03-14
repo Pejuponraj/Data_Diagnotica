@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Diagnotica HMS — Billing & Financial Management</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --brand:#1A5EAB;--brand-dark:#0F3F78;--brand-light:#E8F1FB;--brand-mid:#2E7DD6;
+  --accent:#00C0A3;--accent-lt:#E0F9F5;--accent-dark:#007A68;
+  --warn:#F59E0B;--warn-lt:#FEF3C7;--warn-dark:#92400E;
+  --danger:#EF4444;--danger-lt:#FEE2E2;--danger-dark:#7F1D1D;
+  --success:#10B981;--success-lt:#D1FAE5;--success-dark:#065F46;
+  --purple:#7C3AED;--purple-lt:#EDE9FE;
+  --indigo:#4F46E5;--indigo-lt:#EEF2FF;
+  --text-1:#0F1C2E;--text-2:#3A4D63;--text-3:#7A8FA6;
+  --border:#DDE6F0;--bg:#F0F5FB;--surface:#FFFFFF;--surface-2:#F7FAFD;
+  --radius:10px;--radius-lg:16px;
+  --shadow:0 1px 4px rgba(26,94,171,.08),0 4px 16px rgba(26,94,171,.06);
+  --shadow-lg:0 8px 32px rgba(26,94,171,.14);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-1);min-height:100vh;font-size:14px;}
+
+/* TOPBAR */
+.topbar{background:var(--brand-dark);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:52px;position:sticky;top:0;z-index:100;}
+.logo-wrap{display:flex;align-items:center;gap:10px;}
+.logo-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#00C0A3,#2E7DD6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;}
+.logo-text{color:#fff;font-size:15px;font-weight:600;}
+.logo-sub{color:#8BAFD4;font-size:11px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.t-chip{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#D4E8FF;border-radius:6px;padding:5px 12px;font-size:12px;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;}
+.t-chip:hover{background:rgba(255,255,255,.18);}
+.user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border-radius:20px;padding:4px 12px 4px 4px;}
+.user-av{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+
+/* SHELL */
+.shell{display:flex;height:calc(100vh - 52px);overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:196px;background:var(--surface);border-right:1px solid var(--border);padding:14px 0;flex-shrink:0;overflow-y:auto;}
+.sb-label{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;padding:8px 14px 4px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:var(--radius);margin:0 8px 2px;cursor:pointer;color:var(--text-2);font-size:13px;transition:all .15s;position:relative;}
+.nav-item:hover{background:var(--brand-light);color:var(--brand);}
+.nav-item.active{background:var(--brand-light);color:var(--brand);font-weight:500;}
+.nav-item.active::before{content:'';position:absolute;left:-4px;top:6px;bottom:6px;width:3px;background:var(--brand);border-radius:0 3px 3px 0;}
+.nb{margin-left:auto;font-size:10px;font-weight:700;border-radius:10px;padding:1px 6px;color:#fff;}
+.nb.b{background:var(--brand);}
+.nb.g{background:var(--success);}
+.nb.r{background:var(--danger);}
+.nb.w{background:var(--warn);color:var(--warn-dark);}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+
+/* KPI BANNER */
+.kpi-banner{background:linear-gradient(135deg,var(--brand-dark) 0%,#1563B8 100%);padding:16px 24px;display:flex;gap:0;align-items:stretch;}
+.kpi-item{text-align:center;min-width:110px;padding:0 8px;}
+.kpi-val{font-size:22px;font-weight:700;color:#fff;line-height:1;}
+.kpi-label{font-size:10px;color:#8BAFD4;margin-top:3px;text-transform:uppercase;letter-spacing:.05em;}
+.kpi-trend{font-size:11px;margin-top:3px;}
+.kpi-sep{width:1px;background:rgba(255,255,255,.1);margin:0 4px;}
+
+/* CONTENT */
+.content{padding:16px 20px;display:grid;grid-template-columns:1fr 360px;gap:16px;flex:1;}
+
+/* CARD */
+.card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;}
+.card-header{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);}
+.card-title{font-size:14px;font-weight:600;color:var(--text-1);display:flex;align-items:center;gap:8px;}
+.card-body{padding:16px;}
+
+/* BILLING TABS */
+.bill-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface-2);}
+.bill-tab{padding:11px 20px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:500;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;display:flex;align-items:center;gap:6px;}
+.bill-tab:hover{color:var(--text-1);}
+.bill-tab.active{color:var(--brand);border-bottom-color:var(--brand);}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+
+/* SEARCH BAR */
+.search-row{display:flex;gap:8px;margin-bottom:14px;}
+.search-wrap{flex:1;position:relative;}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:14px;}
+.search-input{width:100%;padding:9px 12px 9px 34px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;color:var(--text-1);background:var(--surface-2);outline:none;transition:border-color .15s;}
+.search-input:focus{border-color:var(--brand);background:#fff;}
+
+/* INVOICE BUILDER */
+.invoice-meta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;}
+.im-field{display:flex;flex-direction:column;gap:4px;}
+.im-label{font-size:11px;font-weight:600;color:var(--text-2);}
+.im-input,.im-select{padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;color:var(--text-1);background:var(--surface-2);outline:none;transition:border-color .15s;width:100%;}
+.im-input:focus,.im-select:focus{border-color:var(--brand);background:#fff;}
+
+/* CASHLESS TOGGLE */
+.cashless-bar{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--brand-light);border:1.5px solid #BFDBFE;border-radius:var(--radius);margin-bottom:14px;}
+.cashless-label{font-size:13px;font-weight:600;color:var(--brand);flex:1;}
+.toggle-wrap{display:flex;align-items:center;gap:8px;}
+.toggle-sw{width:38px;height:22px;border-radius:11px;background:var(--border);position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.toggle-sw.on{background:var(--success);}
+.toggle-knob{width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.toggle-sw.on .toggle-knob{transform:translateX(16px);}
+.toggle-text{font-size:12px;font-weight:600;color:var(--text-2);}
+
+/* PACKAGE SELECTOR */
+.package-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.pkg-card{border-radius:var(--radius);border:2px solid var(--border);padding:10px;cursor:pointer;transition:all .15s;text-align:center;}
+.pkg-card:hover{border-color:var(--brand);background:var(--brand-light);}
+.pkg-card.selected{border-color:var(--brand);background:var(--brand-light);}
+.pkg-icon{font-size:22px;margin-bottom:4px;}
+.pkg-name{font-size:12px;font-weight:600;color:var(--text-1);}
+.pkg-price{font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--brand);margin-top:3px;}
+.pkg-items{font-size:10px;color:var(--text-3);margin-top:2px;}
+
+/* LINE ITEMS TABLE */
+.line-items{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px;}
+.li-header{display:grid;grid-template-columns:2fr 1fr 80px 90px 28px;gap:6px;padding:8px 12px;background:var(--surface-2);font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);}
+.li-row{display:grid;grid-template-columns:2fr 1fr 80px 90px 28px;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border);align-items:center;}
+.li-row:last-child{border-bottom:none;}
+.li-row:hover{background:var(--brand-light);}
+.li-input{padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;font-size:12px;color:var(--text-1);background:var(--surface);outline:none;width:100%;transition:border-color .15s;}
+.li-input:focus{border-color:var(--brand);}
+.li-del{width:24px;height:24px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text-3);transition:all .15s;}
+.li-del:hover{background:var(--danger-lt);border-color:var(--danger);color:var(--danger);}
+.li-add-row{padding:8px 12px;display:flex;align-items:center;gap:6px;background:var(--surface-2);border-top:1px solid var(--border);}
+
+/* GST TABLE */
+.gst-block{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px;}
+.gst-row{display:flex;align-items:center;justify-content:space-between;padding:7px 14px;border-bottom:1px solid var(--border);font-size:12px;}
+.gst-row:last-child{border-bottom:none;}
+.gst-label{color:var(--text-2);}
+.gst-val{font-family:'DM Mono',monospace;font-weight:600;}
+
+/* TOTALS */
+.total-block{background:linear-gradient(135deg,var(--brand-dark),var(--brand));border-radius:var(--radius-lg);padding:16px 20px;color:#fff;margin-bottom:12px;}
+.total-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.total-label{font-size:13px;color:rgba(255,255,255,.75);}
+.total-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;}
+.grand-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.2);}
+.grand-label{font-size:16px;font-weight:700;}
+.grand-val{font-family:'DM Mono',monospace;font-size:24px;font-weight:700;}
+
+/* PAYMENT METHODS */
+.pay-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:12px;}
+.pay-btn{padding:10px 8px;border-radius:var(--radius);border:2px solid var(--border);background:var(--surface-2);cursor:pointer;text-align:center;transition:all .15s;}
+.pay-btn:hover{border-color:var(--brand);background:var(--brand-light);}
+.pay-btn.active{border-color:var(--brand);background:var(--brand-light);}
+.pay-icon{font-size:20px;display:block;margin-bottom:3px;}
+.pay-label{font-size:11px;font-weight:600;color:var(--text-2);}
+.pay-btn.active .pay-label{color:var(--brand);}
+
+/* QR BLOCK */
+.qr-block{border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:16px;text-align:center;margin-bottom:12px;display:none;}
+.qr-block.show{display:block;}
+.qr-canvas{width:120px;height:120px;margin:0 auto 8px;border-radius:8px;}
+.qr-upi{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-3);}
+.qr-amount{font-size:20px;font-weight:700;color:var(--brand);margin-bottom:4px;}
+
+/* RECEIPT PREVIEW */
+.receipt-wrap{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;font-size:12px;position:relative;}
+.receipt-header{text-align:center;margin-bottom:14px;border-bottom:1px dashed var(--border);padding-bottom:12px;}
+.receipt-logo{font-size:18px;font-weight:700;color:var(--brand);letter-spacing:.02em;}
+.receipt-addr{font-size:10px;color:var(--text-3);margin-top:2px;}
+.receipt-meta{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px;font-size:11px;}
+.rm-label{color:var(--text-3);}
+.rm-val{font-weight:500;text-align:right;font-family:'DM Mono',monospace;}
+.receipt-table{width:100%;border-collapse:collapse;margin-bottom:10px;}
+.receipt-table th{font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;border-bottom:1px solid var(--border);padding:4px 6px;text-align:left;}
+.receipt-table td{padding:5px 6px;border-bottom:1px dashed var(--border);font-size:11px;}
+.receipt-table tr:last-child td{border-bottom:none;}
+.receipt-total-block{border-top:2px solid var(--text-1);padding-top:8px;}
+.rt-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;}
+.rt-grand{font-size:15px;font-weight:700;}
+.receipt-footer{text-align:center;font-size:10px;color:var(--text-3);margin-top:10px;border-top:1px dashed var(--border);padding-top:8px;}
+.watermark{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:40px;font-weight:900;color:rgba(16,185,129,.08);letter-spacing:.1em;pointer-events:none;white-space:nowrap;}
+
+/* LEDGER */
+.ledger-row{display:grid;grid-template-columns:100px 1fr 90px 90px 90px;gap:8px;align-items:center;padding:9px 12px;border-radius:var(--radius);font-size:12px;cursor:pointer;transition:background .12s;}
+.ledger-row:hover{background:var(--brand-light);}
+.ledger-row.header{background:var(--surface-2);font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;cursor:default;border-radius:var(--radius) var(--radius) 0 0;}
+.ledger-row.header:hover{background:var(--surface-2);}
+.ldr-date{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-3);}
+.ldr-gateway{display:flex;align-items:center;gap:5px;}
+.gw-badge{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;}
+.gw-razorpay{background:#2D6FDD;color:#fff;}
+.gw-stripe{background:#635BFF;color:#fff;}
+.gw-cash{background:var(--success-lt);color:var(--success);}
+.gw-upi{background:#ED4040;color:#fff;}
+.gw-ins{background:var(--purple-lt);color:var(--purple);}
+.ldr-credit{color:var(--success);font-family:'DM Mono',monospace;font-weight:700;}
+.ldr-debit{color:var(--danger);font-family:'DM Mono',monospace;font-weight:700;}
+.ldr-balance{font-family:'DM Mono',monospace;font-weight:700;}
+
+/* OUTSTANDING */
+.outstanding-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius);border:1.5px solid var(--border);margin-bottom:7px;cursor:pointer;transition:all .15s;}
+.outstanding-row:hover{border-color:var(--warn);background:var(--warn-lt);}
+.ost-icon{width:36px;height:36px;border-radius:10px;background:var(--warn-lt);color:var(--warn);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.ost-name{font-size:13px;font-weight:500;}
+.ost-meta{font-size:11px;color:var(--text-3);}
+.ost-amount{font-family:'DM Mono',monospace;font-size:15px;font-weight:700;color:var(--danger);margin-left:auto;}
+.ost-days{font-size:10px;color:var(--text-3);text-align:right;}
+
+/* GATEWAY CARD */
+.gw-card{border-radius:var(--radius-lg);border:1.5px solid var(--border);padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .15s;}
+.gw-card:hover{border-color:var(--brand);box-shadow:var(--shadow);}
+.gw-logo{width:44px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0;}
+.gw-logo.razorpay{background:#2D6FDD;color:#fff;}
+.gw-logo.stripe{background:#635BFF;color:#fff;}
+.gw-logo.paytm{background:#00BAF2;color:#fff;}
+.gw-name{font-size:13px;font-weight:600;}
+.gw-meta{font-size:11px;color:var(--text-3);}
+.gw-stats{margin-left:auto;text-align:right;}
+.gw-rev{font-family:'DM Mono',monospace;font-size:15px;font-weight:700;color:var(--brand);}
+.gw-txn{font-size:11px;color:var(--text-3);}
+.gw-status-dot{width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 0 3px rgba(16,185,129,.2);margin-left:8px;}
+
+/* BTN */
+.btn{padding:8px 16px;border-radius:var(--radius);border:none;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+.btn-primary{background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(26,94,171,.28);}
+.btn-primary:hover{background:var(--brand-dark);}
+.btn-success{background:var(--success);color:#fff;}
+.btn-success:hover{background:#059669;}
+.btn-outline{background:var(--surface);color:var(--brand);border:1px solid var(--brand);}
+.btn-outline:hover{background:var(--brand-light);}
+.btn-warn{background:var(--warn);color:var(--warn-dark);}
+.btn-sm{padding:5px 12px;font-size:12px;}
+.btn-danger{background:var(--danger);color:#fff;}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600;}
+.bd-blue{background:var(--brand-light);color:var(--brand);}
+.bd-green{background:var(--success-lt);color:var(--success);}
+.bd-warn{background:var(--warn-lt);color:var(--warn-dark);}
+.bd-red{background:var(--danger-lt);color:var(--danger);}
+.bd-purple{background:var(--purple-lt);color:var(--purple);}
+.bd-gray{background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--brand-dark);color:#fff;padding:12px 20px;border-radius:var(--radius);font-size:13px;font-weight:500;z-index:999;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* MINI CHART */
+.mini-chart{height:40px;display:flex;align-items:flex-end;gap:2px;}
+.mc-bar{border-radius:3px 3px 0 0;transition:height .3s;cursor:pointer;}
+.mc-bar:hover{opacity:.8;}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo-wrap">
+    <div class="logo-mark">Dx</div>
+    <div><div class="logo-text">Diagnotica HMS</div><div class="logo-sub">Billing &amp; Financial Management</div></div>
+  </div>
+  <div class="topbar-right">
+    <div class="t-chip" onclick="showToast('Opening new invoice...','🧾')">＋ New Invoice</div>
+    <div class="t-chip" onclick="showToast('Exporting ledger to Excel...','📊')">📊 Export Ledger</div>
+    <div class="t-chip" onclick="showToast('Day-end settlement initiated...','💰')">💰 Day-End Settlement</div>
+    <div class="user-chip">
+      <div class="user-av">AR</div>
+      <span style="color:#D4E8FF;font-size:12px;">Accounts — Arjun R.</span>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-label">Billing</div>
+  <div class="nav-item active">🧾 Invoice Generator</div>
+  <div class="nav-item">📋 OPD Billing <span class="nb b">18</span></div>
+  <div class="nav-item">🛏 IPD Billing <span class="nb b">6</span></div>
+  <div class="nav-item">📦 Packages</div>
+  <div class="nav-item">🏥 Insurance / TPA</div>
+  <div class="nav-item">⏳ Outstanding <span class="nb r">12</span></div>
+  <div class="sb-label">Financial</div>
+  <div class="nav-item">💳 Payment Ledger</div>
+  <div class="nav-item">🔌 Gateway Status</div>
+  <div class="nav-item">📊 Revenue Reports</div>
+  <div class="nav-item">🧮 GST Reports</div>
+  <div class="sb-label">Settings</div>
+  <div class="nav-item">⚙ Rate Master</div>
+  <div class="nav-item">📑 Tariff List</div>
+  <div class="nav-item">🏷 Discount Profiles</div>
+</nav>
+
+<div class="main">
+
+  <!-- KPI BANNER -->
+  <div class="kpi-banner">
+    <div class="kpi-item">
+      <div class="kpi-val">₹2,84,650</div>
+      <div class="kpi-label">Today's Revenue</div>
+      <div class="kpi-trend" style="color:#6EF0DC;">↑ 12% vs yesterday</div>
+    </div>
+    <div class="kpi-sep"></div>
+    <div class="kpi-item">
+      <div class="kpi-val" style="color:#93C5FD;">127</div>
+      <div class="kpi-label">Invoices Issued</div>
+      <div class="kpi-trend" style="color:#6EF0DC;">OPD: 98 · IPD: 29</div>
+    </div>
+    <div class="kpi-sep"></div>
+    <div class="kpi-item">
+      <div class="kpi-val" style="color:#6EF0DC;">₹1,92,400</div>
+      <div class="kpi-label">Cash Collected</div>
+      <div class="kpi-trend" style="color:#6EF0DC;">68% of total</div>
+    </div>
+    <div class="kpi-sep"></div>
+    <div class="kpi-item">
+      <div class="kpi-val" style="color:#C4B5FD;">₹58,200</div>
+      <div class="kpi-label">Insurance Claims</div>
+      <div class="kpi-trend" style="color:#FCD34D;">3 pending auth</div>
+    </div>
+    <div class="kpi-sep"></div>
+    <div class="kpi-item">
+      <div class="kpi-val" style="color:#FCA5A5;">₹34,050</div>
+      <div class="kpi-label">Outstanding</div>
+      <div class="kpi-trend" style="color:#FCA5A5;">12 accounts</div>
+    </div>
+    <div class="kpi-sep"></div>
+    <div class="kpi-item">
+      <div class="kpi-val">₹43,248</div>
+      <div class="kpi-label">GST Collected</div>
+      <div class="kpi-trend" style="color:#6EF0DC;">CGST + SGST</div>
+    </div>
+    <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:4px;">
+      <div style="font-size:11px;color:#8BAFD4;">Last 7 days revenue</div>
+      <div class="mini-chart" id="revenue-chart"></div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="content">
+
+    <!-- LEFT -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+      <!-- INVOICE BUILDER -->
+      <div class="card">
+        <div class="bill-tabs" id="bill-tabs">
+          <button class="bill-tab active" onclick="switchBillTab('opd',this)">🏥 OPD Billing</button>
+          <button class="bill-tab" onclick="switchBillTab('ipd',this)">🛏 IPD Billing</button>
+          <button class="bill-tab" onclick="switchBillTab('package',this)">📦 Package Billing</button>
+          <button class="bill-tab" onclick="switchBillTab('ledger',this)">💳 Payment Ledger</button>
+          <button class="bill-tab" onclick="switchBillTab('outstanding',this)">⏳ Outstanding</button>
+        </div>
+
+        <!-- OPD TAB -->
+        <div class="tab-pane active" id="pane-opd">
+          <div style="padding:16px;">
+            <!-- PATIENT SEARCH -->
+            <div class="search-row">
+              <div class="search-wrap">
+                <span class="search-icon">🔍</span>
+                <input class="search-input" placeholder="Search patient by UHID · Name · Invoice #..." oninput="searchPatient(this.value)"/>
+              </div>
+              <select style="padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;background:var(--surface-2);outline:none;">
+                <option>OPD Visit</option><option>Walk-in</option><option>Emergency OPD</option>
+              </select>
+              <button class="btn btn-primary btn-sm" onclick="showToast('New OPD invoice created','🧾')">＋ New Invoice</button>
+            </div>
+
+            <!-- PATIENT INFO STRIP -->
+            <div style="background:var(--brand-light);border:1px solid #BFDBFE;border-radius:var(--radius);padding:10px 14px;display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+              <div style="width:36px;height:36px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;">RK</div>
+              <div style="flex:1;">
+                <div style="font-size:14px;font-weight:600;">Ravi Kumar</div>
+                <div style="font-size:12px;color:var(--text-3);">UHID: DX-2024-004821 · 42Y · M · Token: OPD-127 · Dr. Anand Krishnan</div>
+              </div>
+              <span class="badge bd-blue">OPD Follow-up</span>
+              <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text-3);">INV-2024-02841</span>
+            </div>
+
+            <!-- CASHLESS TOGGLE -->
+            <div class="cashless-bar" id="cashless-bar">
+              <span style="font-size:18px;">🏥</span>
+              <div class="cashless-label" id="cashless-label">Cashless Billing — Insurance / TPA</div>
+              <select style="padding:6px 10px;border:1.5px solid #BFDBFE;border-radius:var(--radius);font-family:inherit;font-size:12px;background:#fff;outline:none;" id="insurance-select">
+                <option value="">Self-Pay</option>
+                <option value="star">Star Health Insurance</option>
+                <option value="pmjay">PMJAY / Ayushman Bharat</option>
+                <option value="esi">ESI Corporation</option>
+                <option value="nia">New India Assurance</option>
+              </select>
+              <div class="toggle-wrap">
+                <div class="toggle-sw" id="cashless-sw" onclick="toggleCashless()"><div class="toggle-knob"></div></div>
+                <span class="toggle-text" id="cashless-txt">OFF</span>
+              </div>
+            </div>
+
+            <!-- INVOICE META -->
+            <div class="invoice-meta">
+              <div class="im-field">
+                <label class="im-label">Invoice Date</label>
+                <input class="im-input" type="date" value="2024-03-14"/>
+              </div>
+              <div class="im-field">
+                <label class="im-label">Invoice Number</label>
+                <input class="im-input" value="INV-2024-02841" readonly style="background:var(--surface-2);color:var(--text-3);"/>
+              </div>
+              <div class="im-field">
+                <label class="im-label">Department</label>
+                <select class="im-select">
+                  <option>General Medicine</option>
+                  <option>Cardiology</option>
+                  <option>Orthopaedics</option>
+                  <option>Pathology</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- LINE ITEMS -->
+            <div class="line-items">
+              <div class="li-header">
+                <span>Service / Item</span><span>SAC / HSN</span><span>Qty × Rate</span><span>Amount</span><span></span>
+              </div>
+              <div id="line-items-body">
+                <div class="li-row">
+                  <input class="li-input" value="Consultation Fee — General Medicine"/>
+                  <input class="li-input" value="999311" style="font-family:'DM Mono',monospace;"/>
+                  <input class="li-input" value="1 × ₹500" readonly/>
+                  <input class="li-input" value="₹500.00" readonly style="font-weight:600;color:var(--brand);"/>
+                  <button class="li-del" onclick="delLine(this)">×</button>
+                </div>
+                <div class="li-row">
+                  <input class="li-input" value="ECG — 12 Lead"/>
+                  <input class="li-input" value="999311" style="font-family:'DM Mono',monospace;"/>
+                  <input class="li-input" value="1 × ₹350" readonly/>
+                  <input class="li-input" value="₹350.00" readonly style="font-weight:600;color:var(--brand);"/>
+                  <button class="li-del" onclick="delLine(this)">×</button>
+                </div>
+                <div class="li-row">
+                  <input class="li-input" value="HbA1c + FBS + PP2BS"/>
+                  <input class="li-input" value="999311" style="font-family:'DM Mono',monospace;"/>
+                  <input class="li-input" value="1 × ₹680" readonly/>
+                  <input class="li-input" value="₹680.00" readonly style="font-weight:600;color:var(--brand);"/>
+                  <button class="li-del" onclick="delLine(this)">×</button>
+                </div>
+                <div class="li-row">
+                  <input class="li-input" value="Lipid Profile"/>
+                  <input class="li-input" value="999311" style="font-family:'DM Mono',monospace;"/>
+                  <input class="li-input" value="1 × ₹450" readonly/>
+                  <input class="li-input" value="₹450.00" readonly style="font-weight:600;color:var(--brand);"/>
+                  <button class="li-del" onclick="delLine(this)">×</button>
+                </div>
+                <div class="li-row">
+                  <input class="li-input" value="Urine Microalbumin"/>
+                  <input class="li-input" value="999311" style="font-family:'DM Mono',monospace;"/>
+                  <input class="li-input" value="1 × ₹280" readonly/>
+                  <input class="li-input" value="₹280.00" readonly style="font-weight:600;color:var(--brand);"/>
+                  <button class="li-del" onclick="delLine(this)">×</button>
+                </div>
+                <div class="li-row">
+                  <input class="li-input" value="Prescription Dispensing Fee"/>
+                  <input class="li-input" value="999211" style="font-family:'DM Mono',monospace;"/>
+                  <input class="li-input" value="1 × ₹120" readonly/>
+                  <input class="li-input" value="₹120.00" readonly style="font-weight:600;color:var(--brand);"/>
+                  <button class="li-del" onclick="delLine(this)">×</button>
+                </div>
+              </div>
+              <div class="li-add-row">
+                <button class="btn btn-outline btn-sm" onclick="addLine()">＋ Add Service</button>
+                <button class="btn btn-outline btn-sm" onclick="showToast('Service catalog opened','📋')">📋 Service Catalog</button>
+                <span style="font-size:12px;color:var(--text-3);margin-left:auto;">6 items · Subtotal: ₹2,380</span>
+              </div>
+            </div>
+
+            <!-- GST -->
+            <div class="gst-block">
+              <div class="gst-row">
+                <span class="gst-label">Subtotal</span>
+                <span class="gst-val">₹2,380.00</span>
+              </div>
+              <div class="gst-row" style="background:var(--surface-2);">
+                <span class="gst-label">CGST @ 9% (on taxable services only)</span>
+                <span class="gst-val" style="color:var(--brand);">+₹45.00</span>
+              </div>
+              <div class="gst-row" style="background:var(--surface-2);">
+                <span class="gst-label">SGST @ 9% (on taxable services only)</span>
+                <span class="gst-val" style="color:var(--brand);">+₹45.00</span>
+              </div>
+              <div class="gst-row">
+                <span class="gst-label" style="color:var(--success);">Insurance Discount — Star Health (20%)</span>
+                <span class="gst-val" style="color:var(--success);" id="ins-discount">— ₹0.00</span>
+              </div>
+              <div class="gst-row">
+                <span class="gst-label" style="color:var(--warn-dark);">Concession / Waiver</span>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <input style="width:60px;padding:3px 6px;border:1px solid var(--border);border-radius:5px;font-family:'DM Mono',monospace;font-size:12px;outline:none;" value="0%" id="discount-input" oninput="recalcTotal()"/>
+                  <span class="gst-val" style="color:var(--warn-dark);" id="discount-val">— ₹0.00</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- IPD TAB -->
+        <div class="tab-pane" id="pane-ipd">
+          <div style="padding:16px;">
+            <div class="search-row">
+              <div class="search-wrap">
+                <span class="search-icon">🔍</span>
+                <input class="search-input" placeholder="Search admitted patient by UHID or ward..."/>
+              </div>
+              <select style="padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;background:var(--surface-2);outline:none;">
+                <option>Ward A</option><option>Ward B</option><option>ICU</option><option>All Wards</option>
+              </select>
+            </div>
+            <div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+              <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                <thead>
+                  <tr style="background:var(--surface-2);">
+                    <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;border-bottom:1px solid var(--border);">Patient</th>
+                    <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;border-bottom:1px solid var(--border);">Ward/Bed</th>
+                    <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;border-bottom:1px solid var(--border);">Days</th>
+                    <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;border-bottom:1px solid var(--border);">Current Bill</th>
+                    <th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;border-bottom:1px solid var(--border);">Status</th>
+                    <th style="padding:10px 14px;border-bottom:1px solid var(--border);"></th>
+                  </tr>
+                </thead>
+                <tbody id="ipd-table"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- PACKAGE BILLING TAB -->
+        <div class="tab-pane" id="pane-package">
+          <div style="padding:16px;">
+            <div style="font-size:13px;font-weight:600;margin-bottom:12px;">Health &amp; Surgical Packages</div>
+            <div class="package-grid" id="package-grid"></div>
+            <div style="background:var(--success-lt);border:1px solid #6EE7B7;border-radius:var(--radius);padding:12px 14px;margin-top:4px;display:flex;align-items:center;gap:10px;">
+              <span style="font-size:20px;">📦</span>
+              <div style="flex:1;">
+                <div style="font-size:13px;font-weight:600;color:var(--success-dark);">Package selected: Annual Health Checkup — Gold</div>
+                <div style="font-size:12px;color:var(--text-2);">CBC · LFT · RFT · Lipid · Thyroid · HbA1c · CXR · ECG · USG Abdomen · Consultation</div>
+              </div>
+              <div>
+                <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:var(--brand);">₹3,499</div>
+                <div style="font-size:10px;color:var(--success);font-weight:600;text-align:right;">Save ₹1,201</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LEDGER TAB -->
+        <div class="tab-pane" id="pane-ledger">
+          <div style="padding:16px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <div style="font-size:13px;font-weight:600;">Payment Gateway Ledger — 14 Mar 2024</div>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-outline btn-sm" onclick="showToast('Syncing gateways...','🔄')">🔄 Sync</button>
+                <button class="btn btn-primary btn-sm" onclick="showToast('Exporting to Excel...','📊')">📊 Export</button>
+              </div>
+            </div>
+            <!-- GATEWAY CARDS -->
+            <div id="gateway-cards" style="margin-bottom:14px;"></div>
+            <!-- LEDGER TABLE -->
+            <div class="ledger-row header"><span>Txn Time</span><span>Patient / Reference</span><span>Gateway</span><span>Credit</span><span>Balance</span></div>
+            <div id="ledger-rows"></div>
+          </div>
+        </div>
+
+        <!-- OUTSTANDING TAB -->
+        <div class="tab-pane" id="pane-outstanding">
+          <div style="padding:16px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <div style="font-size:13px;font-weight:600;">Outstanding Dues — 12 Accounts</div>
+              <button class="btn btn-warn btn-sm" onclick="showToast('Sending reminder SMS to all...','📱')">📱 Send All Reminders</button>
+            </div>
+            <div id="outstanding-list"></div>
+          </div>
+        </div>
+
+      </div><!-- /bill tabs -->
+    </div><!-- /left -->
+
+    <!-- RIGHT PANEL -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+
+      <!-- TOTALS + PAYMENT -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">💰 Bill Summary &amp; Payment</div>
+          <span class="badge bd-warn" id="bill-status">Draft</span>
+        </div>
+        <div class="card-body">
+          <!-- TOTALS -->
+          <div class="total-block" id="total-block">
+            <div class="total-row"><span class="total-label">Subtotal</span><span class="total-val" id="t-subtotal">₹2,380.00</span></div>
+            <div class="total-row"><span class="total-label">CGST (9%)</span><span class="total-val">₹45.00</span></div>
+            <div class="total-row"><span class="total-label">SGST (9%)</span><span class="total-val">₹45.00</span></div>
+            <div class="total-row" id="ins-row" style="display:none;"><span class="total-label" style="color:rgba(255,255,255,.9);">Insurance Discount</span><span class="total-val" style="color:#6EF0DC;" id="t-ins">— ₹476.00</span></div>
+            <div class="total-row" id="discount-row"><span class="total-label">Discount</span><span class="total-val" id="t-discount">— ₹0.00</span></div>
+            <div class="grand-row">
+              <span class="grand-label">Total Payable</span>
+              <span class="grand-val" id="t-grand">₹2,470</span>
+            </div>
+          </div>
+
+          <!-- PAYMENT METHOD -->
+          <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px;">Select Payment Method</div>
+          <div class="pay-grid" id="pay-methods">
+            <div class="pay-btn active" onclick="selectPay(this,'cash')">
+              <span class="pay-icon">💵</span><span class="pay-label">Cash</span>
+            </div>
+            <div class="pay-btn" onclick="selectPay(this,'upi')">
+              <span class="pay-icon">📱</span><span class="pay-label">UPI / QR</span>
+            </div>
+            <div class="pay-btn" onclick="selectPay(this,'card')">
+              <span class="pay-icon">💳</span><span class="pay-label">Card</span>
+            </div>
+            <div class="pay-btn" onclick="selectPay(this,'razorpay')">
+              <span class="pay-icon">⚡</span><span class="pay-label">Razorpay</span>
+            </div>
+            <div class="pay-btn" onclick="selectPay(this,'insurance')">
+              <span class="pay-icon">🏥</span><span class="pay-label">Insurance</span>
+            </div>
+            <div class="pay-btn" onclick="selectPay(this,'pmjay')">
+              <span class="pay-icon">🇮🇳</span><span class="pay-label">PMJAY</span>
+            </div>
+          </div>
+
+          <!-- QR CODE -->
+          <div class="qr-block" id="qr-block">
+            <div class="qr-amount" id="qr-amount">₹2,470</div>
+            <canvas class="qr-canvas" id="qr-canvas" width="120" height="120"></canvas>
+            <div class="qr-upi">diagnotica@hdfcbank</div>
+            <div style="font-size:11px;color:var(--text-3);margin-top:4px;">Scan via PhonePe · GPay · Paytm · BHIM</div>
+          </div>
+
+          <!-- AMOUNT INPUT -->
+          <div style="margin-bottom:12px;">
+            <div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:5px;">Amount Tendered</div>
+            <div style="display:flex;gap:8px;">
+              <input style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:var(--brand);background:var(--surface-2);outline:none;" value="₹2,470" id="tendered-input"/>
+              <div style="padding:9px 12px;border-radius:var(--radius);background:var(--success-lt);color:var(--success-dark);font-family:'DM Mono',monospace;font-size:13px;font-weight:600;min-width:80px;text-align:center;" id="change-display">Change: ₹0</div>
+            </div>
+          </div>
+
+          <!-- ACTIONS -->
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-outline" style="flex:1;justify-content:center;font-size:12px;" onclick="showToast('Invoice preview opened','👁')">👁 Preview</button>
+              <button class="btn btn-outline" style="flex:1;justify-content:center;font-size:12px;" onclick="showToast('Printing invoice...','🖨')">🖨 Print</button>
+            </div>
+            <button class="btn btn-success" style="width:100%;justify-content:center;" onclick="collectPayment()">✅ Collect Payment &amp; Finalize</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RECEIPT PREVIEW -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🧾 Receipt Preview</div>
+          <div style="display:flex;gap:5px;">
+            <button class="btn btn-outline btn-sm" onclick="showToast('Sending receipt via WhatsApp','📱')">📱 WhatsApp</button>
+            <button class="btn btn-outline btn-sm" onclick="showToast('Receipt emailed','📧')">📧 Email</button>
+          </div>
+        </div>
+        <div class="card-body" style="padding:12px;">
+          <div class="receipt-wrap" id="receipt-wrap">
+            <div class="watermark" id="receipt-watermark">DRAFT</div>
+            <div class="receipt-header">
+              <div class="receipt-logo">🏥 DIAGNOTICA HMS</div>
+              <div class="receipt-addr">239, TTK Road, Alwarpet, Chennai — 600018<br/>GSTIN: 33AABCD1234E1Z5 · Ph: +91 44-2435-6789</div>
+            </div>
+            <div class="receipt-meta">
+              <div class="rm-label">Invoice No.</div><div class="rm-val">INV-2024-02841</div>
+              <div class="rm-label">Date</div><div class="rm-val">14 Mar 2024</div>
+              <div class="rm-label">Patient</div><div class="rm-val">Ravi Kumar</div>
+              <div class="rm-label">UHID</div><div class="rm-val">DX-2024-004821</div>
+              <div class="rm-label">Doctor</div><div class="rm-val">Dr. Anand K.</div>
+              <div class="rm-label">Token</div><div class="rm-val">OPD-127</div>
+            </div>
+            <table class="receipt-table">
+              <thead><tr><th>Service</th><th>Amt</th></tr></thead>
+              <tbody>
+                <tr><td>Consultation Fee</td><td>₹500</td></tr>
+                <tr><td>ECG — 12 Lead</td><td>₹350</td></tr>
+                <tr><td>HbA1c + FBS</td><td>₹680</td></tr>
+                <tr><td>Lipid Profile</td><td>₹450</td></tr>
+                <tr><td>Urine Microalbumin</td><td>₹280</td></tr>
+                <tr><td>Prescription Disp.</td><td>₹120</td></tr>
+              </tbody>
+            </table>
+            <div class="receipt-total-block">
+              <div class="rt-row"><span>Subtotal</span><span>₹2,380</span></div>
+              <div class="rt-row"><span>GST (CGST+SGST)</span><span>₹90</span></div>
+              <div class="rt-row" id="receipt-ins-row" style="display:none;color:var(--success);"><span>Ins. Discount</span><span id="receipt-ins-val">— ₹476</span></div>
+              <div class="rt-row rt-grand"><span>TOTAL</span><span id="receipt-grand">₹2,470</span></div>
+            </div>
+            <div class="receipt-footer">Thank you for choosing Diagnotica HMS<br/>Helpline: 044-2435-6789 · www.diagonatica.com</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /right -->
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span id="toast-icon">✅</span><span id="toast-msg">Done</span></div>
+
+<script>
+// ── MINI REVENUE CHART ──
+const revData=[186000,224000,198000,241000,267000,255000,284650];
+const colors=['#3B82F6','#3B82F6','#3B82F6','#3B82F6','#3B82F6','#3B82F6','#6EF0DC'];
+const maxRev=Math.max(...revData);
+const mc=document.getElementById('revenue-chart');
+revData.forEach((v,i)=>{
+  const h=Math.round((v/maxRev)*38)+2;
+  mc.innerHTML+=`<div class="mc-bar" style="height:${h}px;width:14px;background:${colors[i]};opacity:${i<6?0.5:1};" title="₹${(v/1000).toFixed(0)}K"></div>`;
+});
+
+// ── BILLING TABS ──
+function switchBillTab(id,btn){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.bill-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pane-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── LINE ITEMS ──
+let lineCount=6;
+function addLine(){
+  lineCount++;
+  const d=document.createElement('div');
+  d.className='li-row';
+  d.innerHTML=`<input class="li-input" placeholder="Service description..."/>
+    <input class="li-input" value="999311" style="font-family:'DM Mono',monospace;"/>
+    <input class="li-input" placeholder="1 × ₹0"/>
+    <input class="li-input" value="₹0.00" readonly style="font-weight:600;color:var(--brand);"/>
+    <button class="li-del" onclick="delLine(this)">×</button>`;
+  document.getElementById('line-items-body').appendChild(d);
+  showToast('New line item added','＋');
+}
+function delLine(btn){btn.closest('.li-row').remove();showToast('Item removed','🗑');}
+
+// ── CASHLESS TOGGLE ──
+let cashlessOn=false;
+function toggleCashless(){
+  cashlessOn=!cashlessOn;
+  const sw=document.getElementById('cashless-sw');
+  const txt=document.getElementById('cashless-txt');
+  const ins=document.getElementById('insurance-select');
+  sw.classList.toggle('on',cashlessOn);
+  txt.textContent=cashlessOn?'ON':'OFF';
+  if(cashlessOn){
+    document.getElementById('ins-row').style.display='flex';
+    document.getElementById('receipt-ins-row').style.display='flex';
+    document.getElementById('ins-discount').textContent='— ₹476.00';
+    document.getElementById('t-grand').textContent='₹1,994';
+    document.getElementById('receipt-grand').textContent='₹1,994';
+    document.getElementById('qr-amount').textContent='₹1,994';
+    document.getElementById('tendered-input').value='₹1,994';
+    showToast('Cashless billing enabled — Insurance discount applied','🏥');
+  } else {
+    document.getElementById('ins-row').style.display='none';
+    document.getElementById('receipt-ins-row').style.display='none';
+    document.getElementById('ins-discount').textContent='— ₹0.00';
+    document.getElementById('t-grand').textContent='₹2,470';
+    document.getElementById('receipt-grand').textContent='₹2,470';
+    document.getElementById('qr-amount').textContent='₹2,470';
+    document.getElementById('tendered-input').value='₹2,470';
+    showToast('Self-pay mode','💵');
+  }
+}
+
+// ── DISCOUNT RECALC ──
+function recalcTotal(){
+  const pct=parseFloat(document.getElementById('discount-input').value)||0;
+  const disc=Math.round(2380*(pct/100));
+  document.getElementById('discount-val').textContent=`— ₹${disc.toFixed(2)}`;
+  document.getElementById('t-discount').textContent=`— ₹${disc.toFixed(2)}`;
+}
+
+// ── PAYMENT METHOD ──
+function selectPay(el,method){
+  document.querySelectorAll('.pay-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  const qr=document.getElementById('qr-block');
+  if(method==='upi'){
+    qr.classList.add('show');
+    drawQR();
+    showToast('UPI QR code generated','📱');
+  } else {
+    qr.classList.remove('show');
+    if(method==='razorpay') showToast('Razorpay payment link generated','⚡');
+    else if(method==='insurance') showToast('Insurance claim form opened','🏥');
+    else if(method==='pmjay') showToast('PMJAY pre-auth check initiated','🇮🇳');
+    else showToast('Payment method: '+method,'💳');
+  }
+}
+
+// ── QR CODE (canvas simulation) ──
+function drawQR(){
+  const c=document.getElementById('qr-canvas');
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,120,120);
+  ctx.fillStyle='#000';
+  // Finder patterns
+  [[0,0],[84,0],[0,84]].forEach(([x,y])=>{
+    ctx.fillRect(x+2,y+2,28,28); ctx.fillStyle='#fff'; ctx.fillRect(x+5,y+5,22,22);
+    ctx.fillStyle='#000'; ctx.fillRect(x+8,y+8,16,16);
+    ctx.fillStyle='#fff'; ctx.fillRect(x+11,y+11,10,10);
+    ctx.fillStyle='#000'; ctx.fillRect(x+13,y+13,6,6);
+  });
+  // Data modules
+  for(let row=0;row<22;row++){
+    for(let col=0;col<22;col++){
+      if(Math.random()>0.5 && !((row<10&&col<10)||(row<10&&col>11)||(row>11&&col<10))){
+        ctx.fillRect(col*5+2,row*5+2,4,4);
+      }
+    }
+  }
+  ctx.fillStyle='#1A5EAB';
+  ctx.fillRect(44,44,32,32);
+  ctx.fillStyle='#fff';
+  ctx.font='bold 11px DM Sans';
+  ctx.textAlign='center';
+  ctx.fillText('Dx',60,62);
+}
+
+// ── COLLECT PAYMENT ──
+function collectPayment(){
+  document.getElementById('receipt-watermark').textContent='PAID';
+  document.getElementById('receipt-watermark').style.color='rgba(16,185,129,.12)';
+  document.getElementById('bill-status').textContent='✓ PAID';
+  document.getElementById('bill-status').className='badge bd-green';
+  showToast('Payment collected ✓ — Receipt generated & SMS sent to patient','✅');
+}
+
+// ── IPD TABLE ──
+const ipdData=[
+  {name:'Karthik Rajan',ward:'Ward B · Bed 4',days:3,bill:'₹28,450',status:'Active',sc:'bd-blue'},
+  {name:'Mohan Kumar',ward:'ICU · Bay 1',days:1,bill:'₹42,800',status:'Critical',sc:'bd-red'},
+  {name:'Rajan Pillai',ward:'Ward A · Bed 9',days:5,bill:'₹18,200',status:'Active',sc:'bd-blue'},
+  {name:'Anjali Menon',ward:'Ward A · Bed 3',days:2,bill:'₹9,600',status:'Pre-discharge',sc:'bd-green'},
+  {name:'Saraswathi',ward:'Ward B · Bed 11',days:4,bill:'₹22,100',status:'Active',sc:'bd-blue'},
+  {name:'Deepak Kumar',ward:'Surgical · Bed 2',days:7,bill:'₹64,500',status:'Insurance',sc:'bd-purple'},
+];
+const ipdTb=document.getElementById('ipd-table');
+ipdData.forEach(p=>{
+  ipdTb.innerHTML+=`<tr style="border-bottom:1px solid var(--border);cursor:pointer;" onmouseover="this.style.background='var(--brand-light)'" onmouseout="this.style.background=''" onclick="showToast('Opening ${p.name} IPD bill...','🛏')">
+    <td style="padding:10px 14px;font-weight:500;">${p.name}</td>
+    <td style="padding:10px 14px;font-size:12px;color:var(--text-2);">${p.ward}</td>
+    <td style="padding:10px 14px;font-family:'DM Mono',monospace;font-size:13px;font-weight:600;">${p.days}d</td>
+    <td style="padding:10px 14px;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--brand);">${p.bill}</td>
+    <td style="padding:10px 14px;"><span class="badge ${p.sc}">${p.status}</span></td>
+    <td style="padding:10px 14px;"><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();showToast('Bill details opened','🧾')">View Bill</button></td>
+  </tr>`;
+});
+
+// ── PACKAGES ──
+const packages=[
+  {icon:'🌟',name:'Basic Health Checkup',price:'₹999',items:'6 tests',selected:false},
+  {icon:'🥇',name:'Annual Health — Gold',price:'₹3,499',items:'10 tests + consult',selected:true},
+  {icon:'💎',name:'Executive Health — Platinum',price:'₹6,999',items:'22 tests + imaging',selected:false},
+  {icon:'❤',name:'Cardiac Risk Package',price:'₹2,499',items:'ECHO + Trop + ECG',selected:false},
+  {icon:'🩺',name:'Diabetes Management',price:'₹1,499',items:'HbA1c + FBS + RFT',selected:false},
+  {icon:'🦴',name:'Ortho Bone Profile',price:'₹1,899',items:'Vit D + Calcium + XR',selected:false},
+];
+const pg=document.getElementById('package-grid');
+packages.forEach(p=>{
+  pg.innerHTML+=`<div class="pkg-card${p.selected?' selected':''}" onclick="selectPackage(this,'${p.name}','${p.price}')">
+    <div class="pkg-icon">${p.icon}</div>
+    <div class="pkg-name">${p.name}</div>
+    <div class="pkg-price">${p.price}</div>
+    <div class="pkg-items">${p.items}</div>
+  </div>`;
+});
+function selectPackage(el,name,price){
+  document.querySelectorAll('.pkg-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  showToast(`Package selected: ${name} — ${price}`,'📦');
+}
+
+// ── GATEWAY CARDS ──
+const gws=[
+  {logo:'razorpay',name:'Razorpay',meta:'Linked: HDFC Diagonatica Business A/C',rev:'₹98,420',txn:'48 txns',status:'active'},
+  {logo:'stripe',name:'Stripe',meta:'INR gateway · for international cards',rev:'₹12,880',txn:'6 txns',status:'active'},
+  {logo:'paytm',name:'PayTM for Business',meta:'UPI + Wallet · QR terminal linked',rev:'₹42,600',txn:'84 txns',status:'active'},
+];
+const gc=document.getElementById('gateway-cards');
+gws.forEach(g=>{
+  gc.innerHTML+=`<div class="gw-card" onclick="showToast('${g.name} gateway details','💳')">
+    <div class="gw-logo ${g.logo}">${g.logo==='razorpay'?'Rz':g.logo==='stripe'?'St':'Pa'}</div>
+    <div style="flex:1;">
+      <div class="gw-name">${g.name}</div>
+      <div class="gw-meta">${g.meta}</div>
+    </div>
+    <div class="gw-stats">
+      <div class="gw-rev">${g.rev}</div>
+      <div class="gw-txn">${g.txn} today</div>
+    </div>
+    <div class="gw-status-dot"></div>
+  </div>`;
+});
+
+// ── LEDGER ──
+const ledgerData=[
+  {time:'09:42',patient:'Ravi Kumar — OPD-127',gw:'razorpay',gwLabel:'Rz',credit:'₹2,470',bal:'₹1,84,420'},
+  {time:'09:38',patient:'Karthik Rajan — IPD advance',gw:'cash',gwLabel:'💵',credit:'₹5,000',bal:'₹1,81,950'},
+  {time:'09:31',patient:'Priya Sundaram — OPD-128',gw:'upi',gwLabel:'UPI',credit:'₹850',bal:'₹1,76,950'},
+  {time:'09:25',patient:'Arjun Patel — OPD-126',gw:'stripe',gwLabel:'St',credit:'₹3,200',bal:'₹1,76,100'},
+  {time:'09:18',patient:'Meena Krishnan — OPD-125',gw:'razorpay',gwLabel:'Rz',credit:'₹1,400',bal:'₹1,72,900'},
+  {time:'09:10',patient:'Mohan Kumar — ER deposit',gw:'ins',gwLabel:'Ins',credit:'₹15,000',bal:'₹1,71,500'},
+  {time:'09:04',patient:'Rajan Pillai — IPD — Day 5',gw:'cash',gwLabel:'💵',credit:'₹8,200',bal:'₹1,56,500'},
+  {time:'08:55',patient:'Anitha Selvam — OPD-124',gw:'upi',gwLabel:'UPI',credit:'₹620',bal:'₹1,48,300'},
+];
+const gwClsMap={razorpay:'gw-razorpay',stripe:'gw-stripe',cash:'gw-cash',upi:'gw-upi',ins:'gw-ins'};
+const lr=document.getElementById('ledger-rows');
+ledgerData.forEach(l=>{
+  lr.innerHTML+=`<div class="ledger-row" onclick="showToast('Transaction details: ${l.patient}','💳')">
+    <span class="ldr-date">${l.time}</span>
+    <div class="ldr-gateway"><span class="gw-badge ${gwClsMap[l.gw]}">${l.gwLabel}</span><span style="font-size:12px;">${l.patient}</span></div>
+    <span class="badge ${l.gw==='razorpay'?'bd-blue':l.gw==='stripe'?'bd-purple':l.gw==='ins'?'bd-purple':'bd-green'}">${l.gw.charAt(0).toUpperCase()+l.gw.slice(1)}</span>
+    <span class="ldr-credit">${l.credit}</span>
+    <span class="ldr-balance">${l.bal}</span>
+  </div>`;
+});
+
+// ── OUTSTANDING ──
+const ostData=[
+  {name:'Sundar Krishnan',meta:'IPD-4810 · Discharged 10 Mar',amount:'₹12,400',days:'4 days'},
+  {name:'Bala Subramaniam',meta:'OPD-4795 · Dr. Meera',amount:'₹3,200',days:'7 days'},
+  {name:'Radha Venkat',meta:'IPD-4802 · Ward B',amount:'₹8,750',days:'2 days'},
+  {name:'Gowri Shankar',meta:'OPD-4788 · Dr. Ramesh',amount:'₹1,850',days:'12 days'},
+];
+const ol=document.getElementById('outstanding-list');
+ostData.forEach(o=>{
+  ol.innerHTML+=`<div class="outstanding-row" onclick="showToast('Opening ${o.name} account...','⏳')">
+    <div class="ost-icon">⏳</div>
+    <div><div class="ost-name">${o.name}</div><div class="ost-meta">${o.meta}</div></div>
+    <div style="text-align:right;">
+      <div class="ost-amount">${o.amount}</div>
+      <div class="ost-days">Overdue: ${o.days}</div>
+      <button class="btn btn-sm btn-warn" style="margin-top:4px;" onclick="event.stopPropagation();showToast('Reminder sent to ${o.name}','📱')">Send Reminder</button>
+    </div>
+  </div>`;
+});
+
+// ── TOAST ──
+let tt;
+function showToast(msg,icon='✅'){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').innerHTML=msg;
+  document.getElementById('toast-icon').textContent=icon;
+  t.classList.add('show');clearTimeout(tt);
+  tt=setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+function searchPatient(v){if(v.length>2) showToast(`Searching: "${v}"...`,'🔍');}
+</script>
+</body>
+</html>

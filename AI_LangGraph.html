@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Diagnotica HMS — AI Agents / LangGraph Orchestration</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --brand:#1A5EAB;--brand-dark:#0F3F78;--brand-light:#E8F1FB;
+  --accent:#00C0A3;--accent-lt:#E0F9F5;--accent-dark:#007A68;
+  --warn:#F59E0B;--warn-lt:#FEF3C7;--warn-dark:#92400E;
+  --danger:#EF4444;--danger-lt:#FEE2E2;
+  --success:#10B981;--success-lt:#D1FAE5;--success-dark:#065F46;
+  --purple:#7C3AED;--purple-lt:#EDE9FE;
+  --indigo:#4F46E5;--indigo-lt:#EEF2FF;
+  --text-1:#0F1C2E;--text-2:#3A4D63;--text-3:#7A8FA6;
+  --border:#DDE6F0;--bg:#F0F5FB;--surface:#FFFFFF;--surface-2:#F7FAFD;
+  --radius:10px;--radius-lg:16px;
+  --shadow:0 1px 4px rgba(26,94,171,.08),0 4px 16px rgba(26,94,171,.06);
+  --shadow-lg:0 8px 32px rgba(26,94,171,.14);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-1);min-height:100vh;font-size:14px;}
+
+/* TOPBAR */
+.topbar{background:var(--brand-dark);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:52px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+.logo-wrap{display:flex;align-items:center;gap:10px;}
+.logo-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#7C3AED,#00C0A3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;}
+.logo-text{color:#fff;font-size:15px;font-weight:700;}
+.logo-sub{color:#8BAFD4;font-size:11px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.t-chip{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#D4E8FF;border-radius:6px;padding:5px 12px;font-size:12px;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;}
+.t-chip:hover{background:rgba(255,255,255,.18);}
+.t-chip.live{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3);color:#6EF0DC;}
+.t-chip.alert{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.35);color:#FCA5A5;animation:chipPulse 2s infinite;}
+@keyframes chipPulse{0%,100%{background:rgba(239,68,68,.18);}50%{background:rgba(239,68,68,.28);}}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#10B981;animation:liveDot 1.4s infinite;}
+@keyframes liveDot{0%,100%{opacity:1;}50%{opacity:.35;}}
+.user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border-radius:20px;padding:4px 12px 4px 4px;}
+.user-av{width:26px;height:26px;border-radius:50%;background:var(--purple);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+
+/* SHELL */
+.shell{display:flex;height:calc(100vh - 52px);overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:196px;background:var(--surface);border-right:1px solid var(--border);padding:14px 0;flex-shrink:0;overflow-y:auto;}
+.sb-label{font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;padding:8px 14px 4px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:var(--radius);margin:0 8px 2px;cursor:pointer;color:var(--text-2);font-size:13px;transition:all .15s;position:relative;}
+.nav-item:hover{background:var(--brand-light);color:var(--brand);}
+.nav-item.active{background:var(--purple-lt);color:var(--purple);font-weight:600;}
+.nav-item.active::before{content:'';position:absolute;left:-4px;top:6px;bottom:6px;width:3px;background:var(--purple);border-radius:0 3px 3px 0;}
+.nb{margin-left:auto;font-size:10px;font-weight:700;border-radius:10px;padding:1px 6px;color:#fff;}
+.nb.p{background:var(--purple);}.nb.g{background:var(--success);}.nb.r{background:var(--danger);}.nb.w{background:var(--warn);color:var(--warn-dark);}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+
+/* HERO BANNER */
+.hero-banner{background:linear-gradient(135deg,#0F3F78 0%,#1A5EAB 40%,#4F46E5 75%,#7C3AED 100%);padding:18px 24px;display:flex;align-items:center;gap:20px;position:relative;overflow:hidden;flex-shrink:0;}
+.hero-banner::before{content:'';position:absolute;right:-40px;top:-40px;width:200px;height:200px;border-radius:50%;background:rgba(124,58,237,.15);}
+.hero-banner::after{content:'';position:absolute;right:80px;bottom:-60px;width:150px;height:150px;border-radius:50%;background:rgba(0,192,163,.1);}
+.hb-icon{width:50px;height:50px;border-radius:14px;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.hb-info{flex:1;}
+.hb-title{font-size:18px;font-weight:800;color:#fff;margin-bottom:3px;}
+.hb-sub{font-size:12px;color:rgba(255,255,255,.55);}
+.hb-chips{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+.hb-chip{border-radius:20px;padding:3px 12px;font-size:11px;font-weight:600;border:1px solid;}
+.hb-chip.ok{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3);color:#6EF0DC;}
+.hb-chip.warn{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.3);color:#FCD34D;}
+.hb-chip.info{background:rgba(124,58,237,.2);border-color:rgba(124,58,237,.3);color:#C4B5FD;}
+.orchestration-score{text-align:center;flex-shrink:0;background:rgba(255,255,255,.07);border-radius:var(--radius-lg);padding:12px 20px;border:1px solid rgba(255,255,255,.1);}
+.os-val{font-size:30px;font-weight:800;color:#C4B5FD;line-height:1;}
+.os-label{font-size:10px;color:rgba(255,255,255,.5);margin-top:3px;text-transform:uppercase;letter-spacing:.05em;}
+
+/* CONTENT */
+.content{padding:16px 20px;display:flex;flex-direction:column;gap:16px;flex:1;}
+
+/* CARD */
+.card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;}
+.card-header{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);}
+.card-title{font-size:14px;font-weight:700;color:var(--text-1);display:flex;align-items:center;gap:8px;}
+
+/* PIPELINE HEALTH GRID */
+.pipeline-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;}
+.ph-card{border-radius:var(--radius-lg);border:1.5px solid var(--border);padding:14px;cursor:pointer;transition:all .18s;position:relative;overflow:hidden;}
+.ph-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);}
+.ph-card.healthy{border-color:#6EE7B7;background:linear-gradient(135deg,var(--success-lt),#fff);}
+.ph-card.degraded{border-color:#FCD34D;background:linear-gradient(135deg,var(--warn-lt),#fff);}
+.ph-card.error{border-color:#FCA5A5;background:linear-gradient(135deg,var(--danger-lt),#fff);}
+.ph-card.idle{border-color:#BFDBFE;background:linear-gradient(135deg,var(--brand-light),#fff);}
+.ph-card.training{border-color:#C4B5FD;background:linear-gradient(135deg,var(--purple-lt),#fff);}
+.phc-icon{font-size:24px;margin-bottom:8px;}
+.phc-name{font-size:12px;font-weight:700;color:var(--text-1);margin-bottom:2px;}
+.phc-status{font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;display:inline-block;margin-bottom:8px;}
+.phs-healthy{background:var(--success-lt);color:var(--success-dark);}
+.phs-degraded{background:var(--warn-lt);color:var(--warn-dark);}
+.phs-error{background:var(--danger-lt);color:var(--danger);}
+.phs-idle{background:var(--brand-light);color:var(--brand);}
+.phs-training{background:var(--purple-lt);color:var(--purple);}
+.phc-metric{font-family:'DM Mono',monospace;font-size:20px;font-weight:800;line-height:1;margin-bottom:2px;}
+.phc-label{font-size:10px;color:var(--text-3);}
+.phc-bar{height:4px;background:rgba(0,0,0,.08);border-radius:3px;overflow:hidden;margin-top:8px;}
+.phc-bar-fill{height:100%;border-radius:3px;transition:width .6s;}
+
+/* TWO COL LAYOUT */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.three-col{display:grid;grid-template-columns:2fr 1fr;gap:16px;}
+
+/* RAG SYNC STATUS */
+.rag-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius);border:1.5px solid var(--border);margin-bottom:7px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;}
+.rag-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;}
+.rag-item.synced::before{background:var(--success);}
+.rag-item.syncing::before{background:var(--brand);animation:ragPulse 1.2s infinite;}
+.rag-item.stale::before{background:var(--warn);}
+.rag-item.error::before{background:var(--danger);}
+@keyframes ragPulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.rag-item:hover{border-color:var(--brand);}
+.ri-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.ri-name{font-size:13px;font-weight:600;flex:1;}
+.ri-meta{font-size:11px;color:var(--text-3);}
+.ri-last{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-3);}
+.ri-count{font-family:'DM Mono',monospace;font-size:12px;font-weight:700;}
+.ri-status{font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;}
+.ris-synced{background:var(--success-lt);color:var(--success-dark);}
+.ris-syncing{background:var(--brand-light);color:var(--brand);}
+.ris-stale{background:var(--warn-lt);color:var(--warn-dark);}
+.ris-error{background:var(--danger-lt);color:var(--danger);}
+
+/* WORKFLOW LIST */
+.workflow-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--radius);border:1.5px solid var(--border);margin-bottom:7px;cursor:pointer;transition:all .15s;position:relative;}
+.workflow-item:hover{border-color:var(--purple);background:var(--purple-lt);}
+.workflow-item.running{border-color:#C4B5FD;background:var(--purple-lt);}
+.workflow-item.queued{border-color:#BFDBFE;background:var(--brand-light);}
+.workflow-item.completed{border-color:#6EE7B7;background:var(--success-lt);opacity:.8;}
+.workflow-item.failed{border-color:#FCA5A5;background:var(--danger-lt);}
+.wi-step{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.wis-running{background:var(--purple);animation:wfPulse 1.2s infinite;}
+.wis-queued{background:var(--brand);}
+.wis-completed{background:var(--success);}
+.wis-failed{background:var(--danger);}
+@keyframes wfPulse{0%,100%{box-shadow:0 0 0 0 rgba(124,58,237,.5);}50%{box-shadow:0 0 0 5px rgba(124,58,237,0);}}
+.wi-name{font-size:13px;font-weight:600;flex:1;}
+.wi-meta{font-size:11px;color:var(--text-3);}
+.wi-agents{display:flex;gap:4px;flex-wrap:wrap;}
+.wi-agent-chip{font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;background:var(--purple-lt);color:var(--purple);}
+.wi-progress{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-2);flex-shrink:0;}
+.wi-time{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-3);flex-shrink:0;}
+.wf-mini-bar{height:3px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:5px;}
+.wf-mini-fill{height:100%;border-radius:3px;background:var(--purple);transition:width .5s;}
+
+/* TOKEN USAGE */
+.token-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.token-row:last-child{border-bottom:none;}
+.prog-bar{height:5px;background:var(--border);border-radius:4px;overflow:hidden;margin-top:4px;}
+.prog-fill{height:100%;border-radius:4px;}
+
+/* ALERT TOASTS */
+.alert-stack{position:fixed;top:62px;right:20px;z-index:500;display:flex;flex-direction:column;gap:8px;width:340px;}
+.alert-toast{
+  background:var(--surface);border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-lg);border:1.5px solid;
+  padding:0;overflow:hidden;
+  transform:translateX(360px);opacity:0;
+  transition:all .35s cubic-bezier(.34,1.4,.64,1);
+  cursor:pointer;
+}
+.alert-toast.show{transform:translateX(0);opacity:1;}
+.alert-toast.critical{border-color:#FCA5A5;}
+.alert-toast.warning{border-color:#FCD34D;}
+.alert-toast.info{border-color:#BFDBFE;}
+.at-stripe{height:3px;}
+.at-stripe.critical{background:var(--danger);}
+.at-stripe.warning{background:var(--warn);}
+.at-stripe.info{background:var(--brand);}
+.at-body{padding:12px 14px;display:flex;align-items:flex-start;gap:10px;}
+.at-icon{font-size:20px;flex-shrink:0;}
+.at-title{font-size:12px;font-weight:700;}
+.at-desc{font-size:11px;color:var(--text-2);margin-top:3px;line-height:1.5;}
+.at-time{font-size:10px;color:var(--text-3);font-family:'DM Mono',monospace;margin-top:4px;}
+.at-close{background:none;border:none;cursor:pointer;color:var(--text-3);font-size:16px;padding:4px;line-height:1;margin-left:auto;flex-shrink:0;}
+.at-close:hover{color:var(--danger);}
+.at-action{padding:8px 14px;border-top:1px solid var(--border);display:flex;gap:6px;background:var(--surface-2);}
+.at-btn{padding:5px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .13s;}
+.at-btn:hover{background:var(--brand);color:#fff;border-color:var(--brand);}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600;}
+.bd-purple{background:var(--purple-lt);color:var(--purple);}
+.bd-blue{background:var(--brand-light);color:var(--brand);}
+.bd-green{background:var(--success-lt);color:var(--success);}
+.bd-warn{background:var(--warn-lt);color:var(--warn-dark);}
+.bd-red{background:var(--danger-lt);color:var(--danger);}
+
+/* BTN */
+.btn{padding:7px 14px;border-radius:var(--radius);border:none;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+.btn-purple{background:var(--purple);color:#fff;box-shadow:0 2px 8px rgba(124,58,237,.25);}
+.btn-purple:hover{background:#6D28D9;}
+.btn-outline{background:var(--surface);color:var(--brand);border:1px solid var(--brand);}
+.btn-outline:hover{background:var(--brand-light);}
+.btn-sm{padding:5px 11px;font-size:12px;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+/* TOAST (bottom) */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--brand-dark);color:#fff;padding:11px 20px;border-radius:var(--radius);font-size:13px;font-weight:500;z-index:999;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px;opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo-wrap">
+    <div class="logo-mark">⚡</div>
+    <div><div class="logo-text">Diagnotica HMS</div><div class="logo-sub">AI Agents — LangGraph Orchestration Layer</div></div>
+  </div>
+  <div class="topbar-right">
+    <div class="t-chip live"><div class="live-dot"></div>Orchestrator Live</div>
+    <div class="t-chip alert" id="alert-chip" onclick="showAllAlerts()">🚨 3 Anomaly Alerts</div>
+    <div class="t-chip" onclick="showToast('Triggering RAG full resync...','🔄')">🔄 Resync RAG</div>
+    <div class="t-chip" onclick="showToast('Exporting pipeline metrics...','📊')">📊 Export Metrics</div>
+    <div class="user-chip">
+      <div class="user-av">AI</div>
+      <span style="color:#D4E8FF;font-size:12px;">AI Ops — Diagnotica</span>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-label">AI Orchestration</div>
+  <div class="nav-item active">⚡ Pipeline Dashboard</div>
+  <div class="nav-item">🤖 Agent Registry <span class="nb p">12</span></div>
+  <div class="nav-item">🔄 Workflow Monitor <span class="nb p">6</span></div>
+  <div class="nav-item">📚 RAG Knowledge Base</div>
+  <div class="nav-item">🚨 Anomaly Alerts <span class="nb r">3</span></div>
+  <div class="nav-item">📊 Token Analytics</div>
+  <div class="sb-label">Agents</div>
+  <div class="nav-item">🩺 Clinical Coder <span class="nb g">Live</span></div>
+  <div class="nav-item">💊 Drug Interaction AI</div>
+  <div class="nav-item">📋 Discharge Summariser</div>
+  <div class="nav-item">💰 Upcoding Detector <span class="nb r">Alert</span></div>
+  <div class="nav-item">🔬 Lab Trend Analyst</div>
+  <div class="nav-item">💬 Patient NLP Bot</div>
+  <div class="sb-label">Configuration</div>
+  <div class="nav-item">⚙ Model Config</div>
+  <div class="nav-item">🔑 API Keys & Rate Limits</div>
+  <div class="nav-item">📋 Audit Trail</div>
+</nav>
+
+<div class="main">
+
+<!-- HERO BANNER -->
+<div class="hero-banner">
+  <div class="hb-icon">🧠</div>
+  <div class="hb-info">
+    <div class="hb-title">LangGraph Orchestration — AI Clinical Intelligence Platform</div>
+    <div class="hb-sub">12 agents active · GPT-4o + Claude Sonnet · Vector DB: Pinecone · Embeddings: text-embedding-3-large</div>
+    <div class="hb-chips">
+      <span class="hb-chip ok">✓ 10 Agents Healthy</span>
+      <span class="hb-chip warn">⚠ 1 Degraded</span>
+      <span class="hb-chip warn">⚠ 1 Error State</span>
+      <span class="hb-chip info">RAG: 98.4% fresh</span>
+      <span class="hb-chip info">Avg latency: 284ms</span>
+      <span class="hb-chip ok">✓ 3.2M tokens today</span>
+    </div>
+  </div>
+  <div class="orchestration-score">
+    <div class="os-val">94.2%</div>
+    <div class="os-label">Pipeline Health</div>
+    <div style="font-size:11px;color:#C4B5FD;font-weight:600;margin-top:2px;">Excellent</div>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- PIPELINE HEALTH CARDS -->
+  <div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px;">
+      ⚡ Pipeline Health — All Agents
+      <span class="badge bd-green">10 Healthy</span>
+      <span class="badge bd-warn">1 Degraded</span>
+      <span class="badge bd-red">1 Error</span>
+    </div>
+    <div class="pipeline-grid" id="pipeline-grid"></div>
+  </div>
+
+  <!-- LATENCY CHART + WORKFLOW -->
+  <div class="two-col">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📈 Agent Latency — Last 24h</div>
+        <div style="display:flex;gap:6px;">
+          <div style="display:flex;align-items:center;gap:4px;font-size:11px;"><div style="width:10px;height:3px;border-radius:2px;background:#7C3AED;"></div>Clinical Coder</div>
+          <div style="display:flex;align-items:center;gap:4px;font-size:11px;"><div style="width:10px;height:3px;border-radius:2px;background:#1A5EAB;"></div>Drug Check</div>
+          <div style="display:flex;align-items:center;gap:4px;font-size:11px;"><div style="width:10px;height:3px;border-radius:2px;background:#10B981;"></div>Discharge</div>
+          <div style="display:flex;align-items:center;gap:4px;font-size:11px;"><div style="width:10px;height:3px;border-radius:2px;background:#EF4444;"></div>Upcoding Detect</div>
+        </div>
+      </div>
+      <div style="padding:16px;">
+        <div style="position:relative;height:220px;">
+          <canvas id="latencyChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIVE WORKFLOWS -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🔄 Active Workflows</div>
+        <div style="display:flex;gap:6px;">
+          <span class="badge bd-purple">4 Running</span>
+          <span class="badge bd-blue">2 Queued</span>
+        </div>
+      </div>
+      <div style="padding:14px;" id="workflow-list"></div>
+    </div>
+  </div>
+
+  <!-- RAG SYNC + TOKEN USAGE + THROUGHPUT -->
+  <div class="three-col">
+    <!-- RAG SYNC -->
+    <div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📚 RAG Knowledge Base Sync</div>
+          <div style="display:flex;gap:6px;">
+            <span class="badge bd-green">8 Synced</span>
+            <span class="badge bd-blue">1 Syncing</span>
+            <span class="badge bd-warn">1 Stale</span>
+            <button class="btn btn-outline btn-sm" onclick="showToast('Full RAG resync triggered','🔄')">🔄 Sync All</button>
+          </div>
+        </div>
+        <div style="padding:14px;" id="rag-list"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: TOKEN + THROUGHPUT -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div class="card">
+        <div class="card-header"><div class="card-title">🪙 Token Usage — Today</div></div>
+        <div style="padding:14px;">
+          <div style="position:relative;height:140px;margin-bottom:10px;">
+            <canvas id="tokenChart"></canvas>
+          </div>
+          <div id="token-breakdown"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">⚡ Throughput</div></div>
+        <div style="padding:14px;">
+          <div style="position:relative;height:120px;">
+            <canvas id="throughputChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- ALERT TOAST STACK -->
+<div class="alert-stack" id="alert-stack"></div>
+
+<!-- BOTTOM TOAST -->
+<div class="toast" id="toast"><span id="toast-icon">✅</span><span id="toast-msg">Done</span></div>
+
+<script>
+// ── PIPELINE HEALTH DATA ──
+const pipelines=[
+  {icon:'🩺',name:'Clinical ICD Coder',status:'healthy',sCls:'phs-healthy',cls:'healthy',metric:'142ms',label:'avg latency',pct:92,color:'#10B981'},
+  {icon:'💊',name:'Drug Interaction AI',status:'healthy',sCls:'phs-healthy',cls:'healthy',metric:'218ms',label:'avg latency',pct:88,color:'#10B981'},
+  {icon:'📋',name:'Discharge Summariser',status:'healthy',sCls:'phs-healthy',cls:'healthy',metric:'384ms',label:'avg latency',pct:84,color:'#10B981'},
+  {icon:'💰',name:'Upcoding Detector',status:'degraded',sCls:'phs-degraded',cls:'degraded',metric:'1.24s',label:'↑ high latency',pct:48,color:'#F59E0B'},
+  {icon:'🔬',name:'Lab Trend Analyst',status:'healthy',sCls:'phs-healthy',cls:'healthy',metric:'196ms',label:'avg latency',pct:90,color:'#10B981'},
+  {icon:'💬',name:'Patient NLP Bot',status:'healthy',sCls:'phs-healthy',cls:'healthy',metric:'162ms',label:'avg latency',pct:94,color:'#10B981'},
+  {icon:'📊',name:'Risk Stratification',status:'healthy',sCls:'phs-healthy',cls:'healthy',metric:'280ms',label:'avg latency',pct:86,color:'#10B981'},
+  {icon:'🩻',name:'Radiology Report AI',status:'error',sCls:'phs-error',cls:'error',metric:'Error',label:'503 — GPU OOM',pct:0,color:'#EF4444'},
+  {icon:'💊',name:'Formulary Optimiser',status:'idle',sCls:'phs-idle',cls:'idle',metric:'—',label:'no active jobs',pct:0,color:'#1A5EAB'},
+  {icon:'🧬',name:'Genomics Pipeline',status:'training',sCls:'phs-training',cls:'training',metric:'68%',label:'fine-tune in progress',pct:68,color:'#7C3AED'},
+];
+const pg=document.getElementById('pipeline-grid');
+pipelines.forEach(p=>{
+  pg.innerHTML+=`<div class="ph-card ${p.cls}" onclick="showToast('${p.name}: ${p.metric}','⚡')">
+    <div class="phc-icon">${p.icon}</div>
+    <div class="phc-name">${p.name}</div>
+    <span class="phc-status ${p.sCls}">${p.status==='healthy'?'● Healthy':p.status==='degraded'?'⚠ Degraded':p.status==='error'?'✗ Error':p.status==='idle'?'○ Idle':'⟳ Training'}</span>
+    <div class="phc-metric">${p.metric}</div>
+    <div class="phc-label">${p.label}</div>
+    <div class="phc-bar"><div class="phc-bar-fill" style="width:${p.pct}%;background:${p.color};"></div></div>
+  </div>`;
+});
+
+// ── LATENCY CHART ──
+(()=>{
+  const ctx=document.getElementById('latencyChart').getContext('2d');
+  const hours=Array.from({length:24},(_,i)=>`${String(i).padStart(2,'0')}:00`);
+  const jitter=(base,range)=>Array.from({length:24},()=>Math.round(base+Math.random()*range*2-range));
+  new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:hours,
+      datasets:[
+        {label:'Clinical Coder',data:jitter(142,40),borderColor:'#7C3AED',backgroundColor:'rgba(124,58,237,.08)',tension:.4,fill:true,pointRadius:0,pointHoverRadius:5,borderWidth:2},
+        {label:'Drug Check',data:jitter(218,60),borderColor:'#1A5EAB',backgroundColor:'transparent',tension:.4,fill:false,pointRadius:0,pointHoverRadius:5,borderWidth:1.5,borderDash:[4,3]},
+        {label:'Discharge',data:jitter(384,80),borderColor:'#10B981',backgroundColor:'transparent',tension:.4,fill:false,pointRadius:0,pointHoverRadius:5,borderWidth:1.5},
+        {label:'Upcoding',data:[...jitter(320,80).slice(0,18),1240,1180,1320,1150,980,1100],borderColor:'#EF4444',backgroundColor:'rgba(239,68,68,.05)',tension:.4,fill:true,pointRadius:0,pointHoverRadius:5,borderWidth:2},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:c=>`${c.dataset.label}: ${Math.round(c.raw)}ms`}}},
+      scales:{
+        y:{grid:{color:'rgba(0,0,0,.05)'},ticks:{callback:v=>v+'ms',font:{size:10}},beginAtZero:true},
+        x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:10},maxRotation:0,autoSkip:true,maxTicksLimit:8}}
+      }
+    }
+  });
+})();
+
+// ── WORKFLOW LIST ──
+const workflows=[
+  {step:'wis-running',cls:'running',icon:'🩺',name:'OPD Batch ICD Coding',meta:'47 records · Dr. Anand session',agents:['ICD Coder','Validator','RAG Lookup'],progress:'32/47',pct:68,time:'01:24'},
+  {step:'wis-running',cls:'running',icon:'📋',name:'Discharge Summary Generation',meta:'IPD Ward B — 3 patients pending',agents:['Discharge AI','Summariser','Quality Check'],progress:'1/3',pct:33,time:'00:48'},
+  {step:'wis-running',cls:'running',icon:'💰',name:'Insurance Claim Audit',meta:'PMJAY claims — March batch',agents:['Upcoding Detect','Claim Validator'],progress:'128/200',pct:64,time:'03:12'},
+  {step:'wis-running',cls:'running',icon:'💊',name:'Drug Interaction Screening',meta:'14 new prescriptions — OPD queue',agents:['Drug AI','Formulary'],progress:'9/14',pct:64,time:'00:22'},
+  {step:'wis-queued',cls:'queued',icon:'🔬',name:'Lab Trend Analysis — Week Report',meta:'Queued: awaiting Lab AI capacity',agents:['Lab Analyst'],progress:'0/1',pct:0,time:'—'},
+  {step:'wis-queued',cls:'queued',icon:'🧬',name:'Genomics Model Fine-tune',meta:'Queued: GPU allocation pending',agents:['Genomics AI'],progress:'0/1',pct:68,time:'—'},
+];
+const wl=document.getElementById('workflow-list');
+workflows.forEach(w=>{
+  wl.innerHTML+=`<div class="workflow-item ${w.cls}" onclick="showToast('${w.name}: ${w.progress} tasks','🔄')">
+    <div class="wi-step ${w.step}"></div>
+    <div style="flex:1;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:15px;">${w.icon}</span>
+        <div><div class="wi-name">${w.name}</div><div class="wi-meta">${w.meta}</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap;">
+        ${w.agents.map(a=>`<span class="wi-agent-chip">${a}</span>`).join('')}
+        <span style="margin-left:auto;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-2);">${w.progress}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-3);">${w.time}</span>
+      </div>
+      <div class="wf-mini-bar"><div class="wf-mini-fill" style="width:${w.pct}%;background:${w.cls==='running'?'var(--purple)':'var(--brand)'};"></div></div>
+    </div>
+  </div>`;
+});
+
+// ── RAG SYNC STATUS ──
+const ragSources=[
+  {icon:'📋',bg:'var(--brand-light)',name:'Clinical Guidelines (ICMR)',meta:'10,284 documents · ICD-10 + protocols',last:'Today 08:00',count:'10.2K docs',status:'synced',sCls:'ris-synced',cls:'synced'},
+  {icon:'💊',bg:'var(--warn-lt)',name:'Drug Formulary & Interactions',meta:'48,312 drug pairs · CIMS India 2024',last:'Today 14:30',count:'48.3K pairs',status:'synced',sCls:'ris-synced',cls:'synced'},
+  {icon:'🩸',bg:'var(--danger-lt)',name:'Lab Reference Ranges',meta:'1,842 test parameters · age-stratified',last:'Today 06:00',count:'1.8K params',status:'synced',sCls:'ris-synced',cls:'synced'},
+  {icon:'📊',bg:'var(--success-lt)',name:'PMJAY Scheme Package Rates',meta:'1,573 procedures · rate updates',last:'Syncing now...',count:'1.5K pkgs',status:'syncing',sCls:'ris-syncing',cls:'syncing'},
+  {icon:'🧬',bg:'var(--purple-lt)',name:'ICD-11 Mapping Table',meta:'Migration from ICD-10 — 68% complete',last:'Yesterday 22:00',count:'42K codes',status:'stale',sCls:'ris-stale',cls:'stale'},
+  {icon:'🏥',bg:'var(--brand-light)',name:'Hospital SOPs & Protocols',meta:'384 protocols — internal knowledge base',last:'Today 02:00',count:'384 docs',status:'synced',sCls:'ris-synced',cls:'synced'},
+  {icon:'🩺',bg:'var(--accent-lt)',name:'Patient EMR Index',meta:'4,281 active patients — vector indexed',last:'Continuous (δ)',count:'4.2K recs',status:'synced',sCls:'ris-synced',cls:'synced'},
+  {icon:'💰',bg:'var(--danger-lt)',name:'Claim Audit Rules Engine',meta:'TPA-specific rules · PMJAY upcoding flags',last:'14 Mar 12:00',count:'2.1K rules',status:'synced',sCls:'ris-synced',cls:'synced'},
+  {icon:'🔬',bg:'var(--success-lt)',name:'Radiology AI Model Weights',meta:'CT/X-Ray embeddings — DCGAN v2.1',last:'Error: S3 timeout',count:'8.4 GB',status:'error',sCls:'ris-error',cls:'error'},
+];
+const rl=document.getElementById('rag-list');
+ragSources.forEach(r=>{
+  rl.innerHTML+=`<div class="rag-item ${r.cls}" onclick="showToast('${r.name}: ${r.last}','📚')">
+    <div class="ri-icon" style="background:${r.bg};">${r.icon}</div>
+    <div style="flex:1;">
+      <div class="ri-name">${r.name}</div>
+      <div class="ri-meta">${r.meta}</div>
+      <div class="ri-last">Last sync: ${r.last}</div>
+    </div>
+    <div style="text-align:right;">
+      <div class="ri-count">${r.count}</div>
+      <span class="ri-status ${r.sCls}">${r.status.charAt(0).toUpperCase()+r.status.slice(1)}</span>
+    </div>
+  </div>`;
+});
+
+// ── TOKEN USAGE DOUGHNUT ──
+(()=>{
+  const ctx=document.getElementById('tokenChart').getContext('2d');
+  new Chart(ctx,{
+    type:'doughnut',
+    data:{
+      labels:['Clinical Coder','Drug AI','Discharge AI','Upcoding','Lab AI','Others'],
+      datasets:[{data:[980,640,520,380,280,400],backgroundColor:['#7C3AED','#1A5EAB','#10B981','#EF4444','#059669','#9CA3AF'],borderWidth:0,hoverOffset:6}]
+    },
+    options:{cutout:'62%',plugins:{legend:{display:false}},responsive:true,maintainAspectRatio:false}
+  });
+})();
+
+// Token breakdown
+const tokenData=[
+  {name:'Clinical Coder',tokens:'980K',pct:31,col:'#7C3AED'},
+  {name:'Drug Interaction AI',tokens:'640K',pct:20,col:'#1A5EAB'},
+  {name:'Discharge AI',tokens:'520K',pct:16,col:'#10B981'},
+  {name:'Upcoding Detector',tokens:'380K',pct:12,col:'#EF4444'},
+];
+const tb=document.getElementById('token-breakdown');
+tokenData.forEach(t=>{
+  tb.innerHTML+=`<div class="token-row"><span style="font-size:12px;">${t.name}</span><span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:${t.col};">${t.tokens}</span></div>`;
+});
+
+// ── THROUGHPUT CHART ──
+(()=>{
+  const ctx=document.getElementById('throughputChart').getContext('2d');
+  const hrs=Array.from({length:12},(_,i)=>`${String(i*2).padStart(2,'0')}:00`);
+  new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:hrs,
+      datasets:[{
+        label:'Tasks/hr',
+        data:[48,82,124,148,136,168,172,184,192,178,168,154],
+        backgroundColor:'rgba(124,58,237,.25)',
+        borderColor:'#7C3AED',borderWidth:1.5,borderRadius:4
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{y:{grid:{color:'rgba(0,0,0,.05)'},ticks:{font:{size:10},maxTicksLimit:4}},x:{grid:{display:false},ticks:{font:{size:9}}}}
+    }
+  });
+})();
+
+// ── ANOMALY ALERT TOASTS ──
+const alertsData=[
+  {
+    type:'critical',
+    icon:'🚨',
+    title:'Upcoding Anomaly Detected — Ravi Kumar',
+    desc:'Claim CLM-2024-0142 (PMJAY): Procedure code 33519 (CABG) billed but EMR shows OPD consultation only. Discrepancy: ₹1,84,000. Immediate review required.',
+    time:'14:58',
+    actions:['Review Claim','Flag for Audit','Dismiss']
+  },
+  {
+    type:'warning',
+    icon:'⚠️',
+    title:'ICD Coding Confidence Low — 3 Records',
+    desc:'Clinical Coder agent scored <70% confidence on 3 discharge records: DX-004829, DX-004831, DX-004836. Manual review recommended before claim submission.',
+    time:'14:44',
+    actions:['Review Records','Override & Submit']
+  },
+  {
+    type:'warning',
+    icon:'⚠️',
+    title:'Upcoding Pattern — Dr. Anand (OPD)',
+    desc:'6 consecutive consultations billed at ₹800 (Level 4) vs avg ₹400 (Level 2) for similar presentations. AI confidence: 82% anomaly. Trigger: escalation pattern.',
+    time:'14:32',
+    actions:['View Pattern','Notify Audit Team','Dismiss']
+  },
+];
+
+function buildAlertToast(a,idx){
+  const toast=document.createElement('div');
+  toast.className=`alert-toast ${a.type}`;
+  toast.id=`alert-${idx}`;
+  toast.innerHTML=`<div class="at-stripe ${a.type}"></div>
+    <div class="at-body">
+      <div class="at-icon">${a.icon}</div>
+      <div style="flex:1;">
+        <div class="at-title">${a.title}</div>
+        <div class="at-desc">${a.desc}</div>
+        <div class="at-time">${a.time}</div>
+      </div>
+      <button class="at-close" onclick="dismissAlert(${idx})">×</button>
+    </div>
+    <div class="at-action">
+      ${a.actions.map((act,ai)=>`<button class="at-btn" onclick="handleAlertAction('${act}',${idx})">${act}</button>`).join('')}
+    </div>`;
+  return toast;
+}
+
+function showAllAlerts(){
+  const stack=document.getElementById('alert-stack');
+  stack.innerHTML='';
+  alertsData.forEach((a,i)=>{
+    const toast=buildAlertToast(a,i);
+    stack.appendChild(toast);
+    setTimeout(()=>toast.classList.add('show'),(i*180));
+  });
+}
+function dismissAlert(idx){
+  const el=document.getElementById('alert-'+idx);
+  if(el){el.classList.remove('show');setTimeout(()=>el.remove(),400);}
+}
+function handleAlertAction(action,idx){
+  if(action==='Review Claim'||action==='Review Records') showToast('Opening claim/record for review...','📋');
+  else if(action==='Flag for Audit') showToast('Record flagged — Audit team notified','🚨');
+  else if(action==='Override & Submit') showToast('Override logged — submitted with note','⚠');
+  else if(action==='Notify Audit Team') showToast('Audit team notified via email','📧');
+  else showToast(action+' acknowledged','✅');
+  dismissAlert(idx);
+}
+
+// ── AUTO SHOW ALERTS ON LOAD ──
+setTimeout(showAllAlerts, 1200);
+
+// ── LIVE LATENCY PULSE ──
+setInterval(()=>{
+  const cards=document.querySelectorAll('.phc-metric');
+  cards.forEach((c,i)=>{
+    const p=pipelines[i];
+    if(p.status==='healthy'){
+      const base=parseInt(p.metric)||200;
+      const v=Math.round(base*(0.85+Math.random()*.3));
+      c.textContent=v+'ms';
+    }
+  });
+},3000);
+
+// ── TOAST ──
+let tt;
+function showToast(msg,icon='✅'){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').innerHTML=msg;
+  document.getElementById('toast-icon').textContent=icon;
+  t.classList.add('show');clearTimeout(tt);
+  tt=setTimeout(()=>t.classList.remove('show'),3200);
+}
+</script>
+</body>
+</html>

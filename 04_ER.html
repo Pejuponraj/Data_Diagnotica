@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Diagnotica HMS — Emergency & Casualty</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --brand:#1A5EAB;--brand-dark:#0F3F78;--brand-light:#E8F1FB;
+  --accent:#00C0A3;--accent-lt:#E0F9F5;
+  --warn:#F59E0B;--warn-lt:#FEF3C7;--warn-dark:#92400E;
+  --danger:#EF4444;--danger-lt:#FEE2E2;--danger-dark:#7F1D1D;
+  --success:#10B981;--success-lt:#D1FAE5;
+  --purple:#7C3AED;--purple-lt:#EDE9FE;
+  --esi1:#DC2626;--esi1-lt:#FEF2F2;--esi1-border:#FECACA;
+  --esi2:#EA580C;--esi2-lt:#FFF7ED;--esi2-border:#FED7AA;
+  --esi3:#CA8A04;--esi3-lt:#FEFCE8;--esi3-border:#FEF08A;
+  --esi4:#16A34A;--esi4-lt:#F0FDF4;--esi4-border:#BBF7D0;
+  --esi5:#2563EB;--esi5-lt:#EFF6FF;--esi5-border:#BFDBFE;
+  --text-1:#0F1C2E;--text-2:#3A4D63;--text-3:#7A8FA6;
+  --border:#DDE6F0;--bg:#F0F4F9;--surface:#FFFFFF;--surface-2:#F7FAFD;
+  --radius:10px;--radius-lg:16px;
+  --shadow:0 1px 4px rgba(26,94,171,.08),0 4px 16px rgba(26,94,171,.06);
+  --shadow-lg:0 8px 32px rgba(26,94,171,.14);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-1);min-height:100vh;font-size:14px;}
+
+/* TOPBAR */
+.topbar{background:#0A0F1E;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:52px;position:sticky;top:0;z-index:100;border-bottom:2px solid var(--danger);}
+.logo-wrap{display:flex;align-items:center;gap:10px;}
+.logo-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#00C0A3,#2E7DD6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;}
+.logo-text{color:#fff;font-size:15px;font-weight:600;}
+.logo-sub{color:#8BAFD4;font-size:11px;}
+.er-live{display:flex;align-items:center;gap:8px;background:rgba(220,38,38,.15);border:1px solid rgba(220,38,38,.4);border-radius:8px;padding:5px 14px;}
+.er-dot{width:8px;height:8px;border-radius:50%;background:var(--esi1);animation:pulseRed 1.2s infinite;}
+@keyframes pulseRed{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.5);}50%{box-shadow:0 0 0 6px rgba(220,38,38,0);}}
+.er-live-txt{color:#FCA5A5;font-size:13px;font-weight:600;letter-spacing:.03em;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.t-chip{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#D4E8FF;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;font-family:inherit;}
+.t-chip:hover{background:rgba(255,255,255,.16);}
+.t-chip.alarm{background:rgba(220,38,38,.2);border-color:rgba(220,38,38,.4);color:#FCA5A5;animation:alarmPulse 2s infinite;}
+@keyframes alarmPulse{0%,100%{background:rgba(220,38,38,.2);}50%{background:rgba(220,38,38,.35);}}
+.user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border-radius:20px;padding:4px 12px 4px 4px;}
+.user-av{width:26px;height:26px;border-radius:50%;background:var(--danger);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+
+/* SHELL */
+.shell{display:flex;height:calc(100vh - 52px);overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:190px;background:#0D1626;border-right:1px solid rgba(255,255,255,.06);padding:14px 0;flex-shrink:0;overflow-y:auto;}
+.sb-label{font-size:10px;font-weight:600;color:#4A6080;text-transform:uppercase;letter-spacing:.08em;padding:10px 14px 4px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:var(--radius);margin:0 8px 2px;cursor:pointer;color:#8BAFD4;font-size:13px;transition:all .15s;position:relative;}
+.nav-item:hover{background:rgba(255,255,255,.06);color:#fff;}
+.nav-item.active{background:rgba(220,38,38,.15);color:#FCA5A5;font-weight:500;}
+.nav-item.active::before{content:'';position:absolute;left:-4px;top:6px;bottom:6px;width:3px;background:var(--esi1);border-radius:0 3px 3px 0;}
+.nb{margin-left:auto;font-size:10px;font-weight:700;border-radius:10px;padding:1px 6px;}
+.nb.r{background:var(--esi1);color:#fff;}
+.nb.w{background:var(--warn);color:#78350F;}
+.nb.g{background:var(--success);color:#fff;}
+.nb.b{background:var(--brand);color:#fff;}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+
+/* ER STATUS BAR */
+.er-statusbar{background:#0D1626;border-bottom:1px solid rgba(255,255,255,.08);padding:10px 24px;display:flex;gap:0;align-items:center;}
+.erb-item{text-align:center;min-width:90px;}
+.erb-val{font-size:24px;font-weight:700;line-height:1;}
+.erb-label{font-size:10px;color:#4A6080;margin-top:2px;text-transform:uppercase;letter-spacing:.05em;}
+.erb-sep{width:1px;background:rgba(255,255,255,.08);margin:0 16px;height:36px;}
+.clock-block{margin-left:auto;text-align:right;}
+.er-clock{font-family:'DM Mono',monospace;font-size:22px;font-weight:700;color:#fff;letter-spacing:.05em;}
+.er-date{font-size:11px;color:#4A6080;}
+
+/* CONTENT */
+.content{padding:16px 20px;display:grid;grid-template-columns:1fr 340px;gap:16px;flex:1;}
+
+/* CARD */
+.card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;}
+.card-header{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);}
+.card-title{font-size:14px;font-weight:600;color:var(--text-1);display:flex;align-items:center;gap:8px;}
+.card-body{padding:16px;}
+
+/* ESI LEGEND */
+.esi-legend{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.esi-badge{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;cursor:default;border:1.5px solid;}
+.esi1-b{background:var(--esi1-lt);color:var(--esi1);border-color:var(--esi1-border);}
+.esi2-b{background:var(--esi2-lt);color:var(--esi2);border-color:var(--esi2-border);}
+.esi3-b{background:var(--esi3-lt);color:var(--esi3);border-color:var(--esi3-border);}
+.esi4-b{background:var(--esi4-lt);color:var(--esi4);border-color:var(--esi4-border);}
+.esi5-b{background:var(--esi5-lt);color:var(--esi5);border-color:var(--esi5-border);}
+
+/* TRIAGE QUEUE */
+.triage-card{border-radius:var(--radius-lg);border:2px solid;margin-bottom:8px;overflow:hidden;cursor:pointer;transition:all .18s;position:relative;}
+.triage-card:hover{transform:translateX(3px);box-shadow:var(--shadow);}
+.triage-card.esi1{background:var(--esi1-lt);border-color:var(--esi1-border);}
+.triage-card.esi2{background:var(--esi2-lt);border-color:var(--esi2-border);}
+.triage-card.esi3{background:var(--esi3-lt);border-color:var(--esi3-border);}
+.triage-card.esi4{background:var(--esi4-lt);border-color:var(--esi4-border);}
+.triage-card.esi5{background:var(--esi5-lt);border-color:var(--esi5-border);}
+.triage-card.esi1 .tc-stripe{background:var(--esi1);}
+.triage-card.esi2 .tc-stripe{background:var(--esi2);}
+.triage-card.esi3 .tc-stripe{background:var(--esi3);}
+.triage-card.esi4 .tc-stripe{background:var(--esi4);}
+.triage-card.esi5 .tc-stripe{background:var(--esi5);}
+.tc-stripe{width:5px;position:absolute;left:0;top:0;bottom:0;}
+.tc-inner{padding:12px 14px 12px 20px;display:flex;align-items:center;gap:12px;}
+.tc-esi{width:38px;height:38px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;font-weight:700;}
+.triage-card.esi1 .tc-esi{background:var(--esi1);color:#fff;}
+.triage-card.esi2 .tc-esi{background:var(--esi2);color:#fff;}
+.triage-card.esi3 .tc-esi{background:var(--esi3);color:#fff;}
+.triage-card.esi4 .tc-esi{background:var(--esi4);color:#fff;}
+.triage-card.esi5 .tc-esi{background:var(--esi5);color:#fff;}
+.tc-esi-num{font-size:16px;line-height:1;}
+.tc-esi-label{font-size:8px;letter-spacing:.04em;line-height:1;}
+.tc-info{flex:1;}
+.tc-name{font-size:14px;font-weight:600;color:var(--text-1);margin-bottom:2px;}
+.tc-complaint{font-size:12px;color:var(--text-2);margin-bottom:4px;}
+.tc-tags{display:flex;gap:4px;flex-wrap:wrap;}
+.tc-tag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:10px;}
+.mlc-tag{background:#1C1040;color:#C4B5FD;}
+.age-tag{background:rgba(0,0,0,.06);color:var(--text-2);}
+.tc-right{text-align:right;flex-shrink:0;}
+.tc-wait{font-family:'DM Mono',monospace;font-size:18px;font-weight:700;line-height:1;}
+.triage-card.esi1 .tc-wait{color:var(--esi1);}
+.triage-card.esi2 .tc-wait{color:var(--esi2);}
+.triage-card.esi3 .tc-wait{color:var(--esi3);}
+.triage-card.esi4 .tc-wait{color:var(--esi4);}
+.triage-card.esi5 .tc-wait{color:var(--esi5);}
+.tc-wait-label{font-size:10px;color:var(--text-3);margin-top:1px;}
+.tc-status-row{display:flex;gap:4px;justify-content:flex-end;margin-top:6px;}
+.tc-action{padding:4px 9px;border-radius:6px;border:none;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;transition:all .13s;}
+.tc-action.primary{background:var(--brand);color:#fff;}
+.tc-action.outline{background:transparent;border:1px solid var(--border);color:var(--text-2);}
+.tc-action:hover{opacity:.85;}
+.critical-flash{animation:critFlash 1.5s infinite;}
+@keyframes critFlash{0%,100%{opacity:1;}50%{opacity:.7;}}
+
+/* REGISTRATION FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-group.full{grid-column:1/-1;}
+.form-label{font-size:11px;font-weight:600;color:var(--text-2);}
+.required{color:var(--danger);}
+.form-input,.form-select{padding:8px 11px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;color:var(--text-1);background:var(--surface-2);outline:none;transition:border-color .15s;width:100%;}
+.form-input:focus,.form-select:focus{border-color:var(--brand);background:#fff;}
+
+/* ESI SELECTOR */
+.esi-selector{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:2px;}
+.esi-opt{padding:10px 4px;border-radius:var(--radius);border:2px solid var(--border);text-align:center;cursor:pointer;transition:all .15s;}
+.esi-opt:hover{transform:scale(1.04);}
+.esi-opt.sel{border-width:2.5px;}
+.esi-opt[data-e="1"]{background:var(--esi1-lt);border-color:var(--esi1-border);}
+.esi-opt[data-e="1"].sel{border-color:var(--esi1);box-shadow:0 0 0 3px rgba(220,38,38,.15);}
+.esi-opt[data-e="2"]{background:var(--esi2-lt);border-color:var(--esi2-border);}
+.esi-opt[data-e="2"].sel{border-color:var(--esi2);box-shadow:0 0 0 3px rgba(234,88,12,.15);}
+.esi-opt[data-e="3"]{background:var(--esi3-lt);border-color:var(--esi3-border);}
+.esi-opt[data-e="3"].sel{border-color:var(--esi3);box-shadow:0 0 0 3px rgba(202,138,4,.15);}
+.esi-opt[data-e="4"]{background:var(--esi4-lt);border-color:var(--esi4-border);}
+.esi-opt[data-e="4"].sel{border-color:var(--esi4);box-shadow:0 0 0 3px rgba(22,163,74,.15);}
+.esi-opt[data-e="5"]{background:var(--esi5-lt);border-color:var(--esi5-border);}
+.esi-opt[data-e="5"].sel{border-color:var(--esi5);box-shadow:0 0 0 3px rgba(37,99,235,.15);}
+.esi-num{font-size:18px;font-weight:800;display:block;line-height:1;}
+.esi-name{font-size:9px;font-weight:600;display:block;margin-top:2px;text-transform:uppercase;letter-spacing:.04em;}
+.esi-opt[data-e="1"] .esi-num,.esi-opt[data-e="1"] .esi-name{color:var(--esi1);}
+.esi-opt[data-e="2"] .esi-num,.esi-opt[data-e="2"] .esi-name{color:var(--esi2);}
+.esi-opt[data-e="3"] .esi-num,.esi-opt[data-e="3"] .esi-name{color:var(--esi3);}
+.esi-opt[data-e="4"] .esi-num,.esi-opt[data-e="4"] .esi-name{color:var(--esi4);}
+.esi-opt[data-e="5"] .esi-num,.esi-opt[data-e="5"] .esi-name{color:var(--esi5);}
+
+/* MLC TOGGLE */
+.mlc-toggle{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:var(--radius);border:2px solid var(--border);cursor:pointer;transition:all .15s;background:var(--surface-2);}
+.mlc-toggle.on{border-color:var(--purple);background:var(--purple-lt);}
+.mlc-toggle-info{display:flex;align-items:center;gap:10px;}
+.mlc-icon{font-size:20px;}
+.mlc-label{font-size:13px;font-weight:600;}
+.mlc-sub{font-size:11px;color:var(--text-3);margin-top:1px;}
+.toggle-sw{width:36px;height:20px;border-radius:10px;background:var(--border);position:relative;transition:background .2s;flex-shrink:0;}
+.toggle-sw.on{background:var(--purple);}
+.toggle-knob{width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.toggle-sw.on .toggle-knob{transform:translateX(16px);}
+
+/* BED GRID */
+.er-bed-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.er-bed{border-radius:var(--radius);padding:10px 8px;text-align:center;border:2px solid;cursor:pointer;transition:all .15s;position:relative;}
+.er-bed:hover{transform:scale(1.04);}
+.er-bed.available{background:var(--success-lt);border-color:#6EE7B7;}
+.er-bed.occupied{background:var(--danger-lt);border-color:#FCA5A5;}
+.er-bed.monitored{background:var(--warn-lt);border-color:#FCD34D;}
+.er-bed.resus{background:var(--purple-lt);border-color:#C4B5FD;}
+.er-bed.cleaning{background:var(--surface-2);border-color:var(--border);}
+.eb-num{font-family:'DM Mono',monospace;font-size:14px;font-weight:700;display:block;}
+.er-bed.available .eb-num{color:var(--success);}
+.er-bed.occupied .eb-num{color:var(--danger);}
+.er-bed.monitored .eb-num{color:var(--warn);}
+.er-bed.resus .eb-num{color:var(--purple);}
+.er-bed.cleaning .eb-num{color:var(--text-3);}
+.eb-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;display:block;margin-top:2px;}
+.er-bed.available .eb-label{color:var(--success);}
+.er-bed.occupied .eb-label{color:var(--danger);}
+.er-bed.monitored .eb-label{color:#92400E;}
+.er-bed.resus .eb-label{color:var(--purple);}
+.er-bed.cleaning .eb-label{color:var(--text-3);}
+.resus-badge{position:absolute;top:-6px;right:-4px;background:var(--purple);color:#fff;font-size:8px;font-weight:700;padding:1px 5px;border-radius:5px;letter-spacing:.04em;}
+
+/* VITAL MINI */
+.vitals-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.vmc{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;}
+.vmc-label{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;}
+.vmc-val{font-size:18px;font-weight:700;margin-top:2px;}
+.vmc-unit{font-size:10px;color:var(--text-3);}
+
+/* ALERT BANNER */
+.alert-banner{border-radius:var(--radius);padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:10px;border:1px solid;}
+.ab-critical{background:var(--esi1-lt);border-color:var(--esi1-border);}
+.ab-warn{background:var(--esi2-lt);border-color:var(--esi2-border);}
+
+/* BTN */
+.btn{padding:8px 16px;border-radius:var(--radius);border:none;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+.btn-danger{background:var(--danger);color:#fff;box-shadow:0 2px 8px rgba(239,68,68,.35);}
+.btn-danger:hover{background:#DC2626;}
+.btn-primary{background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(26,94,171,.28);}
+.btn-primary:hover{background:var(--brand-dark);}
+.btn-outline{background:var(--surface);color:var(--text-1);border:1px solid var(--border);}
+.btn-outline:hover{background:var(--surface-2);}
+.btn-warn{background:var(--warn);color:#78350F;}
+.btn-sm{padding:5px 12px;font-size:12px;}
+.btn-purple{background:var(--purple);color:#fff;}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600;}
+.bd-red{background:var(--danger-lt);color:var(--danger);}
+.bd-warn{background:var(--warn-lt);color:var(--warn-dark);}
+.bd-green{background:var(--success-lt);color:var(--success);}
+.bd-blue{background:var(--brand-light);color:var(--brand);}
+.bd-purple{background:var(--purple-lt);color:var(--purple);}
+.bd-gray{background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);}
+
+/* TABS */
+.tab-row{display:flex;gap:0;border-bottom:1px solid var(--border);}
+.tab-btn{padding:10px 16px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:500;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;}
+.tab-btn:hover{color:var(--text-1);}
+.tab-btn.active{color:var(--danger);border-bottom-color:var(--danger);}
+.tab-pane{display:none;padding:16px;}
+.tab-pane.active{display:block;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:#0A0F1E;color:#fff;padding:12px 20px;border-radius:var(--radius);font-size:13px;font-weight:500;z-index:999;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);border:1px solid rgba(255,255,255,.1);}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* MODAL */
+.modal-backdrop{position:fixed;inset:0;background:rgba(10,15,30,.65);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-backdrop.show{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:620px;max-width:94vw;max-height:90vh;overflow-y:auto;transform:translateY(20px) scale(.97);transition:transform .25s cubic-bezier(.34,1.4,.64,1);}
+.modal-backdrop.show .modal{transform:translateY(0) scale(1);}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:2;}
+.modal-title{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.modal-close{width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--surface-2);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.modal-body{padding:20px;}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--surface-2);}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo-wrap">
+    <div class="logo-mark">Dx</div>
+    <div><div class="logo-text">Diagnotica HMS</div><div class="logo-sub">Emergency &amp; Casualty Department</div></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div class="er-live">
+      <div class="er-dot"></div>
+      <span class="er-live-txt">ER LIVE — 7 Active Cases</span>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="t-chip alarm">🚨 2 Critical</div>
+    <div class="t-chip" onclick="openModal()">＋ Register Patient</div>
+    <div class="t-chip" onclick="showToast('Calling Code Blue Team...','🔵')">🔵 Code Blue</div>
+    <div class="t-chip" onclick="showToast('Rapid response paged','📟')">📟 Rapid Response</div>
+    <div class="user-chip">
+      <div class="user-av">ER</div>
+      <span style="color:#D4E8FF;font-size:12px;">Dr. Ramesh — ER Duty</span>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-label">Emergency</div>
+  <div class="nav-item active">🚨 Triage Queue <span class="nb r">7</span></div>
+  <div class="nav-item">🛏 ER Beds <span class="nb r">3</span></div>
+  <div class="nav-item">📋 Registrations</div>
+  <div class="nav-item">⚖ MLC Cases <span class="nb w">2</span></div>
+  <div class="nav-item">🧪 Stat Labs</div>
+  <div class="nav-item">💊 ER Meds</div>
+  <div class="sb-label">Protocols</div>
+  <div class="nav-item">🔵 Code Blue</div>
+  <div class="nav-item">❤ ACLS / ATLS</div>
+  <div class="nav-item">🩸 Trauma Bay</div>
+  <div class="nav-item">🤰 Obstetric ER</div>
+  <div class="sb-label">Handover</div>
+  <div class="nav-item">📝 Shift Notes</div>
+  <div class="nav-item">📤 Admissions <span class="nb b">3</span></div>
+  <div class="nav-item">📊 ER Analytics</div>
+</nav>
+
+<div class="main">
+
+  <!-- STATUS BAR -->
+  <div class="er-statusbar">
+    <div class="erb-item">
+      <div class="erb-val" style="color:#FCA5A5;">2</div>
+      <div class="erb-label">ESI-1 Critical</div>
+    </div>
+    <div class="erb-sep"></div>
+    <div class="erb-item">
+      <div class="erb-val" style="color:#FED7AA;">1</div>
+      <div class="erb-label">ESI-2 Emergent</div>
+    </div>
+    <div class="erb-sep"></div>
+    <div class="erb-item">
+      <div class="erb-val" style="color:#FEF08A;">2</div>
+      <div class="erb-label">ESI-3 Urgent</div>
+    </div>
+    <div class="erb-sep"></div>
+    <div class="erb-item">
+      <div class="erb-val" style="color:#BBF7D0;">1</div>
+      <div class="erb-label">ESI-4 Less Urgent</div>
+    </div>
+    <div class="erb-sep"></div>
+    <div class="erb-item">
+      <div class="erb-val" style="color:#BFDBFE;">1</div>
+      <div class="erb-label">ESI-5 Non-Urgent</div>
+    </div>
+    <div class="erb-sep"></div>
+    <div class="erb-item">
+      <div class="erb-val" style="color:#C4B5FD;">2</div>
+      <div class="erb-label">MLC Flagged</div>
+    </div>
+    <div class="erb-sep"></div>
+    <div class="erb-item">
+      <div class="erb-val" style="color:#6EE7B7;">5</div>
+      <div class="erb-label">ER Beds Free</div>
+    </div>
+    <div class="clock-block">
+      <div class="er-clock" id="er-clock">--:--:--</div>
+      <div class="er-date">14 Mar 2024 · Shift B</div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="content">
+
+    <!-- LEFT -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+
+      <!-- ALERTS -->
+      <div class="alert-banner ab-critical">
+        <span style="font-size:20px;">🔴</span>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:700;color:var(--esi1);">CRITICAL ALERT — Bay 1</div>
+          <div style="font-size:12px;color:#991B1B;">Mohan Kumar · BP 70/40 · Suspected cardiogenic shock — Cardiology consulted, ICU bed requested</div>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="showToast('ICU transfer initiated','🏥')">Transfer ICU</button>
+      </div>
+
+      <!-- TRIAGE QUEUE -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🚨 Live Triage Queue</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="esi-legend">
+              <span class="esi-badge esi1-b">● ESI 1</span>
+              <span class="esi-badge esi2-b">● ESI 2</span>
+              <span class="esi-badge esi3-b">● ESI 3</span>
+              <span class="esi-badge esi4-b">● ESI 4</span>
+              <span class="esi-badge esi5-b">● ESI 5</span>
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="openModal()">＋ New Patient</button>
+          </div>
+        </div>
+        <div class="card-body" id="triage-queue"></div>
+      </div>
+
+      <!-- ER BED STATUS -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🛏 ER Bay &amp; Bed Status</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="badge bd-green">5 Free</span>
+            <span class="badge bd-red">7 Occupied</span>
+            <span class="badge bd-warn">2 Monitored</span>
+            <span class="badge bd-purple">1 Resus</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="er-bed-grid" id="er-beds"></div>
+          <div style="display:flex;gap:14px;margin-top:12px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-2);">
+              <div style="width:10px;height:10px;border-radius:3px;background:var(--success);"></div>Available
+            </div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-2);">
+              <div style="width:10px;height:10px;border-radius:3px;background:var(--danger);"></div>Occupied
+            </div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-2);">
+              <div style="width:10px;height:10px;border-radius:3px;background:var(--warn);"></div>Monitored
+            </div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-2);">
+              <div style="width:10px;height:10px;border-radius:3px;background:var(--purple);"></div>Resuscitation
+            </div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-2);">
+              <div style="width:10px;height:10px;border-radius:3px;background:var(--border);"></div>Cleaning
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /left -->
+
+    <!-- RIGHT -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+
+      <!-- ACTIVE PATIENT PANEL -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">👤 Active Patient — Bay 1</div>
+          <span class="badge bd-red critical-flash">● CRITICAL ESI 1</span>
+        </div>
+        <div class="tab-row">
+          <button class="tab-btn active" onclick="switchTab('overview',this)">Overview</button>
+          <button class="tab-btn" onclick="switchTab('vitals',this)">Vitals</button>
+          <button class="tab-btn" onclick="switchTab('orders',this)">Orders</button>
+          <button class="tab-btn" onclick="switchTab('timeline',this)">Timeline</button>
+        </div>
+
+        <!-- OVERVIEW -->
+        <div class="tab-pane active" id="pane-overview">
+          <div style="background:var(--esi1-lt);border:1.5px solid var(--esi1-border);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+              <div style="font-size:15px;font-weight:700;">Mohan Kumar</div>
+              <span style="background:var(--esi1);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;">ESI 1 — RESUSCITATION</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;">
+              <div><span style="color:var(--text-3);">Age/Gender</span> <b>58Y · Male</b></div>
+              <div><span style="color:var(--text-3);">ER No.</span> <b style="font-family:'DM Mono',monospace;">ER-2024-0047</b></div>
+              <div><span style="color:var(--text-3);">Arrival</span> <b>09:04 AM</b></div>
+              <div><span style="color:var(--text-3);">Bay</span> <b>Resus Bay 1</b></div>
+              <div><span style="color:var(--text-3);">Complaint</span> <b style="color:var(--esi1);">Chest pain + syncope</b></div>
+              <div><span style="color:var(--text-3);">MLC</span> <b style="color:var(--purple);">⚖ Filed</b></div>
+            </div>
+          </div>
+          <div class="vitals-mini-grid">
+            <div class="vmc">
+              <div class="vmc-label">BP</div>
+              <div class="vmc-val" style="color:var(--danger);">70/40</div>
+              <div class="vmc-unit">mmHg — CRITICAL</div>
+            </div>
+            <div class="vmc">
+              <div class="vmc-label">HR</div>
+              <div class="vmc-val" style="color:var(--warn);">118</div>
+              <div class="vmc-unit">bpm — Tachycardia</div>
+            </div>
+            <div class="vmc">
+              <div class="vmc-label">SpO₂</div>
+              <div class="vmc-val" style="color:var(--warn);">88</div>
+              <div class="vmc-unit">% — O₂ @ 10L</div>
+            </div>
+            <div class="vmc">
+              <div class="vmc-label">GCS</div>
+              <div class="vmc-val" style="color:var(--warn);">11/15</div>
+              <div class="vmc-unit">E3V3M5</div>
+            </div>
+          </div>
+          <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn btn-danger btn-sm" onclick="showToast('Code Blue activated!','🔵')">🔵 Code Blue</button>
+            <button class="btn btn-primary btn-sm" onclick="showToast('ICU bed requested','🏥')">🏥 Request ICU</button>
+            <button class="btn btn-sm btn-purple" onclick="showToast('Cardiology paged','📟')">📟 Page Cardiology</button>
+            <button class="btn btn-sm btn-outline" onclick="showToast('ECG ordered STAT','❤')">❤ ECG STAT</button>
+          </div>
+        </div>
+
+        <!-- VITALS -->
+        <div class="tab-pane" id="pane-vitals">
+          <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px;">Latest Vitals — Mohan Kumar</div>
+          <div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+              <thead>
+                <tr style="background:var(--surface-2);">
+                  <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;">Time</th>
+                  <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;">BP</th>
+                  <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;">HR</th>
+                  <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;">SpO₂</th>
+                  <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;">Temp</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-top:1px solid var(--border);background:var(--esi1-lt);">
+                  <td style="padding:8px 12px;font-family:'DM Mono',monospace;font-weight:600;">09:42</td>
+                  <td style="padding:8px 12px;color:var(--danger);font-weight:700;">70/40</td>
+                  <td style="padding:8px 12px;color:var(--warn);font-weight:700;">118</td>
+                  <td style="padding:8px 12px;color:var(--warn);font-weight:700;">88%</td>
+                  <td style="padding:8px 12px;">98.2°F</td>
+                </tr>
+                <tr style="border-top:1px solid var(--border);">
+                  <td style="padding:8px 12px;font-family:'DM Mono',monospace;">09:28</td>
+                  <td style="padding:8px 12px;color:var(--warn);">82/52</td>
+                  <td style="padding:8px 12px;color:var(--warn);">124</td>
+                  <td style="padding:8px 12px;color:var(--warn);">86%</td>
+                  <td style="padding:8px 12px;">98.4°F</td>
+                </tr>
+                <tr style="border-top:1px solid var(--border);">
+                  <td style="padding:8px 12px;font-family:'DM Mono',monospace;">09:10</td>
+                  <td style="padding:8px 12px;color:var(--danger);">68/38</td>
+                  <td style="padding:8px 12px;color:var(--danger);">138</td>
+                  <td style="padding:8px 12px;color:var(--danger);">82%</td>
+                  <td style="padding:8px 12px;">99.0°F</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="margin-top:10px;">
+            <button class="btn btn-primary btn-sm" onclick="showToast('Recording vitals...','📊')">＋ Record Vitals</button>
+          </div>
+        </div>
+
+        <!-- ORDERS -->
+        <div class="tab-pane" id="pane-orders">
+          <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px;">STAT Orders</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:var(--radius);background:var(--success-lt);border:1px solid #6EE7B7;">
+              <div style="font-size:12px;font-weight:500;">ECG 12-Lead STAT</div>
+              <span class="badge bd-green">✓ Done</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:var(--radius);background:var(--warn-lt);border:1px solid #FCD34D;">
+              <div style="font-size:12px;font-weight:500;">Troponin I + CK-MB STAT</div>
+              <span class="badge bd-warn">⏳ Processing</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:var(--radius);background:var(--brand-light);border:1px solid #BFDBFE;">
+              <div style="font-size:12px;font-weight:500;">Chest X-Ray Portable</div>
+              <span class="badge bd-blue">📋 Ordered</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:var(--radius);background:var(--brand-light);border:1px solid #BFDBFE;">
+              <div style="font-size:12px;font-weight:500;">IV Dopamine 5mcg/kg/min</div>
+              <span class="badge bd-blue">💊 Running</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:var(--radius);background:var(--success-lt);border:1px solid #6EE7B7;">
+              <div style="font-size:12px;font-weight:500;">O₂ via NRM @ 10 L/min</div>
+              <span class="badge bd-green">✓ Running</span>
+            </div>
+          </div>
+          <div style="margin-top:10px;display:flex;gap:6px;">
+            <button class="btn btn-primary btn-sm" onclick="showToast('Order panel opened','📋')">＋ Add Order</button>
+            <button class="btn btn-outline btn-sm" onclick="showToast('Lab results opening...','🧪')">🧪 Lab Results</button>
+          </div>
+        </div>
+
+        <!-- TIMELINE -->
+        <div class="tab-pane" id="pane-timeline">
+          <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:10px;">ER Event Timeline</div>
+          <div id="er-timeline"></div>
+        </div>
+
+      </div><!-- /active patient -->
+
+      <!-- MLC QUICK PANEL -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">⚖ Medico-Legal Cases</div>
+          <span class="badge bd-purple">2 Active</span>
+        </div>
+        <div class="card-body" style="padding:12px 16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+            <div>
+              <div style="font-size:13px;font-weight:500;">Mohan Kumar · ER-2024-0047</div>
+              <div style="font-size:11px;color:var(--text-3);">RTA — Notified Police · FIR pending</div>
+            </div>
+            <span class="badge bd-red">Critical</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;">
+            <div>
+              <div style="font-size:13px;font-weight:500;">Unknown Male · ER-2024-0045</div>
+              <div style="font-size:11px;color:var(--text-3);">Assault — Medico-legal report filed</div>
+            </div>
+            <span class="badge bd-warn">Stable</span>
+          </div>
+          <button class="btn btn-purple btn-sm" style="margin-top:8px;width:100%;justify-content:center;" onclick="showToast('MLC documentation opened','⚖')">⚖ MLC Documentation</button>
+        </div>
+      </div>
+
+    </div><!-- /right -->
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- REGISTER PATIENT MODAL -->
+<div class="modal-backdrop" id="reg-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🚨 Emergency Patient Registration</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- ESI SELECTOR -->
+      <div style="margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px;">ESI Triage Level <span class="required">*</span></div>
+        <div class="esi-selector">
+          <div class="esi-opt" data-e="1" onclick="selectESI(1)">
+            <span class="esi-num">1</span>
+            <span class="esi-name">Resuscitation</span>
+          </div>
+          <div class="esi-opt sel" data-e="2" onclick="selectESI(2)">
+            <span class="esi-num">2</span>
+            <span class="esi-name">Emergent</span>
+          </div>
+          <div class="esi-opt" data-e="3" onclick="selectESI(3)">
+            <span class="esi-num">3</span>
+            <span class="esi-name">Urgent</span>
+          </div>
+          <div class="esi-opt" data-e="4" onclick="selectESI(4)">
+            <span class="esi-num">4</span>
+            <span class="esi-name">Less Urgent</span>
+          </div>
+          <div class="esi-opt" data-e="5" onclick="selectESI(5)">
+            <span class="esi-num">5</span>
+            <span class="esi-name">Non-Urgent</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-grid" style="margin-bottom:12px;">
+        <div class="form-group">
+          <label class="form-label">Patient Name / Unknown <span class="required">*</span></label>
+          <input class="form-input" placeholder="Name or 'Unknown Male / Female'"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Approx. Age</label>
+          <input class="form-input" type="number" placeholder="e.g. 45"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gender</label>
+          <select class="form-select"><option>Male</option><option>Female</option><option>Unknown</option></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mobile / Attendant</label>
+          <input class="form-input" placeholder="+91 XXXXX XXXXX"/>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Chief Complaint / Presenting Problem <span class="required">*</span></label>
+          <input class="form-input" placeholder="e.g. Chest pain, loss of consciousness, RTA injuries..."/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mode of Arrival</label>
+          <select class="form-select">
+            <option>Ambulance — 108</option>
+            <option>Walk-in</option>
+            <option>Private vehicle</option>
+            <option>Police / Government</option>
+            <option>Referred from clinic</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assign Bay / Bed</label>
+          <select class="form-select">
+            <option>Resus Bay 1 (Free)</option>
+            <option>Bay 3 (Free)</option>
+            <option>Bay 6 (Free)</option>
+            <option>Bay 9 (Free)</option>
+            <option>Bay 12 (Free)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Attending Doctor</label>
+          <select class="form-select">
+            <option>Dr. Ramesh Iyer — ER Duty</option>
+            <option>Dr. Anand Krishnan</option>
+            <option>Dr. Meera Suresh</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">BP (if recorded)</label>
+          <input class="form-input" placeholder="e.g. 120/80"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">SpO₂ / HR</label>
+          <input class="form-input" placeholder="e.g. 96% / 88 bpm"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Known Allergies</label>
+          <input class="form-input" placeholder="NKDA or specify..."/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Insurance / PMJAY</label>
+          <select class="form-select"><option>None / Self-pay</option><option>PMJAY</option><option>Star Health</option><option>ESI</option></select>
+        </div>
+      </div>
+
+      <!-- MLC TOGGLE -->
+      <div style="margin-bottom:14px;">
+        <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;">Medico-Legal Case (MLC) Status</div>
+        <div class="mlc-toggle" id="mlc-toggle" onclick="toggleMLC()">
+          <div class="mlc-toggle-info">
+            <div class="mlc-icon">⚖</div>
+            <div>
+              <div class="mlc-label" id="mlc-label">Not an MLC Case</div>
+              <div class="mlc-sub" id="mlc-sub">Toggle if this is RTA, assault, poisoning, burn, or suspicious injury</div>
+            </div>
+          </div>
+          <div class="toggle-sw" id="mlc-sw"><div class="toggle-knob"></div></div>
+        </div>
+        <div id="mlc-extra" style="display:none;margin-top:10px;">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">MLC Type <span class="required">*</span></label>
+              <select class="form-select">
+                <option>RTA — Road Traffic Accident</option>
+                <option>Assault / Violence</option>
+                <option>Poisoning / Overdose</option>
+                <option>Burns / Scalds</option>
+                <option>Suspected Abuse</option>
+                <option>Industrial Accident</option>
+                <option>Unnatural Death</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Police Station Notified</label>
+              <select class="form-select"><option>Yes — Pending FIR</option><option>Yes — FIR filed</option><option>Not yet</option></select>
+            </div>
+            <div class="form-group full">
+              <label class="form-label">Brief MLC Description</label>
+              <input class="form-input" placeholder="Circumstances of injury, witness details, police reference..."/>
+            </div>
+          </div>
+          <div style="background:var(--purple-lt);border:1px solid #C4B5FD;border-radius:var(--radius);padding:10px 12px;margin-top:8px;font-size:12px;color:var(--purple);">
+            ⚖ MLC case — Police notification is <b>mandatory</b>. Patient cannot be discharged without clearance. All clinical findings must be documented in MLC register.
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <div style="font-size:12px;color:var(--text-3);">ER No. will be auto-generated on registration</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="closeModal();showToast('Patient registered — ESI tag &amp; wristband printing','✅')">Print ESI Tag</button>
+        <button class="btn btn-danger" onclick="closeModal();showToast('🚨 Emergency patient registered!','🚨')">🚨 Register Patient</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span id="toast-icon">✅</span><span id="toast-msg">Done</span>
+</div>
+
+<script>
+// ── CLOCK ──
+function updateClock(){
+  const n=new Date();
+  const h=String(n.getHours()).padStart(2,'0');
+  const m=String(n.getMinutes()).padStart(2,'0');
+  const s=String(n.getSeconds()).padStart(2,'0');
+  document.getElementById('er-clock').textContent=`${h}:${m}:${s}`;
+}
+setInterval(updateClock,1000); updateClock();
+
+// ── WAIT TIMERS ──
+const arrivals={
+  'ER-0047': new Date(Date.now()-38*60000),
+  'ER-0046': new Date(Date.now()-14*60000),
+  'ER-0045': new Date(Date.now()-27*60000),
+  'ER-0044': new Date(Date.now()-51*60000),
+  'ER-0043': new Date(Date.now()-62*60000),
+  'ER-0042': new Date(Date.now()-8*60000),
+  'ER-0041': new Date(Date.now()-94*60000),
+};
+function getWait(id){
+  const diff=Math.floor((Date.now()-arrivals[id])/60000);
+  return diff+'m';
+}
+
+// ── TRIAGE DATA ──
+const triageData=[
+  {id:'ER-0047',name:'Mohan Kumar',age:'58M',esi:1,complaint:'Chest pain + syncope — Cardiogenic shock suspected',mlc:true,bay:'Resus 1',status:'Critical'},
+  {id:'ER-0046',name:'Unknown Female',age:'~35F',esi:1,complaint:'Severe head injury — RTA, GCS 8',mlc:true,bay:'Bay 2',status:'Critical'},
+  {id:'ER-0045',name:'Lakshmi Devi',age:'34F',esi:2,complaint:'Severe abdominal pain — Ectopic pregnancy ruled out',mlc:false,bay:'Bay 4',status:'Emergent'},
+  {id:'ER-0044',name:'Rajan Pillai',age:'67M',esi:3,complaint:'COPD exacerbation — SpO₂ 89% on room air',mlc:false,bay:'Bay 5',status:'Urgent'},
+  {id:'ER-0043',name:'Anjali Menon',age:'28F',esi:3,complaint:'Severe allergic reaction — Urticaria + angioedema',mlc:false,bay:'Bay 7',status:'Urgent'},
+  {id:'ER-0042',name:'Arjun Raj',age:'22M',esi:4,complaint:'Wrist injury — suspected fracture after fall',mlc:false,bay:'Bay 10',status:'Less Urgent'},
+  {id:'ER-0041',name:'Saraswathi',age:'72F',esi:5,complaint:'Minor laceration — finger cut while cooking',mlc:false,bay:'Waiting',status:'Non-Urgent'},
+];
+
+function renderTriage(){
+  const q=document.getElementById('triage-queue');
+  q.innerHTML='';
+  triageData.forEach(p=>{
+    const wait=getWait(p.id);
+    const isCrit=p.esi<=2;
+    q.innerHTML+=`
+    <div class="triage-card esi${p.esi}${isCrit?' critical-flash':''}" onclick="showToast('Loading ${p.name} profile','👤')">
+      <div class="tc-stripe"></div>
+      <div class="tc-inner">
+        <div class="tc-esi">
+          <span class="tc-esi-num">${p.esi}</span>
+          <span class="tc-esi-label">ESI</span>
+        </div>
+        <div class="tc-info">
+          <div class="tc-name">${p.name}</div>
+          <div class="tc-complaint">${p.complaint}</div>
+          <div class="tc-tags">
+            <span class="tc-tag age-tag">${p.age}</span>
+            <span class="tc-tag age-tag">📍 ${p.bay}</span>
+            <span class="tc-tag age-tag">${p.id}</span>
+            ${p.mlc?'<span class="tc-tag mlc-tag">⚖ MLC</span>':''}
+          </div>
+        </div>
+        <div class="tc-right">
+          <div class="tc-wait">${wait}</div>
+          <div class="tc-wait-label">wait time</div>
+          <div class="tc-status-row">
+            <button class="tc-action primary" onclick="event.stopPropagation();showToast('Opening ${p.name} chart','📋')">Chart</button>
+            <button class="tc-action outline" onclick="event.stopPropagation();showToast('Ordering labs for ${p.name}','🧪')">Labs</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  });
+}
+renderTriage();
+setInterval(renderTriage,60000);
+
+// ── BED GRID ──
+const beds=[
+  {n:'R-1',st:'resus',label:'RESUS',resus:true},
+  {n:'R-2',st:'occupied',label:'Occupied'},
+  {n:'B-3',st:'available',label:'Free'},
+  {n:'B-4',st:'occupied',label:'Occupied'},
+  {n:'B-5',st:'occupied',label:'Occupied'},
+  {n:'B-6',st:'available',label:'Free'},
+  {n:'B-7',st:'monitored',label:'Monitor'},
+  {n:'B-8',st:'occupied',label:'Occupied'},
+  {n:'B-9',st:'available',label:'Free'},
+  {n:'B-10',st:'occupied',label:'Occupied'},
+  {n:'B-11',st:'monitored',label:'Monitor'},
+  {n:'B-12',st:'available',label:'Free'},
+  {n:'B-13',st:'occupied',label:'Occupied'},
+  {n:'B-14',st:'available',label:'Free'},
+  {n:'B-15',st:'cleaning',label:'Cleaning'},
+  {n:'T-1',st:'occupied',label:'Triage'},
+];
+const bg=document.getElementById('er-beds');
+beds.forEach(b=>{
+  bg.innerHTML+=`<div class="er-bed ${b.st}" onclick="showToast('Bed ${b.n} — ${b.label}','🛏')">
+    ${b.resus?'<span class="resus-badge">RESUS</span>':''}
+    <span class="eb-num">${b.n}</span>
+    <span class="eb-label">${b.label}</span>
+  </div>`;
+});
+
+// ── ER TIMELINE ──
+const tlEvents=[
+  {t:'09:04',e:'Patient arrived via Ambulance 108',c:'var(--brand)'},
+  {t:'09:06',e:'Triaged ESI 1 — Resus Bay 1 assigned',c:'var(--danger)'},
+  {t:'09:08',e:'IV access ×2, O₂ NRM 10L started',c:'var(--success)'},
+  {t:'09:10',e:'BP 68/38 — Cardiogenic shock suspected',c:'var(--danger)'},
+  {t:'09:12',e:'ECG done — ST elevation leads II, III, aVF',c:'var(--warn)'},
+  {t:'09:14',e:'Cardiology paged STAT — Dr. Suresh responding',c:'var(--brand)'},
+  {t:'09:18',e:'Troponin I sent — STAT',c:'var(--success)'},
+  {t:'09:22',e:'IV Dopamine 5mcg/kg/min started',c:'var(--warn)'},
+  {t:'09:28',e:'BP 82/52 — slight improvement',c:'var(--success)'},
+  {t:'09:35',e:'ICU bed request sent — Awaiting confirmation',c:'var(--brand)'},
+  {t:'09:42',e:'BP 70/40 — deteriorating — MLC filed',c:'var(--danger)'},
+];
+const tl=document.getElementById('er-timeline');
+tlEvents.slice().reverse().forEach(e=>{
+  tl.innerHTML+=`<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);align-items:flex-start;">
+    <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-3);min-width:44px;padding-top:1px;">${e.t}</div>
+    <div style="width:8px;height:8px;border-radius:50%;background:${e.c};flex-shrink:0;margin-top:4px;"></div>
+    <div style="font-size:12px;color:var(--text-2);line-height:1.5;">${e.e}</div>
+  </div>`;
+});
+
+// ── TAB SWITCH ──
+function switchTab(id,btn){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pane-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── ESI SELECTOR ──
+function selectESI(n){
+  document.querySelectorAll('.esi-opt').forEach(o=>o.classList.remove('sel'));
+  document.querySelector(`.esi-opt[data-e="${n}"]`).classList.add('sel');
+}
+
+// ── MLC TOGGLE ──
+let mlcOn=false;
+function toggleMLC(){
+  mlcOn=!mlcOn;
+  document.getElementById('mlc-sw').classList.toggle('on',mlcOn);
+  document.getElementById('mlc-toggle').classList.toggle('on',mlcOn);
+  document.getElementById('mlc-label').textContent=mlcOn?'⚖ MLC Case — Documentation Required':'Not an MLC Case';
+  document.getElementById('mlc-extra').style.display=mlcOn?'block':'none';
+}
+
+// ── MODAL ──
+function openModal(){document.getElementById('reg-modal').classList.add('show');}
+function closeModal(){document.getElementById('reg-modal').classList.remove('show');mlcOn=false;document.getElementById('mlc-sw').classList.remove('on');document.getElementById('mlc-toggle').classList.remove('on');document.getElementById('mlc-label').textContent='Not an MLC Case';document.getElementById('mlc-extra').style.display='none';}
+
+// ── TOAST ──
+let tt;
+function showToast(msg,icon='✅'){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').innerHTML=msg;
+  document.getElementById('toast-icon').textContent=icon;
+  t.classList.add('show');clearTimeout(tt);
+  tt=setTimeout(()=>t.classList.remove('show'),3200);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Diagnotica HMS — Security & Data Protection</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --brand:#1A5EAB;--brand-dark:#0F3F78;--brand-light:#E8F1FB;--brand-mid:#2E7DD6;
+  --accent:#00C0A3;--accent-lt:#E0F9F5;--accent-dark:#007A68;
+  --warn:#F59E0B;--warn-lt:#FEF3C7;--warn-dark:#92400E;
+  --danger:#EF4444;--danger-lt:#FEE2E2;--danger-dark:#7F1D1D;
+  --success:#10B981;--success-lt:#D1FAE5;--success-dark:#065F46;
+  --purple:#7C3AED;--purple-lt:#EDE9FE;
+  --text-1:#0F1C2E;--text-2:#3A4D63;--text-3:#7A8FA6;
+  --border:#DDE6F0;--bg:#F0F5FB;--surface:#FFFFFF;--surface-2:#F7FAFD;
+  --radius:10px;--radius-lg:16px;
+  --shadow:0 1px 4px rgba(26,94,171,.08),0 4px 16px rgba(26,94,171,.06);
+  --shadow-lg:0 8px 32px rgba(26,94,171,.14);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-1);min-height:100vh;font-size:14px;}
+
+/* TOPBAR */
+.topbar{background:var(--brand-dark);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:52px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+.logo-wrap{display:flex;align-items:center;gap:10px;}
+.logo-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#00C0A3,#2E7DD6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;}
+.logo-text{color:#fff;font-size:15px;font-weight:700;}
+.logo-sub{color:#8BAFD4;font-size:11px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.t-chip{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#D4E8FF;border-radius:6px;padding:5px 12px;font-size:12px;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;}
+.t-chip:hover{background:rgba(255,255,255,.18);}
+.t-chip.alert{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.38);color:#FCA5A5;animation:chipPulse 2s infinite;}
+@keyframes chipPulse{0%,100%{background:rgba(239,68,68,.18);}50%{background:rgba(239,68,68,.3);}}
+.user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border-radius:20px;padding:4px 12px 4px 4px;}
+.user-av{width:26px;height:26px;border-radius:50%;background:var(--danger);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+
+/* SHELL */
+.shell{display:flex;height:calc(100vh - 52px);overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:196px;background:var(--surface);border-right:1px solid var(--border);padding:14px 0;flex-shrink:0;overflow-y:auto;}
+.sb-label{font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;padding:8px 14px 4px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:var(--radius);margin:0 8px 2px;cursor:pointer;color:var(--text-2);font-size:13px;transition:all .15s;position:relative;}
+.nav-item:hover{background:var(--brand-light);color:var(--brand);}
+.nav-item.active{background:var(--brand-light);color:var(--brand);font-weight:600;}
+.nav-item.active::before{content:'';position:absolute;left:-4px;top:6px;bottom:6px;width:3px;background:var(--brand);border-radius:0 3px 3px 0;}
+.nb{margin-left:auto;font-size:10px;font-weight:700;border-radius:10px;padding:1px 6px;color:#fff;}
+.nb.b{background:var(--brand);}.nb.g{background:var(--success);}.nb.r{background:var(--danger);}.nb.w{background:var(--warn);color:var(--warn-dark);}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+
+/* SECURITY BANNER */
+.security-banner{background:linear-gradient(135deg,#0F3F78 0%,#1A5EAB 50%,#111827 100%);padding:18px 24px;display:flex;align-items:center;gap:20px;position:relative;overflow:hidden;flex-shrink:0;}
+.security-banner::before{content:'🔐';position:absolute;right:-10px;top:-20px;font-size:130px;opacity:.05;}
+.sb-shield{width:52px;height:52px;border-radius:14px;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+.sb-info{flex:1;}
+.sb-title{font-size:17px;font-weight:800;color:#fff;margin-bottom:3px;}
+.sb-sub{font-size:12px;color:rgba(255,255,255,.55);}
+.sb-chips{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+.sb-chip{border-radius:20px;padding:3px 12px;font-size:11px;font-weight:600;border:1px solid;}
+.sb-chip.ok{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3);color:#6EF0DC;}
+.sb-chip.warn{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.3);color:#FCD34D;}
+.sb-chip.crit{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3);color:#FCA5A5;}
+.security-score{text-align:center;flex-shrink:0;background:rgba(255,255,255,.07);border-radius:var(--radius-lg);padding:14px 22px;border:1px solid rgba(255,255,255,.1);}
+.ss-val{font-size:34px;font-weight:800;color:#6EF0DC;line-height:1;}
+.ss-label{font-size:10px;color:rgba(255,255,255,.5);margin-top:3px;text-transform:uppercase;letter-spacing:.05em;}
+.ss-grade{font-size:12px;font-weight:700;color:#6EF0DC;margin-top:2px;}
+
+/* CONTENT */
+.content{padding:16px 20px;display:grid;grid-template-columns:1fr 320px;gap:16px;flex:1;}
+
+/* CARD */
+.card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px;}
+.card:last-child{margin-bottom:0;}
+.card-header{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);}
+.card-title{font-size:14px;font-weight:700;color:var(--text-1);display:flex;align-items:center;gap:8px;}
+
+/* TABS */
+.tabs-row{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface-2);}
+.tab-btn{padding:10px 14px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:500;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap;}
+.tab-btn:hover{color:var(--text-1);}
+.tab-btn.active{color:var(--brand);border-bottom-color:var(--brand);}
+.tab-pane{display:none;padding:16px;}
+.tab-pane.active{display:block;}
+
+/* RBAC MATRIX */
+.rbac-matrix{width:100%;border-collapse:collapse;font-size:11px;}
+.rbac-matrix th{padding:8px 10px;background:var(--surface-2);text-align:center;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;border:1px solid var(--border);white-space:nowrap;min-width:72px;}
+.rbac-matrix th.role-col{text-align:left;min-width:160px;font-size:11px;}
+.rbac-matrix td{padding:8px 10px;border:1px solid var(--border);text-align:center;vertical-align:middle;}
+.rbac-matrix tr:hover td{background:var(--brand-light);}
+.perm-cell{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto;cursor:pointer;transition:all .15s;font-size:13px;font-weight:700;}
+.perm-cell:hover{transform:scale(1.15);}
+.pc-full{background:var(--brand);color:#fff;}
+.pc-read{background:var(--success-lt);color:var(--success-dark);border:2px solid var(--success);}
+.pc-none{background:var(--surface-2);color:var(--text-3);border:1px solid var(--border);}
+.pc-custom{background:var(--warn-lt);color:var(--warn-dark);border:2px solid var(--warn);}
+.role-cell{display:flex;align-items:center;gap:7px;}
+.role-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;}
+.role-name{font-size:12px;font-weight:600;}
+.role-dept{font-size:10px;color:var(--text-3);}
+
+/* AUDIT LOG */
+.audit-filters{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;}
+.audit-row{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border-radius:var(--radius);border:1.5px solid var(--border);margin-bottom:6px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;}
+.audit-row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;}
+.audit-row.ev-login::before{background:var(--brand);}
+.audit-row.ev-access::before{background:var(--success);}
+.audit-row.ev-modify::before{background:var(--warn);}
+.audit-row.ev-delete::before{background:var(--danger);}
+.audit-row.ev-export::before{background:var(--purple);}
+.audit-row.ev-failed::before{background:var(--danger);}
+.audit-row:hover{border-color:var(--brand);}
+.audit-row.ev-failed{border-color:#FCA5A5;background:var(--danger-lt);}
+.audit-time{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-3);min-width:80px;flex-shrink:0;}
+.audit-event-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:6px;margin-right:8px;flex-shrink:0;white-space:nowrap;}
+.aeb-login{background:var(--brand-light);color:var(--brand);}
+.aeb-access{background:var(--success-lt);color:var(--success-dark);}
+.aeb-modify{background:var(--warn-lt);color:var(--warn-dark);}
+.aeb-delete{background:var(--danger-lt);color:var(--danger);}
+.aeb-export{background:var(--purple-lt);color:var(--purple);}
+.aeb-failed{background:var(--danger-lt);color:var(--danger);}
+.audit-desc{font-size:12px;color:var(--text-1);flex:1;line-height:1.5;}
+.audit-user{font-size:10px;color:var(--text-3);margin-top:2px;}
+.audit-ip{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-3);flex-shrink:0;}
+
+/* ENCRYPTION STATUS */
+.enc-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--radius-lg);border:1.5px solid var(--border);margin-bottom:8px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;}
+.enc-item::before{content:'';position:absolute;right:-16px;top:-16px;width:64px;height:64px;border-radius:50%;background:currentColor;opacity:.04;}
+.enc-item:hover{border-color:var(--brand);box-shadow:var(--shadow);}
+.enc-item.encrypted{border-color:#6EE7B7;background:var(--success-lt);}
+.enc-item.partial{border-color:#FCD34D;background:var(--warn-lt);}
+.enc-item.risk{border-color:#FCA5A5;background:var(--danger-lt);}
+.ei-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.ei-name{font-size:13px;font-weight:700;flex:1;}
+.ei-meta{font-size:11px;color:var(--text-2);margin-top:2px;}
+.ei-algo{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-3);}
+.ei-status{font-size:10px;font-weight:700;padding:3px 10px;border-radius:10px;flex-shrink:0;}
+.eis-ok{background:var(--success-lt);color:var(--success-dark);}
+.eis-partial{background:var(--warn-lt);color:var(--warn-dark);}
+.eis-risk{background:var(--danger-lt);color:var(--danger);}
+
+/* BACKUP STATUS */
+.backup-card{border-radius:var(--radius-lg);border:1.5px solid var(--border);margin-bottom:10px;overflow:hidden;cursor:pointer;transition:all .15s;}
+.backup-card:hover{border-color:var(--brand);box-shadow:var(--shadow);}
+.backup-card.success{border-color:#6EE7B7;}
+.backup-card.warning{border-color:#FCD34D;}
+.backup-card.failed{border-color:#FCA5A5;}
+.bc-header{padding:12px 14px;display:flex;align-items:center;gap:10px;}
+.bc-icon{font-size:24px;flex-shrink:0;}
+.bc-name{font-size:13px;font-weight:700;flex:1;}
+.bc-status-badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:10px;}
+.bcs-success{background:var(--success-lt);color:var(--success-dark);}
+.bcs-warning{background:var(--warn-lt);color:var(--warn-dark);}
+.bcs-failed{background:var(--danger-lt);color:var(--danger);}
+.bc-body{padding:0 14px 12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;}
+.bcb-item{}<div class="bcb-label{font-size:10px;color:var(--text-3);margin-bottom:1px;}
+.bcb-val{font-family:'DM Mono',monospace;font-weight:600;}
+.bc-progress{margin:0 14px 12px;}
+.bcp-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text-3);margin-bottom:4px;}
+.prog-bar{height:5px;background:var(--border);border-radius:4px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:4px;}
+
+/* USER PERMISSION FORM */
+.user-perm-form{display:flex;flex-direction:column;gap:12px;}
+.upf-section{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
+.upf-section-title{font-size:12px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.perm-toggle-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.perm-toggle{display:flex;align-items:center;justify-content:space-between;padding:8px 11px;border-radius:8px;border:1.5px solid var(--border);transition:all .15s;cursor:pointer;}
+.perm-toggle:hover{border-color:var(--brand);background:var(--brand-light);}
+.perm-toggle.on{border-color:var(--success);background:var(--success-lt);}
+.pt-label{font-size:12px;font-weight:500;}
+.toggle-switch{width:34px;height:20px;border-radius:10px;background:var(--border);position:relative;transition:background .2s;flex-shrink:0;}
+.toggle-switch.on{background:var(--success);}
+.toggle-knob{width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.toggle-switch.on .toggle-knob{transform:translateX(14px);}
+
+/* THREAT MAP */
+.threat-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius);border:1.5px solid var(--border);margin-bottom:6px;cursor:pointer;transition:all .15s;}
+.threat-item:hover{border-color:var(--brand);background:var(--brand-light);}
+.threat-item.critical{border-color:#FCA5A5;background:var(--danger-lt);}
+.ti-icon{font-size:20px;flex-shrink:0;}
+.ti-title{font-size:12px;font-weight:600;flex:1;}
+.ti-meta{font-size:10px;color:var(--text-3);}
+.ti-severity{font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;}
+.ts-critical{background:var(--danger-lt);color:var(--danger);}
+.ts-high{background:var(--warn-lt);color:var(--warn-dark);}
+.ts-medium{background:var(--brand-light);color:var(--brand);}
+.ts-low{background:var(--success-lt);color:var(--success-dark);}
+
+/* SESSION TABLE */
+.session-table{width:100%;border-collapse:collapse;font-size:12px;}
+.session-table th{padding:8px 12px;background:var(--surface-2);text-align:left;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);}
+.session-table td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.session-table tr:hover td{background:var(--brand-light);cursor:pointer;}
+.session-current{background:var(--success-lt);border-color:#6EE7B7;}
+
+/* FORM */
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-group.full{grid-column:1/-1;}
+.fl{font-size:11px;font-weight:600;color:var(--text-2);}
+.fi,.fs{padding:8px 11px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;color:var(--text-1);background:var(--surface-2);outline:none;transition:border-color .15s;width:100%;}
+.fi:focus,.fs:focus{border-color:var(--brand);background:#fff;}
+.fi-mono{font-family:'DM Mono',monospace;}
+
+/* BTN */
+.btn{padding:8px 16px;border-radius:var(--radius);border:none;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+.btn-primary{background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(26,94,171,.25);}
+.btn-primary:hover{background:var(--brand-dark);}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-danger:hover{background:var(--danger-dark);}
+.btn-success{background:var(--success);color:#fff;}
+.btn-outline{background:var(--surface);color:var(--brand);border:1.5px solid var(--brand);}
+.btn-outline:hover{background:var(--brand-light);}
+.btn-sm{padding:5px 11px;font-size:12px;}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600;}
+.bd-blue{background:var(--brand-light);color:var(--brand);}
+.bd-green{background:var(--success-lt);color:var(--success);}
+.bd-warn{background:var(--warn-lt);color:var(--warn-dark);}
+.bd-red{background:var(--danger-lt);color:var(--danger);}
+.bd-purple{background:var(--purple-lt);color:var(--purple);}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--brand-dark);color:#fff;padding:12px 20px;border-radius:var(--radius);font-size:13px;font-weight:500;z-index:999;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* MODAL */
+.modal-backdrop{position:fixed;inset:0;background:rgba(15,28,46,.55);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-backdrop.show{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:560px;max-width:94vw;max-height:90vh;overflow-y:auto;transform:translateY(20px) scale(.97);transition:transform .25s cubic-bezier(.34,1.4,.64,1);}
+.modal-backdrop.show .modal{transform:none;}
+.modal-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);position:sticky;top:0;z-index:2;}
+.modal-title{font-size:15px;font-weight:700;}
+.modal-close{width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.modal-body{padding:20px;}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:var(--surface-2);}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo-wrap">
+    <div class="logo-mark">🔐</div>
+    <div><div class="logo-text">Diagnotica HMS</div><div class="logo-sub">Security & Data Protection — Admin Console</div></div>
+  </div>
+  <div class="topbar-right">
+    <div class="t-chip alert">⚠ 3 Failed Logins Detected</div>
+    <div class="t-chip alert">🔴 2 High Risk Events</div>
+    <div class="t-chip" onclick="openModal('user')">＋ Add / Edit User</div>
+    <div class="t-chip" onclick="showToast('Running full security audit...','🔍')">🔍 Run Audit</div>
+    <div class="t-chip" onclick="showToast('Security report exported','📊')">📊 Export Report</div>
+    <div class="user-chip">
+      <div class="user-av">SA</div>
+      <span style="color:#D4E8FF;font-size:12px;">Super Admin — Kiran M.</span>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-label">Security</div>
+  <div class="nav-item active">🛡 Security Overview</div>
+  <div class="nav-item">👥 RBAC Matrix</div>
+  <div class="nav-item">📋 Audit Log <span class="nb r">12</span></div>
+  <div class="nav-item">🔐 Encryption Status</div>
+  <div class="nav-item">💾 Backup & DR</div>
+  <div class="nav-item">👤 User Permissions</div>
+  <div class="nav-item">🖥 Active Sessions <span class="nb b">28</span></div>
+  <div class="sb-label">Threat Management</div>
+  <div class="nav-item">🚨 Threat Monitor <span class="nb r">2</span></div>
+  <div class="nav-item">🔑 MFA Management</div>
+  <div class="nav-item">🌐 IP Whitelist</div>
+  <div class="nav-item">📧 Security Alerts</div>
+  <div class="sb-label">Compliance</div>
+  <div class="nav-item">📋 DPDP Compliance</div>
+  <div class="nav-item">🏛 HIPAA Equivalence</div>
+  <div class="nav-item">🔏 Data Masking Rules</div>
+</nav>
+
+<div class="main">
+<!-- SECURITY BANNER -->
+<div class="security-banner">
+  <div class="sb-shield">🛡️</div>
+  <div class="sb-info">
+    <div class="sb-title">Diagnotica HMS — Security Operations Centre</div>
+    <div class="sb-sub">AES-256 Encrypted · Role-based Access · DPDP 2023 Compliant · Last scan: 14 Mar 2024 14:58</div>
+    <div class="sb-chips">
+      <span class="sb-chip ok">✓ AES-256 Active</span>
+      <span class="sb-chip ok">✓ MFA Enforced</span>
+      <span class="sb-chip ok">✓ TLS 1.3</span>
+      <span class="sb-chip warn">⚠ 3 Failed Logins</span>
+      <span class="sb-chip crit">🔴 2 High Risk Events</span>
+      <span class="sb-chip ok">✓ Backup: Today 02:00</span>
+    </div>
+  </div>
+  <div class="security-score">
+    <div class="ss-val">84</div>
+    <div class="ss-label">Security Score</div>
+    <div class="ss-grade">Grade B+ — Good</div>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- LEFT -->
+  <div>
+    <div class="card">
+      <div class="tabs-row">
+        <button class="tab-btn active" onclick="switchTab('rbac',this)">👥 RBAC Matrix</button>
+        <button class="tab-btn" onclick="switchTab('audit',this)">📋 Audit Log</button>
+        <button class="tab-btn" onclick="switchTab('encryption',this)">🔐 Encryption</button>
+        <button class="tab-btn" onclick="switchTab('backup',this)">💾 Backup & DR</button>
+        <button class="tab-btn" onclick="switchTab('permissions',this)">👤 User Permissions</button>
+        <button class="tab-btn" onclick="switchTab('sessions',this)">🖥 Sessions</button>
+      </div>
+
+      <!-- ── RBAC MATRIX TAB ── -->
+      <div class="tab-pane active" id="pane-rbac">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div>
+            <div style="font-size:13px;font-weight:600;">Role-Based Access Control Matrix</div>
+            <div style="font-size:12px;color:var(--text-3);">Permissions per module by user role</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:11px;">
+              <span style="display:flex;align-items:center;gap:4px;"><div style="width:18px;height:18px;border-radius:50%;background:var(--brand);"></div>Full Access</span>
+              <span style="display:flex;align-items:center;gap:4px;"><div style="width:18px;height:18px;border-radius:50%;background:var(--success-lt);border:2px solid var(--success);"></div>Read Only</span>
+              <span style="display:flex;align-items:center;gap:4px;"><div style="width:18px;height:18px;border-radius:50%;background:var(--warn-lt);border:2px solid var(--warn);"></div>Custom</span>
+              <span style="display:flex;align-items:center;gap:4px;"><div style="width:18px;height:18px;border-radius:50%;background:var(--surface-2);border:1px solid var(--border);"></div>No Access</span>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="showToast('Saving RBAC changes...','🔐')">💾 Save Changes</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="rbac-matrix" id="rbac-table"></table>
+        </div>
+      </div>
+
+      <!-- ── AUDIT LOG TAB ── -->
+      <div class="tab-pane" id="pane-audit">
+        <div class="audit-filters">
+          <select style="padding:7px 11px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:12px;background:var(--surface-2);outline:none;">
+            <option>All Event Types</option>
+            <option>Login / Logout</option>
+            <option>Data Access</option>
+            <option>Data Modification</option>
+            <option>Data Export</option>
+            <option>Failed Attempts</option>
+          </select>
+          <select style="padding:7px 11px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:12px;background:var(--surface-2);outline:none;">
+            <option>All Users</option>
+            <option>Doctors</option>
+            <option>Nurses</option>
+            <option>Pharmacist</option>
+            <option>Admin</option>
+          </select>
+          <input type="date" value="2024-03-14" style="padding:7px 11px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:12px;background:var(--surface-2);outline:none;"/>
+          <button class="btn btn-outline btn-sm" onclick="showToast('Audit log exported','📊')">📊 Export Log</button>
+          <span style="margin-left:auto;font-size:11px;color:var(--text-3);">Showing 12 of 1,248 events today</span>
+        </div>
+        <div id="audit-log-list"></div>
+        <div style="display:flex;justify-content:center;margin-top:10px;">
+          <button class="btn btn-outline btn-sm" onclick="showToast('Loading more audit events...','📋')">Load More Events</button>
+        </div>
+      </div>
+
+      <!-- ── ENCRYPTION TAB ── -->
+      <div class="tab-pane" id="pane-encryption">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="font-size:13px;font-weight:600;">Data Encryption Status</div>
+          <div style="display:flex;gap:6px;">
+            <span class="badge bd-green">18 Encrypted</span>
+            <span class="badge bd-warn">2 Partial</span>
+            <span class="badge bd-red">1 At Risk</span>
+            <button class="btn btn-primary btn-sm" onclick="showToast('Running encryption scan...','🔐')">🔐 Re-scan</button>
+          </div>
+        </div>
+        <div style="background:var(--success-lt);border:1px solid #6EE7B7;border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--success-dark);">
+          🔐 Primary database encrypted with AES-256-GCM · TLS 1.3 in transit · Key rotation: every 90 days (last: 01 Mar 2024)
+        </div>
+        <div id="encryption-list"></div>
+      </div>
+
+      <!-- ── BACKUP & DR TAB ── -->
+      <div class="tab-pane" id="pane-backup">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="font-size:13px;font-weight:600;">Backup & Disaster Recovery</div>
+          <div style="display:flex;gap:6px;">
+            <span class="badge bd-green">3 Healthy</span>
+            <span class="badge bd-warn">1 Warning</span>
+            <button class="btn btn-primary btn-sm" onclick="showToast('Manual backup triggered','💾')">💾 Run Backup Now</button>
+          </div>
+        </div>
+        <div style="background:var(--brand-light);border:1px solid #BFDBFE;border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--brand);">
+          📊 RTO: 4 hours · RPO: 15 minutes · DR Site: Chennai Tier-3 DC (100km) · Last tested: 01 Mar 2024
+        </div>
+        <div id="backup-list"></div>
+
+        <!-- DR READINESS -->
+        <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px;">
+          <div style="font-size:12px;font-weight:700;color:var(--text-2);margin-bottom:10px;">Disaster Recovery Readiness</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;" id="dr-readiness"></div>
+        </div>
+      </div>
+
+      <!-- ── USER PERMISSIONS TAB ── -->
+      <div class="tab-pane" id="pane-permissions">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="font-size:13px;font-weight:600;">User Permission Assignment</div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('user')">＋ Add New User</button>
+        </div>
+        <div class="fg2" style="gap:12px;margin-bottom:14px;">
+          <div class="form-group">
+            <label class="fl">Select User</label>
+            <select class="fs" onchange="loadUserPerms(this.value)">
+              <option value="dr_anand">Dr. Anand Krishnan — Doctor</option>
+              <option value="nurse_suma">Suma W. — Staff Nurse</option>
+              <option value="pharmacist">Meera P. — Pharmacist</option>
+              <option value="reception">Priya S. — Receptionist</option>
+              <option value="it_admin">Kiran M. — IT Admin</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="fl">Role Template</label>
+            <select class="fs" onchange="showToast('Role template applied','🔐')">
+              <option>Doctor (Senior)</option>
+              <option>Doctor (Junior)</option>
+              <option>Staff Nurse</option>
+              <option>Pharmacist</option>
+              <option>Admin Staff</option>
+              <option>Super Admin</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- CURRENT USER INFO -->
+        <div style="background:var(--brand-light);border:1px solid #BFDBFE;border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:50%;background:var(--brand);color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;">AK</div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;">Dr. Anand Krishnan</div>
+            <div style="font-size:11px;color:var(--text-3);">EMP-0110 · General Physician · Joined: Jan 2015 · MFA: ✓ Enabled</div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <span class="badge bd-blue">Doctor (Senior)</span>
+            <button class="btn btn-danger btn-sm" onclick="showToast('User account suspended — confirm required','⚠')">Suspend</button>
+          </div>
+        </div>
+
+        <!-- PERMISSION TOGGLES -->
+        <div class="user-perm-form" id="perm-toggles"></div>
+
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+          <button class="btn btn-outline" onclick="showToast('Permission changes reset','🔄')">Reset to Default</button>
+          <button class="btn btn-success" onclick="showToast('Permissions saved for Dr. Anand Krishnan ✓','✅')">✅ Save Permissions</button>
+        </div>
+      </div>
+
+      <!-- ── SESSIONS TAB ── -->
+      <div class="tab-pane" id="pane-sessions">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:13px;font-weight:600;">Active Sessions — 14 Mar 2024</div>
+          <div style="display:flex;gap:6px;">
+            <span class="badge bd-blue">28 Active</span>
+            <button class="btn btn-danger btn-sm" onclick="showToast('All other sessions terminated','⚠')">⚠ Kill All Sessions</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="session-table">
+            <thead><tr>
+              <th>User</th><th>Role</th><th>IP Address</th><th>Device / Browser</th><th>Location</th><th>Login Time</th><th>Duration</th><th>Action</th>
+            </tr></thead>
+            <tbody id="sessions-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /card -->
+  </div><!-- /left -->
+
+  <!-- RIGHT COLUMN -->
+  <div style="display:flex;flex-direction:column;gap:14px;">
+
+    <!-- THREAT MONITOR -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🚨 Threat Monitor</div>
+        <span class="badge bd-red">2 Active</span>
+      </div>
+      <div style="padding:12px;" id="threat-monitor"></div>
+    </div>
+
+    <!-- SECURITY QUICK STATS -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">📊 Security Metrics</div><span style="font-size:11px;color:var(--text-3);">Last 24h</span></div>
+      <div style="padding:14px;" id="security-metrics"></div>
+    </div>
+
+    <!-- MFA STATUS -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">🔑 MFA Status</div><button class="btn btn-outline btn-sm" onclick="showToast('MFA enforcement email sent to all users','📧')">📧 Enforce All</button></div>
+      <div style="padding:14px;" id="mfa-status"></div>
+    </div>
+
+    <!-- COMPLIANCE STATUS -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">📋 Compliance</div></div>
+      <div style="padding:14px;" id="compliance-status"></div>
+    </div>
+
+  </div><!-- /right -->
+</div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- USER MANAGEMENT MODAL -->
+<div class="modal-backdrop" id="modal-user">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">👤 Add / Edit User Account</div>
+      <button class="modal-close" onclick="closeModal('user')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="fg2" style="gap:12px;">
+        <div class="form-group"><label class="fl">Full Name</label><input class="fi" placeholder="Employee full name"/></div>
+        <div class="form-group"><label class="fl">Employee ID</label><input class="fi fi-mono" placeholder="EMP-XXXX"/></div>
+        <div class="form-group"><label class="fl">Email (Login ID)</label><input class="fi" type="email" placeholder="name@diagnotica.com"/></div>
+        <div class="form-group"><label class="fl">Mobile (MFA)</label><input class="fi" placeholder="+91 XXXXX XXXXX"/></div>
+        <div class="form-group"><label class="fl">Department</label><select class="fs"><option>Doctors</option><option>Nursing</option><option>Pharmacy</option><option>Laboratory</option><option>Radiology</option><option>Administration</option></select></div>
+        <div class="form-group"><label class="fl">Role / Access Level</label><select class="fs"><option>Super Admin</option><option>Doctor (Senior)</option><option>Doctor (Junior)</option><option>Staff Nurse</option><option>Pharmacist</option><option>Receptionist</option><option>Lab Technician</option><option>Read Only</option></select></div>
+        <div class="form-group"><label class="fl">Account Expiry</label><input class="fi" type="date" value="2025-03-14"/></div>
+        <div class="form-group"><label class="fl">MFA Required</label><select class="fs"><option>Yes — Mandatory</option><option>No (not recommended)</option></select></div>
+        <div class="form-group full"><label class="fl">IP Restriction (optional)</label><input class="fi fi-mono" placeholder="192.168.1.0/24 or leave blank for all IPs"/></div>
+        <div class="form-group full"><label class="fl">Notes / Reason for Access</label><input class="fi" placeholder="Justification for this access level..."/></div>
+      </div>
+      <div style="background:var(--warn-lt);border:1px solid #FCD34D;border-radius:var(--radius);padding:10px 14px;margin-top:12px;font-size:12px;color:var(--warn-dark);">
+        ⚠ User will receive email with temporary password. MFA setup required on first login. All access logged per DPDP 2023 compliance.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('user')">Cancel</button>
+      <button class="btn btn-primary" onclick="closeModal('user');showToast('User account created — credentials emailed ✓','✅')">✅ Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span id="toast-icon">✅</span><span id="toast-msg">Done</span></div>
+
+<script>
+// ── RBAC MATRIX ──
+const roles=[
+  {init:'SA',col:'#DC2626',name:'Super Admin',dept:'IT Administration'},
+  {init:'DA',col:'#1A5EAB',name:'Doctor (Senior)',dept:'Clinical'},
+  {init:'DJ',col:'#2E7DD6',name:'Doctor (Junior)',dept:'Clinical'},
+  {init:'SN',col:'#00C0A3',name:'Staff Nurse',dept:'Nursing'},
+  {init:'PH',col:'#F59E0B',name:'Pharmacist',dept:'Pharmacy'},
+  {init:'RC',col:'#7C3AED',name:'Receptionist',dept:'Administration'},
+  {init:'LT',col:'#059669',name:'Lab Technician',dept:'Laboratory'},
+  {init:'RO',col:'#9CA3AF',name:'Read Only',dept:'Reporting'},
+];
+const modules=['Patient Reg.','OPD / EMR','IPD / Ward','Laboratory','Pharmacy','Billing','Radiology','Reports','HR / Staff','System Config'];
+// F=Full, R=Read, C=Custom, N=None
+const perms=[
+  ['F','F','F','F','F','F','F','F','F','F'], // Super Admin
+  ['R','F','F','R','R','R','R','R','N','N'], // Doctor Sr
+  ['R','F','C','N','R','N','R','N','N','N'], // Doctor Jr
+  ['R','R','F','N','R','N','N','R','N','N'], // Staff Nurse
+  ['N','R','R','N','F','R','N','R','N','N'], // Pharmacist
+  ['F','R','R','N','N','F','N','R','N','N'], // Receptionist
+  ['N','N','N','F','N','N','R','R','N','N'], // Lab Tech
+  ['N','R','R','R','R','R','R','F','N','N'], // Read Only
+];
+const permCls={F:'pc-full',R:'pc-read',C:'pc-custom',N:'pc-none'};
+const permLabel={F:'F',R:'R',C:'C',N:'—'};
+const permTitle={F:'Full Access',R:'Read Only',C:'Custom',N:'No Access'};
+const rt=document.getElementById('rbac-table');
+rt.innerHTML=`<thead><tr><th class="role-col">Role / User Type</th>${modules.map(m=>`<th>${m}</th>`).join('')}</tr></thead>`;
+rt.innerHTML+=`<tbody>${roles.map((r,ri)=>`<tr>
+  <td><div class="role-cell"><div class="role-av" style="background:${r.col};">${r.init}</div><div><div class="role-name">${r.name}</div><div class="role-dept">${r.dept}</div></div></div></td>
+  ${perms[ri].map((p,mi)=>`<td onclick="cyclePermission(this,'${r.name}','${modules[mi]}')" title="${r.name} — ${modules[mi]}: ${permTitle[p]}"><div class="perm-cell ${permCls[p]}">${permLabel[p]}</div></td>`).join('')}
+</tr>`).join('')}</tbody>`;
+function cyclePermission(td,role,module){
+  const cell=td.querySelector('.perm-cell');
+  const order=['pc-full','pc-read','pc-custom','pc-none'];
+  const labels={pc-full:'F',['pc-read']:'R',['pc-custom']:'C',['pc-none']:'—'};
+  const labelMap={'pc-full':'F','pc-read':'R','pc-custom':'C','pc-none':'—'};
+  let cur=order.findIndex(c=>cell.classList.contains(c));
+  order.forEach(c=>cell.classList.remove(c));
+  const next=order[(cur+1)%order.length];
+  cell.classList.add(next);
+  cell.textContent=labelMap[next];
+  showToast(`${role} — ${module}: ${next.replace('pc-','')}`,next==='pc-full'?'🔓':next==='pc-none'?'🔒':'🔑');
+}
+
+// ── AUDIT LOG ──
+const auditEvents=[
+  {time:'14:58:32',type:'failed',badge:'aeb-failed',cls:'ev-failed',event:'FAILED LOGIN',desc:'3 consecutive failed login attempts for user meera.pharmacy@diagnotica.com',user:'Unknown — Blocked after 3 attempts',ip:'103.45.82.14'},
+  {time:'14:52:18',type:'export',badge:'aeb-export',cls:'ev-export',event:'DATA EXPORT',desc:'Patient records (OPD-127) exported as PDF — Discharge summary',user:'Dr. Anand Krishnan · EMP-0110',ip:'192.168.1.42'},
+  {time:'14:48:05',type:'modify',badge:'aeb-modify',cls:'ev-modify',event:'RECORD MODIFY',desc:'Prescription updated — Amlodipine 5mg → 10mg for Ravi Kumar (DX-004821)',user:'Dr. Anand Krishnan · EMP-0110',ip:'192.168.1.42'},
+  {time:'14:35:44',type:'access',badge:'aeb-access',cls:'ev-access',event:'DATA ACCESS',desc:'Patient record accessed — Deepak Kumar IPD chart (DX-004829)',user:'Nurse Suma W. · EMP-0842',ip:'192.168.1.78'},
+  {time:'14:22:11',type:'login',badge:'aeb-login',cls:'ev-login',event:'LOGIN',desc:'Successful login — 2FA OTP verified · Session started',user:'Pharmacist Meera P. · EMP-0648',ip:'192.168.1.95'},
+  {time:'14:18:33',type:'modify',badge:'aeb-modify',cls:'ev-modify',event:'RECORD MODIFY',desc:'MAR updated — Cefazolin 1g marked as given (12:00 dose)',user:'Nurse Suma W. · EMP-0842',ip:'192.168.1.78'},
+  {time:'14:10:22',type:'access',badge:'aeb-access',cls:'ev-access',event:'DATA ACCESS',desc:'Blood bank unit BB-2024-0831 record accessed for transfusion',user:'Dr. Kavita · Blood Bank',ip:'192.168.1.104'},
+  {time:'13:58:47',type:'failed',badge:'aeb-failed',cls:'ev-failed',event:'FAILED LOGIN',desc:'Login attempt from unrecognized IP — blocked by firewall',user:'Unknown · IP flagged',ip:'45.142.212.8'},
+  {time:'13:44:18',type:'export',badge:'aeb-export',cls:'ev-export',event:'DATA EXPORT',desc:'Lab report (CBC) downloaded by patient via portal',user:'Patient Ravi Kumar · Portal',ip:'103.21.45.82'},
+  {time:'13:30:05',type:'modify',badge:'aeb-modify',cls:'ev-modify',event:'CONFIG CHANGE',desc:'RBAC update — Junior Doctor role: Pharmacy access set to Read-only',user:'IT Admin Kiran M. · EMP-SA001',ip:'192.168.1.10'},
+  {time:'13:22:14',type:'access',badge:'aeb-access',cls:'ev-access',event:'DATA ACCESS',desc:'OT surgery list accessed — 14 Mar 2024 schedule',user:'OT Coordinator Nisha · EMP-0520',ip:'192.168.1.66'},
+  {time:'13:01:49',type:'failed',badge:'aeb-failed',cls:'ev-failed',event:'FAILED LOGIN',desc:'Account locked after 5 failed attempts — receptionist account',user:'priya.reception@diagnotica.com · Locked',ip:'192.168.1.82'},
+];
+const all=document.getElementById('audit-log-list');
+auditEvents.forEach(e=>{
+  all.innerHTML+=`<div class="audit-row ${e.cls}" onclick="showToast('${e.event} — ${e.time}','📋')">
+    <div class="audit-time">${e.time}</div>
+    <span class="audit-event-badge ${e.badge}">${e.event}</span>
+    <div style="flex:1;"><div class="audit-desc">${e.desc}</div><div class="audit-user">${e.user}</div></div>
+    <div class="audit-ip">${e.ip}</div>
+  </div>`;
+});
+
+// ── ENCRYPTION STATUS ──
+const encItems=[
+  {icon:'🗄',bg:'var(--success-lt)',name:'Primary Database (PostgreSQL)',meta:'Patient records, EMR, billing data',algo:'AES-256-GCM · Key Mgmt: AWS KMS',status:'encrypted',sCls:'eis-ok',stLabel:'✓ Encrypted'},
+  {icon:'💾',bg:'var(--success-lt)',name:'Backup Storage (S3)',meta:'Daily full backups + hourly incrementals',algo:'AES-256-SSE · TLS 1.3 in transit',status:'encrypted',sCls:'eis-ok',stLabel:'✓ Encrypted'},
+  {icon:'📋',bg:'var(--success-lt)',name:'Audit Log Storage',meta:'Immutable audit trail — read-only after write',algo:'AES-256 · WORM compliant',status:'encrypted',sCls:'eis-ok',stLabel:'✓ Encrypted'},
+  {icon:'🖼',bg:'var(--success-lt)',name:'DICOM Image Store (PACS)',meta:'Radiology images — X-Ray, CT, MRI',algo:'AES-256 at-rest · TLS in transit',status:'encrypted',sCls:'eis-ok',stLabel:'✓ Encrypted'},
+  {icon:'📱',bg:'var(--warn-lt)',name:'Mobile App Cache (Patient Portal)',meta:'Temporary local cache on patient devices',algo:'Device keychain (partial)',status:'partial',sCls:'eis-partial',stLabel:'⚠ Partial'},
+  {icon:'📧',bg:'var(--warn-lt)',name:'Email Notifications',meta:'Appointment reminders via SMTP',algo:'TLS in transit only — no E2E',status:'partial',sCls:'eis-partial',stLabel:'⚠ Partial'},
+  {icon:'🖨',bg:'var(--danger-lt)',name:'Print Spooler / Legacy Printers',meta:'Ward printer queue — unencrypted spool',algo:'No encryption — legacy system',status:'risk',sCls:'eis-risk',stLabel:'🔴 At Risk'},
+];
+const el=document.getElementById('encryption-list');
+encItems.forEach(e=>{
+  el.innerHTML+=`<div class="enc-item ${e.status}" style="color:${e.status==='encrypted'?'var(--success)':e.status==='partial'?'var(--warn)':'var(--danger)'};" onclick="showToast('${e.name} — ${e.stLabel}','🔐')">
+    <div class="ei-icon" style="background:${e.bg};">${e.icon}</div>
+    <div style="flex:1;">
+      <div class="ei-name">${e.name}</div>
+      <div class="ei-meta">${e.meta}</div>
+      <div class="ei-algo">${e.algo}</div>
+    </div>
+    <span class="ei-status ${e.sCls}">${e.stLabel}</span>
+  </div>`;
+});
+
+// ── BACKUP STATUS ──
+const backups=[
+  {icon:'🗄',name:'Full Database Backup',type:'PostgreSQL Full Dump',last:'Today 02:00 AM',next:'Tomorrow 02:00 AM',size:'18.4 GB',retention:'90 days',rpo:'24h',status:'success',sCls:'bcs-success',stLabel:'✓ Successful'},
+  {icon:'🔄',name:'Incremental Backup',type:'WAL Streaming Replication',last:'Today 14:45 PM',next:'Every 15 min',size:'240 MB',retention:'7 days',rpo:'15 min',status:'success',sCls:'bcs-success',stLabel:'✓ Active'},
+  {icon:'📦',name:'DICOM / PACS Archive',type:'Radiology image store',last:'Today 03:30 AM',next:'Tomorrow 03:30 AM',size:'124 GB',retention:'10 years',rpo:'24h',status:'warning',sCls:'bcs-warning',stLabel:'⚠ 82% Storage'},
+  {icon:'🌐',name:'DR Site Replication',type:'Chennai Tier-3 DC Mirror',last:'Today 14:50 PM',next:'Continuous',size:'Mirror',retention:'30 days',rpo:'5 min',status:'success',sCls:'bcs-success',stLabel:'✓ In Sync'},
+];
+const bl=document.getElementById('backup-list');
+backups.forEach(b=>{
+  bl.innerHTML+=`<div class="backup-card ${b.status}" onclick="showToast('${b.name} — ${b.stLabel}','💾')">
+    <div class="bc-header">
+      <span class="bc-icon">${b.icon}</span>
+      <div><div class="bc-name">${b.name}</div><div style="font-size:11px;color:var(--text-3);">${b.type}</div></div>
+      <span class="bc-status-badge ${b.sCls}">${b.stLabel}</span>
+    </div>
+    <div class="bc-body">
+      <div><div style="font-size:10px;color:var(--text-3);">Last Backup</div><div style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;">${b.last}</div></div>
+      <div><div style="font-size:10px;color:var(--text-3);">Next Backup</div><div style="font-family:'DM Mono',monospace;font-size:12px;">${b.next}</div></div>
+      <div><div style="font-size:10px;color:var(--text-3);">Size</div><div style="font-family:'DM Mono',monospace;font-size:12px;">${b.size}</div></div>
+      <div><div style="font-size:10px;color:var(--text-3);">RPO</div><div style="font-family:'DM Mono',monospace;font-size:12px;">${b.rpo}</div></div>
+    </div>
+    ${b.status==='warning'?`<div class="bc-progress">
+      <div class="bcp-label"><span>Storage Used</span><span style="color:var(--warn-dark);">82%</span></div>
+      <div class="prog-bar"><div class="prog-fill" style="width:82%;background:var(--warn);"></div></div>
+    </div>`:''}
+  </div>`;
+});
+
+// DR READINESS
+const drItems=[
+  {label:'Database Failover Test',status:'✓ Passed',date:'01 Mar 2024',col:'var(--success)'},
+  {label:'Network Failover',status:'✓ Passed',date:'01 Mar 2024',col:'var(--success)'},
+  {label:'Application Recovery',status:'⚠ Scheduled',date:'20 Mar 2024',col:'var(--warn)'},
+  {label:'Full DR Drill',status:'✓ Passed',date:'15 Feb 2024',col:'var(--success)'},
+];
+const dr=document.getElementById('dr-readiness');
+drItems.forEach(d=>{
+  dr.innerHTML+=`<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;cursor:pointer;" onclick="showToast('${d.label}: ${d.status}','💾')">
+    <div style="font-size:12px;font-weight:600;margin-bottom:3px;">${d.label}</div>
+    <div style="font-size:12px;color:${d.col};font-weight:700;">${d.status}</div>
+    <div style="font-size:10px;color:var(--text-3);">${d.date}</div>
+  </div>`;
+});
+
+// ── USER PERMISSIONS ──
+const permSections=[
+  {title:'📋 Clinical Modules',perms:[
+    {label:'View Patient Records',on:true},
+    {label:'Edit / Update Records',on:true},
+    {label:'Order Lab Tests',on:true},
+    {label:'Prescribe Medications',on:true},
+    {label:'Access Radiology',on:true},
+    {label:'OT Scheduling',on:false},
+  ]},
+  {title:'📊 Administrative Access',perms:[
+    {label:'View Billing',on:true},
+    {label:'Edit Billing',on:false},
+    {label:'View HR Records',on:false},
+    {label:'Export Patient Data',on:false},
+    {label:'Generate Reports',on:true},
+    {label:'System Configuration',on:false},
+  ]},
+  {title:'🔐 Security Permissions',perms:[
+    {label:'View Audit Logs',on:false},
+    {label:'Manage User Accounts',on:false},
+    {label:'RBAC Administration',on:false},
+    {label:'API Access',on:false},
+  ]},
+];
+const pt=document.getElementById('perm-toggles');
+permSections.forEach(sec=>{
+  let html=`<div class="upf-section"><div class="upf-section-title">${sec.title}</div><div class="perm-toggle-grid">`;
+  sec.perms.forEach(p=>{
+    html+=`<div class="perm-toggle ${p.on?'on':''}" onclick="togglePerm(this,'${p.label}')">
+      <span class="pt-label">${p.label}</span>
+      <div class="toggle-switch ${p.on?'on':''}"><div class="toggle-knob"></div></div>
+    </div>`;
+  });
+  html+='</div></div>';
+  pt.innerHTML+=html;
+});
+function togglePerm(el,label){
+  el.classList.toggle('on');
+  const sw=el.querySelector('.toggle-switch');
+  sw.classList.toggle('on');
+  showToast(`${label}: ${el.classList.contains('on')?'Enabled':'Disabled'}`,el.classList.contains('on')?'✅':'🚫');
+}
+
+// ── ACTIVE SESSIONS ──
+const sessions=[
+  {user:'Dr. Anand Krishnan',role:'Doctor (Senior)',ip:'192.168.1.42',device:'Chrome 122 · MacBook Pro',location:'OPD Block, Floor 2',time:'08:55 AM',duration:'5h 43m',current:true},
+  {user:'Nurse Suma W.',role:'Staff Nurse',ip:'192.168.1.78',device:'Firefox 123 · iPad',location:'Ward B, Nurses Station',time:'14:00 PM',duration:'58m',current:false},
+  {user:'Pharmacist Meera P.',role:'Pharmacist',ip:'192.168.1.95',device:'Chrome 122 · Windows PC',location:'Pharmacy Counter',time:'14:22 PM',duration:'36m',current:false},
+  {user:'Dr. Ramesh Iyer',role:'Doctor (Senior)',ip:'192.168.1.52',device:'Safari · iPhone 14',location:'OT Complex',time:'09:00 AM',duration:'5h 38m',current:false},
+  {user:'IT Admin Kiran M.',role:'Super Admin',ip:'192.168.1.10',device:'Chrome 122 · Windows PC',location:'IT Server Room',time:'09:30 AM',duration:'5h 08m',current:false},
+  {user:'Ravi Kumar (Patient)',role:'Patient Portal',ip:'103.21.45.82',device:'Chrome Mobile · Android',location:'External — Mumbai',time:'14:44 PM',duration:'14m',current:false},
+];
+const sb=document.getElementById('sessions-body');
+sessions.forEach(s=>{
+  sb.innerHTML+=`<tr class="${s.current?'session-current':''}" onclick="showToast('${s.user} — ${s.location}','🖥')">
+    <td><div style="font-size:12px;font-weight:500;">${s.user}${s.current?'<span style="font-size:10px;color:var(--success);margin-left:5px;">(You)</span>':''}</div></td>
+    <td><span class="badge bd-blue" style="font-size:10px;">${s.role}</span></td>
+    <td style="font-family:'DM Mono',monospace;font-size:11px;">${s.ip}</td>
+    <td style="font-size:11px;color:var(--text-2);">${s.device}</td>
+    <td style="font-size:11px;color:var(--text-2);">${s.location}</td>
+    <td style="font-family:'DM Mono',monospace;font-size:11px;">${s.time}</td>
+    <td style="font-family:'DM Mono',monospace;font-size:11px;">${s.duration}</td>
+    <td>${s.current?'<span style="font-size:11px;color:var(--text-3);">Current</span>':`<button class="btn btn-danger btn-sm" style="font-size:11px;" onclick="event.stopPropagation();showToast('Session terminated for ${s.user}','⚠')">Terminate</button>`}</td>
+  </tr>`;
+});
+
+// ── THREAT MONITOR ──
+const threats=[
+  {icon:'🚨',title:'Brute Force Attack Detected',meta:'IP 103.45.82.14 — 3 failed logins in 2 min',severity:'ts-critical',svLabel:'Critical',cls:'critical'},
+  {icon:'🌐',title:'Login from External IP',meta:'Patient portal access from unknown location',severity:'ts-high',svLabel:'High'},
+  {icon:'📤',title:'Large Data Export',meta:'Dr. Anand — 48 records exported in 10 min',severity:'ts-medium',svLabel:'Medium'},
+  {icon:'🔑',title:'MFA Bypass Attempt',meta:'Receptionist account — OTP retry limit hit',severity:'ts-high',svLabel:'High'},
+];
+const tm=document.getElementById('threat-monitor');
+threats.forEach(t=>{
+  tm.innerHTML+=`<div class="threat-item${t.cls?' '+t.cls:''}" onclick="showToast('${t.title}','🚨')">
+    <div class="ti-icon">${t.icon}</div>
+    <div style="flex:1;"><div class="ti-title">${t.title}</div><div class="ti-meta">${t.meta}</div></div>
+    <span class="ti-severity ${t.severity}">${t.svLabel}</span>
+  </div>`;
+});
+
+// ── SECURITY METRICS ──
+const metrics=[
+  {label:'Total Login Events',val:'284',trend:'↑ Normal',col:'var(--brand)'},
+  {label:'Failed Logins',val:'12',trend:'⚠ Above threshold',col:'var(--danger)'},
+  {label:'Data Exports',val:'38',trend:'Review recommended',col:'var(--warn-dark)'},
+  {label:'Locked Accounts',val:'2',trend:'Reset initiated',col:'var(--danger)'},
+  {label:'MFA Challenges',val:'142',trend:'All verified',col:'var(--success-dark)'},
+  {label:'Policy Violations',val:'3',trend:'Under review',col:'var(--danger)'},
+];
+const sm=document.getElementById('security-metrics');
+metrics.forEach(m=>{
+  sm.innerHTML+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="showToast('${m.label}: ${m.val}','📊')">
+    <span style="font-size:12px;color:var(--text-2);">${m.label}</span>
+    <div style="text-align:right;">
+      <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:${m.col};">${m.val}</div>
+      <div style="font-size:10px;color:var(--text-3);">${m.trend}</div>
+    </div>
+  </div>`;
+});
+
+// ── MFA STATUS ──
+const mfaDepts=[
+  {dept:'Doctors',total:24,enabled:24,pct:100,col:'var(--success)'},
+  {dept:'Nursing',total:48,enabled:46,pct:96,col:'var(--success)'},
+  {dept:'Administration',total:18,enabled:14,pct:78,col:'var(--warn)'},
+  {dept:'Support Staff',total:40,enabled:28,pct:70,col:'var(--warn)'},
+  {dept:'Lab / Pharmacy',total:24,enabled:22,pct:92,col:'var(--success)'},
+];
+const mfa=document.getElementById('mfa-status');
+mfaDepts.forEach(d=>{
+  mfa.innerHTML+=`<div style="margin-bottom:9px;cursor:pointer;" onclick="showToast('${d.dept} MFA: ${d.pct}%','🔑')">
+    <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
+      <span>${d.dept}</span>
+      <span style="font-weight:700;color:${d.col};">${d.enabled}/${d.total} (${d.pct}%)</span>
+    </div>
+    <div class="prog-bar"><div class="prog-fill" style="width:${d.pct}%;background:${d.col};"></div></div>
+  </div>`;
+});
+
+// ── COMPLIANCE ──
+const compliance=[
+  {label:'DPDP Act 2023',status:'✓ Compliant',col:'var(--success)'},
+  {label:'NABH Data Standards',status:'✓ Compliant',col:'var(--success)'},
+  {label:'ABDM Security Guidelines',status:'✓ Compliant',col:'var(--success)'},
+  {label:'ISO 27001 (in progress)',status:'⚠ 78% done',col:'var(--warn-dark)'},
+  {label:'HIPAA Equivalence',status:'⚠ Review pending',col:'var(--warn-dark)'},
+];
+const cp=document.getElementById('compliance-status');
+compliance.forEach(c=>{
+  cp.innerHTML+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer;font-size:12px;" onclick="showToast('${c.label}: ${c.status}','📋')">
+    <span>${c.label}</span>
+    <span style="font-weight:600;color:${c.col};">${c.status}</span>
+  </div>`;
+});
+
+// ── TABS ──
+function switchTab(id,btn){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pane-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── MODAL ──
+function openModal(id){document.getElementById('modal-'+id).classList.add('show');}
+function closeModal(id){document.getElementById('modal-'+id).classList.remove('show');}
+
+// ── TOAST ──
+let tt;
+function showToast(msg,icon='✅'){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').innerHTML=msg;
+  document.getElementById('toast-icon').textContent=icon;
+  t.classList.add('show');clearTimeout(tt);
+  tt=setTimeout(()=>t.classList.remove('show'),3200);
+}
+</script>
+</body>
+</html>

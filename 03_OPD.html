@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Diagnotica HMS — OPD Management</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --brand:#1A5EAB;--brand-dark:#0F3F78;--brand-light:#E8F1FB;--brand-mid:#2E7DD6;
+  --accent:#00C0A3;--accent-lt:#E0F9F5;
+  --warn:#F59E0B;--warn-lt:#FEF3C7;
+  --danger:#EF4444;--danger-lt:#FEE2E2;
+  --success:#10B981;--success-lt:#D1FAE5;
+  --purple:#7C3AED;--purple-lt:#EDE9FE;
+  --text-1:#0F1C2E;--text-2:#3A4D63;--text-3:#7A8FA6;
+  --border:#DDE6F0;--bg:#F2F6FB;--surface:#FFFFFF;--surface-2:#F7FAFD;
+  --radius:10px;--radius-lg:16px;
+  --shadow:0 1px 4px rgba(26,94,171,.08),0 4px 16px rgba(26,94,171,.06);
+  --shadow-lg:0 8px 32px rgba(26,94,171,.14);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-1);min-height:100vh;font-size:14px;}
+
+/* TOPBAR */
+.topbar{background:var(--brand-dark);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:52px;position:sticky;top:0;z-index:100;}
+.logo-wrap{display:flex;align-items:center;gap:10px;}
+.logo-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#00C0A3,#2E7DD6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;}
+.logo-text{color:#fff;font-size:15px;font-weight:600;}
+.logo-sub{color:#8BAFD4;font-size:11px;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.t-chip{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#D4E8FF;border-radius:6px;padding:5px 12px;font-size:12px;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;}
+.t-chip:hover{background:rgba(255,255,255,.18);}
+.user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border-radius:20px;padding:4px 12px 4px 4px;cursor:pointer;}
+.user-av{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+
+/* LAYOUT */
+.shell{display:flex;height:calc(100vh - 52px);overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:200px;background:var(--surface);border-right:1px solid var(--border);padding:14px 0;flex-shrink:0;overflow-y:auto;}
+.sb-label{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;padding:8px 14px 4px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:var(--radius);margin:0 8px 2px;cursor:pointer;color:var(--text-2);font-size:13px;transition:all .15s;position:relative;}
+.nav-item:hover{background:var(--brand-light);color:var(--brand);}
+.nav-item.active{background:var(--brand-light);color:var(--brand);font-weight:500;}
+.nav-item.active::before{content:'';position:absolute;left:-4px;top:6px;bottom:6px;width:3px;background:var(--brand);border-radius:0 3px 3px 0;}
+.nb{margin-left:auto;color:#fff;font-size:10px;font-weight:600;border-radius:10px;padding:1px 6px;}
+.nb.b{background:var(--brand);}
+.nb.g{background:var(--success);}
+.nb.r{background:var(--danger);}
+.nb.w{background:var(--warn);color:#78350F;}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+
+/* STATS BANNER */
+.stats-banner{background:linear-gradient(135deg,var(--brand-dark),#1A6BC4);padding:16px 24px;display:flex;gap:0;}
+.stat-sep{width:1px;background:rgba(255,255,255,.12);margin:0 20px;}
+.stat-item{text-align:center;min-width:80px;}
+.si-val{font-size:26px;font-weight:700;color:#fff;line-height:1;}
+.si-label{font-size:11px;color:#8BAFD4;margin-top:3px;}
+.si-trend{font-size:11px;margin-top:2px;}
+
+/* CONTENT GRID */
+.content-grid{display:grid;grid-template-columns:1fr 380px;gap:16px;padding:20px 24px;flex:1;}
+
+/* CARD */
+.card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;}
+.card-header{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);}
+.card-title{font-size:14px;font-weight:600;color:var(--text-1);display:flex;align-items:center;gap:8px;}
+.card-body{padding:18px;}
+
+/* CALENDAR */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.cal-title{font-size:15px;font-weight:600;color:var(--text-1);}
+.cal-arrow{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .15s;}
+.cal-arrow:hover{background:var(--brand-light);border-color:var(--brand);color:var(--brand);}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.cal-dow{text-align:center;font-size:11px;font-weight:600;color:var(--text-3);padding:6px 0;text-transform:uppercase;letter-spacing:.05em;}
+.cal-day{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;position:relative;border:1.5px solid transparent;}
+.cal-day:hover{background:var(--brand-light);}
+.cal-day.today{background:var(--brand);border-color:var(--brand);}
+.cal-day.today .cd-num{color:#fff;font-weight:700;}
+.cal-day.selected{border-color:var(--brand);background:var(--brand-light);}
+.cal-day.other-month .cd-num{color:var(--text-3);}
+.cal-day.has-appt .cd-dot{display:block;}
+.cd-num{font-size:13px;font-weight:500;line-height:1;}
+.cd-dot{display:none;width:4px;height:4px;border-radius:50%;background:var(--accent);margin-top:2px;}
+.cal-day.today .cd-dot{background:#fff;}
+
+/* SLOTS */
+.slots-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.slots-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.slot{padding:8px 4px;border-radius:var(--radius);border:1.5px solid var(--border);text-align:center;cursor:pointer;transition:all .15s;font-size:12px;font-weight:500;}
+.slot:hover{border-color:var(--brand);background:var(--brand-light);color:var(--brand);}
+.slot.booked{background:var(--brand);border-color:var(--brand);color:#fff;}
+.slot.blocked{background:var(--surface-2);border-color:var(--border);color:var(--text-3);cursor:not-allowed;text-decoration:line-through;}
+.slot.available{background:var(--success-lt);border-color:#6EE7B7;color:var(--success);}
+.slot.selected{background:var(--brand-light);border-color:var(--brand);color:var(--brand);box-shadow:0 0 0 2px rgba(26,94,171,.2);}
+.slot-time{font-size:11px;display:block;}
+.slot-status{font-size:10px;opacity:.8;display:block;margin-top:1px;}
+
+/* QUEUE */
+.queue-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius);margin-bottom:6px;border:1.5px solid var(--border);cursor:pointer;transition:all .15s;position:relative;}
+.queue-item:hover{border-color:var(--brand);background:var(--brand-light);}
+.queue-item.active-patient{border-color:var(--success);background:var(--success-lt);}
+.queue-item.active-patient::before{content:'IN';position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--success);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;}
+.q-num{width:28px;height:28px;border-radius:50%;background:var(--brand-light);color:var(--brand);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.q-name{font-size:13px;font-weight:500;}
+.q-meta{font-size:11px;color:var(--text-3);}
+.q-wait{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-2);margin-left:auto;flex-shrink:0;}
+
+/* DOCTOR SELECTOR */
+.doc-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;}
+.doc-card{padding:10px;border-radius:var(--radius);border:1.5px solid var(--border);cursor:pointer;transition:all .15s;text-align:center;}
+.doc-card:hover{border-color:var(--brand);background:var(--brand-light);}
+.doc-card.active{border-color:var(--brand);background:var(--brand-light);}
+.doc-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;margin:0 auto 6px;}
+.doc-name{font-size:12px;font-weight:500;color:var(--text-1);}
+.doc-spec{font-size:10px;color:var(--text-3);}
+.doc-slots{font-size:11px;font-weight:600;margin-top:3px;}
+
+/* CONSULTATION NOTES */
+.tabs-row{display:flex;gap:0;border-bottom:1px solid var(--border);}
+.tab-btn{padding:10px 16px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:500;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap;}
+.tab-btn:hover{color:var(--text-1);}
+.tab-btn.active{color:var(--brand);border-bottom-color:var(--brand);}
+.tab-pane{display:none;padding:16px;}
+.tab-pane.active{display:block;}
+
+/* NOTES EDITOR */
+.notes-wrap{border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color .15s;}
+.notes-wrap:focus-within{border-color:var(--brand);}
+.notes-toolbar{padding:6px 10px;background:var(--surface-2);border-bottom:1px solid var(--border);display:flex;gap:4px;flex-wrap:wrap;}
+.toolbar-btn{padding:4px 8px;border:none;background:none;border-radius:5px;cursor:pointer;font-size:12px;color:var(--text-2);transition:background .12s;}
+.toolbar-btn:hover{background:var(--border);}
+.notes-area{width:100%;min-height:120px;padding:12px;border:none;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text-1);resize:vertical;outline:none;line-height:1.7;background:var(--surface);}
+.notes-area::placeholder{color:var(--text-3);}
+
+/* PRESCRIPTION */
+.rx-builder{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.rx-header{padding:10px 14px;background:var(--surface-2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.rx-row{display:grid;grid-template-columns:2fr 1fr 1.2fr 1fr 28px;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border);align-items:center;}
+.rx-row.header-row{background:var(--surface-2);font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em;}
+.rx-row.header-row:last-child{border-bottom:none;}
+.rx-input{padding:6px 9px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;color:var(--text-1);background:var(--surface);outline:none;width:100%;transition:border-color .15s;}
+.rx-input:focus{border-color:var(--brand);}
+.rx-select{padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;color:var(--text-1);background:var(--surface);outline:none;width:100%;cursor:pointer;}
+.rx-del{width:24px;height:24px;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text-3);transition:all .15s;}
+.rx-del:hover{background:var(--danger-lt);border-color:var(--danger);color:var(--danger);}
+.rx-footer{padding:8px 12px;background:var(--surface-2);border-top:1px solid var(--border);display:flex;gap:8px;align-items:center;}
+
+/* BILLING */
+.bill-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);}
+.bill-row:last-child{border-bottom:none;}
+.bill-item{font-size:13px;}
+.bill-code{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-3);}
+.bill-amt{font-size:13px;font-weight:600;font-family:'DM Mono',monospace;}
+.bill-total-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:2px solid var(--border);margin-top:4px;}
+.bill-total-label{font-size:14px;font-weight:600;}
+.bill-total-amt{font-size:18px;font-weight:700;color:var(--brand);font-family:'DM Mono',monospace;}
+.pay-methods{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px;}
+.pay-btn{padding:8px;border-radius:var(--radius);border:1.5px solid var(--border);background:var(--surface-2);cursor:pointer;text-align:center;font-size:12px;font-weight:500;color:var(--text-2);transition:all .15s;}
+.pay-btn:hover{border-color:var(--brand);background:var(--brand-light);color:var(--brand);}
+.pay-btn.active{border-color:var(--brand);background:var(--brand-light);color:var(--brand);}
+
+/* FOLLOW-UP */
+.fu-option{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius);border:1.5px solid var(--border);margin-bottom:6px;cursor:pointer;transition:all .15s;}
+.fu-option:hover{border-color:var(--brand);background:var(--brand-light);}
+.fu-option.selected{border-color:var(--brand);background:var(--brand-light);}
+.fu-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+
+/* FORM */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-group.full{grid-column:1/-1;}
+.form-label{font-size:11px;font-weight:600;color:var(--text-2);}
+.form-input,.form-select{padding:8px 11px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;color:var(--text-1);background:var(--surface-2);outline:none;transition:border-color .15s;width:100%;}
+.form-input:focus,.form-select:focus{border-color:var(--brand);background:#fff;}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600;}
+.bd-blue{background:var(--brand-light);color:var(--brand);}
+.bd-green{background:var(--success-lt);color:var(--success);}
+.bd-warn{background:var(--warn-lt);color:#92400E;}
+.bd-red{background:var(--danger-lt);color:var(--danger);}
+.bd-purple{background:var(--purple-lt);color:var(--purple);}
+
+/* BTN */
+.btn{padding:8px 16px;border-radius:var(--radius);border:none;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+.btn-primary{background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(26,94,171,.28);}
+.btn-primary:hover{background:var(--brand-dark);}
+.btn-outline{background:var(--surface);color:var(--brand);border:1px solid var(--brand);}
+.btn-outline:hover{background:var(--brand-light);}
+.btn-success{background:var(--success);color:#fff;}
+.btn-success:hover{background:#059669;}
+.btn-sm{padding:5px 12px;font-size:12px;}
+.btn-danger{background:var(--danger);color:#fff;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--brand-dark);color:#fff;padding:12px 20px;border-radius:var(--radius);font-size:13px;font-weight:500;z-index:999;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* MODAL */
+.modal-backdrop{position:fixed;inset:0;background:rgba(15,28,46,.45);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-backdrop.show{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:480px;max-width:90vw;overflow:hidden;transform:translateY(20px) scale(.97);transition:transform .25s cubic-bezier(.34,1.4,.64,1);}
+.modal-backdrop.show .modal{transform:translateY(0) scale(1);}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-size:15px;font-weight:600;}
+.modal-close{width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--surface-2);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.modal-body{padding:20px;}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo-wrap">
+    <div class="logo-mark">Dx</div>
+    <div><div class="logo-text">Diagnotica HMS</div><div class="logo-sub">OPD Management</div></div>
+  </div>
+  <div class="topbar-right">
+    <div class="t-chip">📅 14 Mar 2024</div>
+    <div class="t-chip">🏥 Chennai General</div>
+    <div class="t-chip" onclick="showToast('Opening print view...','🖨')">🖨 Print Schedule</div>
+    <div class="t-chip" onclick="openModal('new-appt')">＋ New Appointment</div>
+    <div class="user-chip">
+      <div class="user-av">PD</div>
+      <span style="color:#D4E8FF;font-size:12px;">Front Desk — Priya</span>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-label">OPD</div>
+  <div class="nav-item active">📅 Scheduler</div>
+  <div class="nav-item">🗂 Today's Queue <span class="nb b">18</span></div>
+  <div class="nav-item">📝 Consultation Notes</div>
+  <div class="nav-item">💊 Prescriptions</div>
+  <div class="nav-item">🧾 OPD Billing <span class="nb w">3</span></div>
+  <div class="nav-item">📤 Follow-up</div>
+  <div class="sb-label">Doctors</div>
+  <div class="nav-item">👨‍⚕️ Dr. Anand <span class="nb g">12</span></div>
+  <div class="nav-item">👩‍⚕️ Dr. Meera <span class="nb g">9</span></div>
+  <div class="nav-item">👨‍⚕️ Dr. Ramesh <span class="nb g">8</span></div>
+  <div class="sb-label">Reports</div>
+  <div class="nav-item">📊 OPD Analytics</div>
+  <div class="nav-item">📋 Referrals</div>
+</nav>
+
+<div class="main">
+
+  <!-- STATS BANNER -->
+  <div class="stats-banner">
+    <div class="stat-item">
+      <div class="si-val">47</div>
+      <div class="si-label">Total Booked</div>
+      <div class="si-trend" style="color:#6EF0DC;">↑ 5 walk-ins</div>
+    </div>
+    <div class="stat-sep"></div>
+    <div class="stat-item">
+      <div class="si-val" style="color:#6EF0DC;">29</div>
+      <div class="si-label">Seen Today</div>
+      <div class="si-trend" style="color:#6EF0DC;">62% complete</div>
+    </div>
+    <div class="stat-sep"></div>
+    <div class="stat-item">
+      <div class="si-val" style="color:#FCD34D;">18</div>
+      <div class="si-label">Waiting</div>
+      <div class="si-trend" style="color:#FCD34D;">Avg 22 min wait</div>
+    </div>
+    <div class="stat-sep"></div>
+    <div class="stat-item">
+      <div class="si-val">3</div>
+      <div class="si-label">Doctors On</div>
+      <div class="si-trend" style="color:#6EF0DC;">All available</div>
+    </div>
+    <div class="stat-sep"></div>
+    <div class="stat-item">
+      <div class="si-val" style="color:#FCA5A5;">2</div>
+      <div class="si-label">No-shows</div>
+      <div class="si-trend" style="color:#FCA5A5;">Reminder sent</div>
+    </div>
+    <div class="stat-sep"></div>
+    <div class="stat-item">
+      <div class="si-val">₹38,450</div>
+      <div class="si-label">OPD Revenue</div>
+      <div class="si-trend" style="color:#6EF0DC;">Today so far</div>
+    </div>
+  </div>
+
+  <div class="content-grid">
+
+    <!-- LEFT COLUMN -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+      <!-- DOCTOR SELECTOR + CALENDAR -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📅 Appointment Scheduler</div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-outline btn-sm" onclick="showToast('Week view loaded','📅')">Week</button>
+            <button class="btn btn-primary btn-sm" onclick="openModal('new-appt')">＋ Book Slot</button>
+          </div>
+        </div>
+        <div class="card-body">
+
+          <!-- DOCTOR CARDS -->
+          <div class="doc-cards">
+            <div class="doc-card active" onclick="selectDoc(this,'AK')">
+              <div class="doc-av" style="background:var(--brand-light);color:var(--brand);">AK</div>
+              <div class="doc-name">Dr. Anand Krishnan</div>
+              <div class="doc-spec">General Medicine</div>
+              <div class="doc-slots" style="color:var(--brand);">12 / 20 slots</div>
+            </div>
+            <div class="doc-card" onclick="selectDoc(this,'MS')">
+              <div class="doc-av" style="background:var(--accent-lt);color:var(--accent);">MS</div>
+              <div class="doc-name">Dr. Meera Suresh</div>
+              <div class="doc-spec">Cardiology</div>
+              <div class="doc-slots" style="color:var(--success);">4 / 12 slots</div>
+            </div>
+            <div class="doc-card" onclick="selectDoc(this,'RI')">
+              <div class="doc-av" style="background:var(--purple-lt);color:var(--purple);">RI</div>
+              <div class="doc-name">Dr. Ramesh Iyer</div>
+              <div class="doc-spec">Orthopaedics</div>
+              <div class="doc-slots" style="color:var(--warn);">8 / 10 slots</div>
+            </div>
+          </div>
+
+          <!-- CALENDAR -->
+          <div class="cal-nav">
+            <button class="cal-arrow" onclick="changeMonth(-1)">‹</button>
+            <div class="cal-title" id="cal-title"></div>
+            <button class="cal-arrow" onclick="changeMonth(1)">›</button>
+          </div>
+          <div class="cal-grid" id="cal-grid"></div>
+
+          <!-- SLOTS FOR SELECTED DAY -->
+          <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px;">
+            <div class="slots-header">
+              <div style="font-size:13px;font-weight:600;" id="slots-date-label">Slots — Today, 14 Mar 2024</div>
+              <div style="display:flex;gap:6px;align-items:center;">
+                <span style="font-size:11px;color:var(--text-3);">Dr. Anand Krishnan</span>
+                <button class="btn btn-outline btn-sm" onclick="showToast('Blocking slot...','🚫')">Block Slot</button>
+              </div>
+            </div>
+            <div class="slots-grid" id="slots-grid"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONSULTATION CARD -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📝 Consultation — Current Patient</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="background:var(--success-lt);color:var(--success);font-size:12px;font-weight:600;padding:3px 10px;border-radius:10px;">● IN CONSULTATION</span>
+            <span style="font-size:12px;color:var(--text-3);">Token OPD-127 · Ravi Kumar</span>
+          </div>
+        </div>
+        <div class="tabs-row">
+          <button class="tab-btn active" onclick="switchTab('notes',this)">📝 Notes</button>
+          <button class="tab-btn" onclick="switchTab('rx',this)">💊 Prescription</button>
+          <button class="tab-btn" onclick="switchTab('followup',this)">📅 Follow-up</button>
+          <button class="tab-btn" onclick="switchTab('billing',this)">🧾 Billing</button>
+        </div>
+
+        <!-- NOTES TAB -->
+        <div class="tab-pane active" id="pane-notes">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:600;">Ravi Kumar <span style="font-weight:400;color:var(--text-3);">· 42M · O+ · UHID DX-2024-004821</span></div>
+              <div style="font-size:12px;color:var(--text-3);">Chief Complaint: Headache &amp; BP review · Follow-up #8</div>
+            </div>
+            <span class="badge bd-warn">⚠ Allergies: Penicillin, Aspirin</span>
+          </div>
+          <div class="notes-wrap" style="margin-bottom:10px;">
+            <div class="notes-toolbar">
+              <button class="toolbar-btn" title="Bold"><b>B</b></button>
+              <button class="toolbar-btn" title="Italic"><i>I</i></button>
+              <button class="toolbar-btn" onclick="showToast('SOAP template loaded','📋')">📋 SOAP</button>
+              <button class="toolbar-btn" onclick="showToast('Vitals imported from nursing station','📊')">📊 Import Vitals</button>
+              <button class="toolbar-btn" onclick="showToast('Voice dictation started','🎙')">🎙 Dictate</button>
+              <button class="toolbar-btn" onclick="showToast('AI assist activated','🤖')">🤖 AI Assist</button>
+            </div>
+            <textarea class="notes-area" placeholder="Enter consultation notes...">Patient presents for hypertension follow-up. BP today 142/88 — improved from 148/92 last visit. Headache largely resolved. Complains of mild ankle swelling (possible Amlodipine side effect).
+
+Examination: CVS — S1S2 normal, mild bilateral ankle pitting oedema +1. RS clear. Abdomen soft.
+
+Assessment: Hypertension — partially controlled. To optimise by adding Losartan 50mg. Switch to ARB-CCB combination. Review in 2 weeks.</textarea>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end;">
+            <button class="btn btn-outline btn-sm" onclick="showToast('Note saved as draft','💾')">Save Draft</button>
+            <button class="btn btn-primary btn-sm" onclick="showToast('Consultation note finalised','✅')">✅ Finalise Note</button>
+          </div>
+        </div>
+
+        <!-- PRESCRIPTION TAB -->
+        <div class="tab-pane" id="pane-rx">
+          <div style="background:var(--danger-lt);border:1px solid #FCA5A5;border-radius:var(--radius);padding:9px 14px;margin-bottom:12px;font-size:12px;font-weight:500;color:var(--danger);display:flex;gap:8px;">
+            <span>⚠️</span> Allergy alert: Avoid <b>Penicillin</b> &amp; <b>Aspirin / NSAIDs</b>. Drug interaction check is active.
+          </div>
+          <div class="rx-builder">
+            <div class="rx-header">
+              <span style="font-size:13px;font-weight:600;">Prescription Builder</span>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-outline btn-sm" onclick="showToast('Offline drug catalog opened','📚')">📚 Drug Catalog</button>
+                <button class="btn btn-outline btn-sm" onclick="addRxRow()">＋ Add Drug</button>
+              </div>
+            </div>
+            <div class="rx-row header-row">
+              <span>Drug Name</span><span>Dose</span><span>Frequency</span><span>Duration</span><span></span>
+            </div>
+            <div id="rx-rows">
+              <div class="rx-row">
+                <input class="rx-input" value="Amlodipine 10mg" placeholder="Drug name"/>
+                <input class="rx-input" value="10mg" placeholder="Dose"/>
+                <select class="rx-select"><option>OD</option><option>BD</option><option>TDS</option><option>QID</option><option>SOS</option><option>ON</option></select>
+                <input class="rx-input" value="30 days" placeholder="Duration"/>
+                <button class="rx-del" onclick="delRxRow(this)">×</button>
+              </div>
+              <div class="rx-row">
+                <input class="rx-input" value="Losartan 50mg" placeholder="Drug name"/>
+                <input class="rx-input" value="50mg" placeholder="Dose"/>
+                <select class="rx-select"><option>OD</option><option>BD</option><option>TDS</option><option>QID</option><option>SOS</option><option>ON</option></select>
+                <input class="rx-input" value="30 days" placeholder="Duration"/>
+                <button class="rx-del" onclick="delRxRow(this)">×</button>
+              </div>
+              <div class="rx-row">
+                <input class="rx-input" value="Metformin 500mg" placeholder="Drug name"/>
+                <input class="rx-input" value="500mg" placeholder="Dose"/>
+                <select class="rx-select"><option>OD</option><option selected>BD</option><option>TDS</option></select>
+                <input class="rx-input" value="90 days" placeholder="Duration"/>
+                <button class="rx-del" onclick="delRxRow(this)">×</button>
+              </div>
+            </div>
+            <div class="rx-footer">
+              <span style="font-size:11px;color:var(--text-3);">3 drugs · AI check: ✓ No interactions</span>
+              <div style="margin-left:auto;display:flex;gap:6px;">
+                <button class="btn btn-outline btn-sm" onclick="showToast('Printing prescription...','🖨')">🖨 Print</button>
+                <button class="btn btn-primary btn-sm" onclick="showToast('e-Rx sent to pharmacy ✓','💊')">📤 Send to Pharmacy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FOLLOW-UP TAB -->
+        <div class="tab-pane" id="pane-followup">
+          <div style="font-size:13px;font-weight:600;margin-bottom:12px;">Schedule Next Visit</div>
+          <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+            <button class="btn btn-outline btn-sm" onclick="setFollowup('1 week')">1 Week</button>
+            <button class="btn btn-outline btn-sm" onclick="setFollowup('2 weeks')">2 Weeks</button>
+            <button class="btn btn-outline btn-sm" onclick="setFollowup('1 month')">1 Month</button>
+            <button class="btn btn-outline btn-sm" onclick="setFollowup('3 months')">3 Months</button>
+            <button class="btn btn-outline btn-sm" onclick="setFollowup('6 months')">6 Months</button>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Follow-up Date</label>
+              <input class="form-input" type="date" id="fu-date" value="2024-03-28"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Doctor</label>
+              <select class="form-select">
+                <option>Dr. Anand Krishnan — General</option>
+                <option>Dr. Meera Suresh — Cardiology</option>
+                <option>Dr. Ramesh Iyer — Ortho</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Visit Type</label>
+              <select class="form-select">
+                <option>Follow-up</option><option>Review</option><option>Procedure</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Preferred Time</label>
+              <select class="form-select">
+                <option>Morning (9–12)</option><option>Afternoon (12–3)</option><option>Evening (3–6)</option>
+              </select>
+            </div>
+            <div class="form-group full">
+              <label class="form-label">Instructions for Patient</label>
+              <input class="form-input" value="Check BP daily. Return if BP > 160/100 or severe headache."/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Send Reminder Via</label>
+              <select class="form-select">
+                <option>SMS + WhatsApp</option><option>SMS only</option><option>Email</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Referral (if any)</label>
+              <select class="form-select">
+                <option>None</option>
+                <option>Ophthalmology</option>
+                <option>Cardiology</option>
+                <option>Nephrology</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- FOLLOW-UP OPTIONS -->
+          <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px;">
+            <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px;">Consultation Mode</div>
+            <div class="fu-option selected" onclick="selectFU(this)">
+              <div class="fu-icon" style="background:var(--brand-light);">🏥</div>
+              <div><div style="font-size:13px;font-weight:500;">In-person OPD visit</div>
+              <div style="font-size:11px;color:var(--text-3);">Standard clinic appointment</div></div>
+            </div>
+            <div class="fu-option" onclick="selectFU(this)">
+              <div class="fu-icon" style="background:var(--accent-lt);">📹</div>
+              <div><div style="font-size:13px;font-weight:500;">Telemedicine / Video consult</div>
+              <div style="font-size:11px;color:var(--text-3);">Link sent via WhatsApp</div></div>
+            </div>
+          </div>
+
+          <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
+            <button class="btn btn-outline btn-sm" onclick="showToast('Patient discharge summary printed','🖨')">🖨 Discharge Summary</button>
+            <button class="btn btn-success" onclick="showToast('Follow-up booked — reminder sent via SMS ✓','📅')">📅 Confirm Follow-up</button>
+          </div>
+        </div>
+
+        <!-- BILLING TAB -->
+        <div class="tab-pane" id="pane-billing">
+          <div style="font-size:13px;font-weight:600;margin-bottom:12px;">OPD Billing Summary — Ravi Kumar</div>
+          <div style="border:1px solid var(--border);border-radius:var(--radius);padding:0 14px;margin-bottom:12px;">
+            <div class="bill-row">
+              <div><div class="bill-item">Consultation Fee — General Medicine</div><div class="bill-code">SVC-001</div></div>
+              <div class="bill-amt">₹500</div>
+            </div>
+            <div class="bill-row">
+              <div><div class="bill-item">ECG — 12 Lead</div><div class="bill-code">LAB-ECG-01</div></div>
+              <div class="bill-amt">₹350</div>
+            </div>
+            <div class="bill-row">
+              <div><div class="bill-item">HbA1c + FBS + PP2BS</div><div class="bill-code">LAB-DIA-03</div></div>
+              <div class="bill-amt">₹680</div>
+            </div>
+            <div class="bill-row">
+              <div><div class="bill-item">Lipid Profile</div><div class="bill-code">LAB-LIP-01</div></div>
+              <div class="bill-amt">₹450</div>
+            </div>
+            <div class="bill-row">
+              <div><div class="bill-item">Urine Microalbumin</div><div class="bill-code">LAB-URI-02</div></div>
+              <div class="bill-amt">₹280</div>
+            </div>
+            <div class="bill-row">
+              <div>
+                <div class="bill-item">Prescription Dispensing</div>
+                <div class="bill-code">PHM-DISP</div>
+              </div>
+              <div class="bill-amt">₹120</div>
+            </div>
+            <div style="padding:8px 0;display:flex;align-items:center;justify-content:space-between;border-top:1px dashed var(--border);margin-top:4px;">
+              <span style="font-size:12px;color:var(--text-3);">Subtotal</span>
+              <span style="font-family:'DM Mono',monospace;font-size:13px;">₹2,380</span>
+            </div>
+            <div style="padding:4px 0;display:flex;align-items:center;justify-content:space-between;">
+              <span style="font-size:12px;color:var(--success);">Insurance discount (Star Health — 20%)</span>
+              <span style="font-family:'DM Mono',monospace;font-size:13px;color:var(--success);">– ₹476</span>
+            </div>
+            <div style="padding:4px 0;display:flex;align-items:center;justify-content:space-between;">
+              <span style="font-size:12px;color:var(--text-3);">GST (18% on services only)</span>
+              <span style="font-family:'DM Mono',monospace;font-size:13px;">+ ₹90</span>
+            </div>
+            <div class="bill-total-row">
+              <span class="bill-total-label">Total Payable</span>
+              <span class="bill-total-amt">₹1,994</span>
+            </div>
+          </div>
+
+          <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px;">Payment Method</div>
+          <div class="pay-methods">
+            <div class="pay-btn active" onclick="selectPay(this)">💵 Cash</div>
+            <div class="pay-btn" onclick="selectPay(this)">📱 UPI / QR</div>
+            <div class="pay-btn" onclick="selectPay(this)">💳 Card</div>
+            <div class="pay-btn" onclick="selectPay(this)">🏥 Insurance</div>
+            <div class="pay-btn" onclick="selectPay(this)">📋 PMJAY</div>
+            <div class="pay-btn" onclick="selectPay(this)">🔄 EMI</div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
+            <button class="btn btn-outline btn-sm" onclick="showToast('Invoice generated','🧾')">🧾 Generate Invoice</button>
+            <button class="btn btn-primary" onclick="showToast('Payment of ₹1,994 collected ✓','✅')">✅ Collect Payment ₹1,994</button>
+          </div>
+        </div>
+
+      </div><!-- /consultation card -->
+    </div><!-- /left col -->
+
+    <!-- RIGHT COLUMN -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+      <!-- TODAY'S QUEUE -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🗂 Today's OPD Queue</div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <span style="font-size:12px;color:var(--text-3);">18 waiting</span>
+            <button class="btn btn-outline btn-sm" onclick="showToast('Queue refreshed','🔄')">🔄</button>
+          </div>
+        </div>
+        <div class="card-body" style="padding:12px;" id="queue-list"></div>
+      </div>
+
+      <!-- DOCTOR STATUS -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">👨‍⚕️ Doctor Availability</div></div>
+        <div class="card-body" style="padding:12px 16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--success);"></div>
+              <div>
+                <div style="font-size:13px;font-weight:500;">Dr. Anand Krishnan</div>
+                <div style="font-size:11px;color:var(--text-3);">General · Room 101</div>
+              </div>
+            </div>
+            <span class="badge bd-green">In Consultation</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--warn);"></div>
+              <div>
+                <div style="font-size:13px;font-weight:500;">Dr. Meera Suresh</div>
+                <div style="font-size:11px;color:var(--text-3);">Cardiology · Room 204</div>
+              </div>
+            </div>
+            <span class="badge bd-warn">With Patient</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--success);"></div>
+              <div>
+                <div style="font-size:13px;font-weight:500;">Dr. Ramesh Iyer</div>
+                <div style="font-size:11px;color:var(--text-3);">Orthopaedics · Room 108</div>
+              </div>
+            </div>
+            <span class="badge bd-blue">Available</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /right col -->
+  </div><!-- /content-grid -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- BOOK APPOINTMENT MODAL -->
+<div class="modal-backdrop" id="modal-new-appt">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📅 Book New Appointment</div>
+      <button class="modal-close" onclick="closeModal('new-appt')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group full">
+          <label class="form-label">Patient UHID / Name *</label>
+          <input class="form-input" placeholder="Search by UHID or patient name..."/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Doctor *</label>
+          <select class="form-select">
+            <option>Dr. Anand Krishnan — General</option>
+            <option>Dr. Meera Suresh — Cardiology</option>
+            <option>Dr. Ramesh Iyer — Ortho</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date *</label>
+          <input class="form-input" type="date" value="2024-03-14"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Time Slot *</label>
+          <select class="form-select">
+            <option>09:00 AM</option><option>09:15 AM</option><option>09:30 AM</option>
+            <option>10:00 AM</option><option>10:30 AM</option><option>11:00 AM</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Visit Type</label>
+          <select class="form-select"><option>New Patient</option><option>Follow-up</option><option>Review</option></select>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">Chief Complaint</label>
+          <input class="form-input" placeholder="Reason for visit..."/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Insurance / TPA</label>
+          <select class="form-select"><option>Self-pay</option><option>Star Health</option><option>PMJAY</option></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Send Reminder</label>
+          <select class="form-select"><option>SMS + WhatsApp</option><option>SMS</option><option>None</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('new-appt')">Cancel</button>
+      <button class="btn btn-primary" onclick="closeModal('new-appt');showToast('Appointment booked! Token generated ✓','📅')">✅ Confirm Booking</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span id="toast-icon">✅</span><span id="toast-msg">Done</span>
+</div>
+
+<script>
+// ── CALENDAR ──
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+let curYear=2024,curMonth=2,selectedDay=14;
+const apptDays={2:[1,4,5,7,8,10,12,14,15,17,19,20,22,25,27,28],3:[1,2,5,8,11,14,17,20]};
+
+function renderCal(){
+  const title=document.getElementById('cal-title');
+  title.textContent=MONTHS[curMonth]+' '+curYear;
+  const grid=document.getElementById('cal-grid');
+  grid.innerHTML=DAYS.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  const first=new Date(curYear,curMonth,1).getDay();
+  const days=new Date(curYear,curMonth+1,0).getDate();
+  const prev=new Date(curYear,curMonth,0).getDate();
+  for(let i=0;i<first;i++){
+    const d=prev-first+1+i;
+    grid.innerHTML+=`<div class="cal-day other-month"><span class="cd-num">${d}</span><span class="cd-dot"></span></div>`;
+  }
+  for(let d=1;d<=days;d++){
+    const isToday=(d===14&&curMonth===2&&curYear===2024);
+    const isSel=(d===selectedDay&&curMonth===2&&curYear===2024);
+    const hasAppt=(apptDays[curMonth]||[]).includes(d);
+    const cls=['cal-day',isToday?'today':'',isSel&&!isToday?'selected':'',hasAppt?'has-appt':''].filter(Boolean).join(' ');
+    grid.innerHTML+=`<div class="${cls}" onclick="selectDay(${d})"><span class="cd-num">${d}</span><span class="cd-dot"></span></div>`;
+  }
+  let rem=42-first-days;
+  for(let d=1;d<=rem;d++){
+    grid.innerHTML+=`<div class="cal-day other-month"><span class="cd-num">${d}</span><span class="cd-dot"></span></div>`;
+  }
+}
+function changeMonth(dir){curMonth+=dir;if(curMonth>11){curMonth=0;curYear++;}if(curMonth<0){curMonth=11;curYear--;}renderCal();}
+function selectDay(d){selectedDay=d;renderCal();renderSlots(d);document.getElementById('slots-date-label').textContent=`Slots — ${d} Mar 2024`;}
+renderCal();
+
+// ── SLOTS ──
+const allSlots=[
+  {t:'09:00',st:'booked'},{t:'09:15',st:'booked'},{t:'09:30',st:'booked'},{t:'09:45',st:'booked'},
+  {t:'10:00',st:'available'},{t:'10:15',st:'available'},{t:'10:30',st:'booked'},{t:'10:45',st:'booked'},
+  {t:'11:00',st:'booked'},{t:'11:15',st:'available'},{t:'11:30',st:'available'},{t:'11:45',st:'booked'},
+  {t:'02:00',st:'available'},{t:'02:15',st:'blocked'},{t:'02:30',st:'available'},{t:'02:45',st:'booked'},
+  {t:'03:00',st:'booked'},{t:'03:15',st:'available'},{t:'03:30',st:'available'},{t:'03:45',st:'available'},
+];
+function renderSlots(day){
+  const grid=document.getElementById('slots-grid');
+  grid.innerHTML=allSlots.map(s=>{
+    const lbl=s.st==='booked'?'Booked':s.st==='blocked'?'Blocked':'Free';
+    return `<div class="slot ${s.st}" onclick="clickSlot(this,'${s.t}','${s.st}')">
+      <span class="slot-time">${s.t}</span>
+      <span class="slot-status">${lbl}</span>
+    </div>`;
+  }).join('');
+}
+function clickSlot(el,t,st){
+  if(st==='blocked'){showToast(`Slot ${t} is blocked`,'🚫');return;}
+  document.querySelectorAll('.slot').forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected');
+  if(st==='available') showToast(`Slot ${t} selected — booking...`,'📅');
+  else showToast(`Patient in slot ${t} — viewing details`,'👤');
+}
+renderSlots(14);
+
+// ── QUEUE ──
+const queue=[
+  {n:'Ravi Kumar',t:'OPD-127',d:'Dr. Anand',w:'IN',type:'followup',status:'active'},
+  {n:'Sita Ramachandran',t:'OPD-128',d:'Dr. Anand',w:'2 min',type:'new'},
+  {n:'Arjun Patel',t:'OPD-129',d:'Dr. Anand',w:'8 min',type:'followup'},
+  {n:'Meena Krishnan',t:'OPD-130',d:'Dr. Meera',w:'12 min',type:'new'},
+  {n:'Karthik Rajan',t:'OPD-131',d:'Dr. Anand',w:'18 min',type:'review'},
+  {n:'Priya Devi',t:'OPD-132',d:'Dr. Ramesh',w:'22 min',type:'new'},
+  {n:'Suresh Kumar',t:'OPD-133',d:'Dr. Meera',w:'28 min',type:'followup'},
+];
+const ql=document.getElementById('queue-list');
+queue.forEach(p=>{
+  const isActive=p.status==='active';
+  ql.innerHTML+=`<div class="queue-item${isActive?' active-patient':''}" onclick="showToast('Loading ${p.n}...','👤')">
+    <div class="q-num" style="${isActive?'background:var(--success);color:#fff;':''}">
+      ${isActive?'●':p.t.split('-')[1]}
+    </div>
+    <div>
+      <div class="q-name">${p.n}</div>
+      <div class="q-meta">${p.t} · ${p.d} · ${p.type}</div>
+    </div>
+    <div class="q-wait">${p.w}</div>
+  </div>`;
+});
+
+// ── TABS ──
+function switchTab(id,btn){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pane-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── RX ──
+function addRxRow(){
+  const rows=document.getElementById('rx-rows');
+  const div=document.createElement('div');
+  div.className='rx-row';
+  div.innerHTML=`<input class="rx-input" placeholder="Drug name"/>
+    <input class="rx-input" placeholder="Dose"/>
+    <select class="rx-select"><option>OD</option><option>BD</option><option>TDS</option><option>QID</option><option>SOS</option><option>ON</option></select>
+    <input class="rx-input" placeholder="Duration"/>
+    <button class="rx-del" onclick="delRxRow(this)">×</button>`;
+  rows.appendChild(div);
+  showToast('New drug row added','💊');
+}
+function delRxRow(btn){btn.closest('.rx-row').remove();showToast('Drug removed','🗑');}
+
+// ── DOC SELECT ──
+function selectDoc(el,id){
+  document.querySelectorAll('.doc-card').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  showToast('Showing schedule for Dr. '+id,'👨‍⚕️');
+}
+
+// ── FOLLOW-UP ──
+function setFollowup(period){
+  const d=new Date('2024-03-14');
+  if(period==='1 week') d.setDate(d.getDate()+7);
+  else if(period==='2 weeks') d.setDate(d.getDate()+14);
+  else if(period==='1 month') d.setMonth(d.getMonth()+1);
+  else if(period==='3 months') d.setMonth(d.getMonth()+3);
+  else d.setMonth(d.getMonth()+6);
+  document.getElementById('fu-date').value=d.toISOString().split('T')[0];
+  showToast('Follow-up set: '+period,'📅');
+}
+function selectFU(el){document.querySelectorAll('.fu-option').forEach(f=>f.classList.remove('selected'));el.classList.add('selected');}
+
+// ── PAY ──
+function selectPay(el){document.querySelectorAll('.pay-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
+
+// ── MODAL ──
+function openModal(id){document.getElementById('modal-'+id).classList.add('show');}
+function closeModal(id){document.getElementById('modal-'+id).classList.remove('show');}
+
+// ── TOAST ──
+let tt;
+function showToast(msg,icon='✅'){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  document.getElementById('toast-icon').textContent=icon;
+  t.classList.add('show');clearTimeout(tt);
+  tt=setTimeout(()=>t.classList.remove('show'),3000);
+}
+</script>
+</body>
+</html>

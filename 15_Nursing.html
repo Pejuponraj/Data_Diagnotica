@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Diagnotica HMS — Nursing Station Management</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --brand:#1A5EAB;--brand-dark:#0F3F78;--brand-light:#E8F1FB;--brand-mid:#2E7DD6;
+  --accent:#00C0A3;--accent-lt:#E0F9F5;--accent-dark:#007A68;
+  --warn:#F59E0B;--warn-lt:#FEF3C7;--warn-dark:#92400E;
+  --danger:#EF4444;--danger-lt:#FEE2E2;--danger-dark:#7F1D1D;
+  --success:#10B981;--success-lt:#D1FAE5;--success-dark:#065F46;
+  --purple:#7C3AED;--purple-lt:#EDE9FE;
+  --text-1:#0F1C2E;--text-2:#3A4D63;--text-3:#7A8FA6;
+  --border:#DDE6F0;--bg:#F0F5FB;--surface:#FFFFFF;--surface-2:#F7FAFD;
+  --radius:10px;--radius-lg:16px;
+  --shadow:0 1px 4px rgba(26,94,171,.08),0 4px 16px rgba(26,94,171,.06);
+  --shadow-lg:0 8px 32px rgba(26,94,171,.14);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-1);min-height:100vh;font-size:14px;}
+
+/* TOPBAR */
+.topbar{background:var(--brand-dark);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:52px;position:sticky;top:0;z-index:100;}
+.logo-wrap{display:flex;align-items:center;gap:10px;}
+.logo-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#00C0A3,#2E7DD6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;}
+.logo-text{color:#fff;font-size:15px;font-weight:600;}
+.logo-sub{color:#8BAFD4;font-size:11px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.t-chip{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#D4E8FF;border-radius:6px;padding:5px 12px;font-size:12px;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;}
+.t-chip:hover{background:rgba(255,255,255,.18);}
+.t-chip.alert{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.38);color:#FCA5A5;animation:alertBlink 2s infinite;}
+@keyframes alertBlink{0%,100%{background:rgba(239,68,68,.18);}50%{background:rgba(239,68,68,.3);}}
+.user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border-radius:20px;padding:4px 12px 4px 4px;}
+.user-av{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+
+/* SHELL */
+.shell{display:flex;height:calc(100vh - 52px);overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:196px;background:var(--surface);border-right:1px solid var(--border);padding:14px 0;flex-shrink:0;overflow-y:auto;}
+.sb-label{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;padding:8px 14px 4px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:var(--radius);margin:0 8px 2px;cursor:pointer;color:var(--text-2);font-size:13px;transition:all .15s;position:relative;}
+.nav-item:hover{background:var(--brand-light);color:var(--brand);}
+.nav-item.active{background:var(--brand-light);color:var(--brand);font-weight:500;}
+.nav-item.active::before{content:'';position:absolute;left:-4px;top:6px;bottom:6px;width:3px;background:var(--brand);border-radius:0 3px 3px 0;}
+.nb{margin-left:auto;font-size:10px;font-weight:700;border-radius:10px;padding:1px 6px;color:#fff;}
+.nb.b{background:var(--brand);}.nb.g{background:var(--success);}.nb.r{background:var(--danger);}.nb.w{background:var(--warn);color:var(--warn-dark);}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+
+/* KPI BANNER */
+.kpi-banner{background:linear-gradient(135deg,var(--brand-dark),#1563B8);padding:14px 24px;display:flex;gap:0;align-items:center;flex-shrink:0;}
+.kpi-item{text-align:center;min-width:90px;}
+.kpi-val{font-size:22px;font-weight:700;color:#fff;line-height:1;}
+.kpi-label{font-size:10px;color:#8BAFD4;margin-top:3px;text-transform:uppercase;letter-spacing:.05em;}
+.kpi-trend{font-size:11px;margin-top:2px;}
+.kpi-sep{width:1px;background:rgba(255,255,255,.1);margin:0 12px;height:30px;}
+
+/* SHIFT BADGE */
+.shift-badge{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.sb-pill{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid rgba(255,255,255,.2);}
+.sb-pill.b{background:rgba(26,94,171,.3);color:#93C5FD;}
+.clock{font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:#fff;}
+
+/* CONTENT */
+.content{padding:16px 20px;display:grid;grid-template-columns:1fr 320px;gap:16px;flex:1;}
+
+/* CARD */
+.card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px;}
+.card:last-child{margin-bottom:0;}
+.card-header{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);}
+.card-title{font-size:14px;font-weight:600;color:var(--text-1);display:flex;align-items:center;gap:8px;}
+
+/* TABS */
+.tabs-row{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface-2);}
+.tab-btn{padding:10px 15px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:500;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap;}
+.tab-btn:hover{color:var(--text-1);}
+.tab-btn.active{color:var(--brand);border-bottom-color:var(--brand);}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+
+/* PATIENT MONITORING GRID */
+.monitor-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px;}
+.monitor-card{border-radius:var(--radius-lg);border:1.5px solid var(--border);padding:12px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;}
+.monitor-card:hover{border-color:var(--brand);box-shadow:var(--shadow);}
+.monitor-card.critical{border-color:#FCA5A5;background:var(--danger-lt);}
+.monitor-card.warning{border-color:#FCD34D;background:var(--warn-lt);}
+.monitor-card.stable{border-color:#6EE7B7;background:var(--success-lt);}
+.mc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.mc-bed{font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;}
+.mc-alert-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.mc-critical .mc-alert-dot,.monitor-card.critical .mc-alert-dot{background:var(--danger);animation:dotPulse 1.2s infinite;}
+.monitor-card.warning .mc-alert-dot{background:var(--warn);animation:dotPulse 1.8s infinite;}
+.monitor-card.stable .mc-alert-dot{background:var(--success);}
+@keyframes dotPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4);}50%{box-shadow:0 0 0 5px rgba(239,68,68,0);}}
+.mc-name{font-size:13px;font-weight:600;margin-bottom:3px;}
+.mc-vitals{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+.mc-vital{background:rgba(0,0,0,.04);border-radius:6px;padding:5px 8px;text-align:center;}
+.mcv-val{font-size:14px;font-weight:700;line-height:1;}
+.mcv-label{font-size:9px;color:var(--text-3);text-transform:uppercase;margin-top:1px;}
+.mc-vital.hi .mcv-val{color:var(--danger);}
+.mc-vital.lo .mcv-val{color:var(--warn-dark);}
+.mc-vital.ok .mcv-val{color:var(--success-dark);}
+.mc-vital.norm .mcv-val{color:var(--brand);}
+
+/* VITALS INPUT */
+.vitals-input-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px;}
+.vi-card{border-radius:var(--radius-lg);border:2px solid var(--border);padding:14px;transition:all .15s;position:relative;}
+.vi-card:focus-within{border-color:var(--brand);box-shadow:0 0 0 3px rgba(26,94,171,.1);}
+.vi-label{font-size:11px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.vi-icon{font-size:16px;}
+.vi-input{width:100%;border:none;outline:none;font-family:'DM Mono',monospace;font-size:24px;font-weight:700;color:var(--brand);background:transparent;padding:0;margin-bottom:4px;}
+.vi-unit{font-size:11px;color:var(--text-3);}
+.vi-range{font-size:10px;color:var(--text-3);margin-top:4px;}
+.vi-trend{font-size:11px;font-weight:600;margin-top:3px;}
+.vi-trend.up{color:var(--danger);}
+.vi-trend.down{color:var(--success);}
+.vi-trend.stable{color:var(--success);}
+.vi-card.alert-state{border-color:#FCA5A5;background:var(--danger-lt);}
+.vi-card.warn-state{border-color:#FCD34D;background:var(--warn-lt);}
+
+/* VITALS SPARKLINE */
+.sparkline{width:100%;height:32px;margin-top:6px;}
+
+/* CHART CANVAS */
+.chart-container{padding:0 16px 16px;position:relative;}
+
+/* MAR TABLE */
+.mar-wrap{overflow-x:auto;}
+.mar-table{width:100%;border-collapse:collapse;font-size:12px;}
+.mar-table th{padding:9px 12px;background:var(--surface-2);text-align:left;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);white-space:nowrap;}
+.mar-table td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.mar-table tr:hover td{background:var(--brand-light);cursor:pointer;}
+.mar-cell{width:34px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;cursor:pointer;transition:all .15s;border:1px solid var(--border);}
+.mc-given{background:var(--success-lt);color:var(--success-dark);border-color:#6EE7B7;}
+.mc-due{background:var(--warn-lt);color:var(--warn-dark);border-color:#FCD34D;animation:marBlink 2s infinite;}
+@keyframes marBlink{0%,100%{border-color:#FCD34D;}50%{border-color:var(--warn);box-shadow:0 0 0 2px rgba(245,158,11,.2);}}
+.mc-held{background:var(--danger-lt);color:var(--danger);border-color:#FCA5A5;}
+.mc-na{background:var(--surface-2);color:var(--text-3);}
+.drug-name-cell{font-weight:500;}
+.drug-route{font-size:10px;color:var(--text-3);}
+.allergy-warn{font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;background:var(--danger-lt);color:var(--danger);margin-left:4px;}
+
+/* NURSING NOTES */
+.notes-toolbar{padding:7px 12px;background:var(--surface-2);border-bottom:1px solid var(--border);display:flex;gap:4px;align-items:center;flex-wrap:wrap;}
+.toolbar-btn{padding:4px 9px;border:1px solid var(--border);border-radius:6px;background:var(--surface);font-size:12px;cursor:pointer;color:var(--text-2);transition:all .12s;font-family:inherit;}
+.toolbar-btn:hover{background:var(--brand-light);border-color:var(--brand);color:var(--brand);}
+.note-area{width:100%;padding:14px;border:none;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text-1);resize:vertical;outline:none;min-height:160px;line-height:1.75;background:var(--surface);}
+.note-meta{padding:8px 14px;background:var(--surface-2);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text-3);}
+.previous-note{padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;}
+.previous-note:hover{background:var(--brand-light);}
+.pn-meta{font-size:11px;color:var(--text-3);margin-bottom:3px;}
+.pn-text{font-size:12px;color:var(--text-2);line-height:1.5;}
+
+/* HANDOVER */
+.handover-section{padding:14px 16px;border-bottom:1px solid var(--border);}
+.hs-title{font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+.handover-patient-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius);border:1.5px solid var(--border);margin-bottom:6px;cursor:pointer;transition:all .15s;}
+.handover-patient-row:hover{border-color:var(--brand);background:var(--brand-light);}
+.hp-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;}
+.hp-name{font-size:12px;font-weight:500;flex:1;}
+.hp-meta{font-size:11px;color:var(--text-3);}
+.hp-priority{font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;}
+.hpri-high{background:var(--danger-lt);color:var(--danger);}
+.hpri-med{background:var(--warn-lt);color:var(--warn-dark);}
+.hpri-low{background:var(--success-lt);color:var(--success-dark);}
+
+/* PATIENT SELECTOR (right panel) */
+.pt-selector{border-radius:var(--radius);border:1.5px solid var(--border);margin-bottom:7px;cursor:pointer;transition:all .15s;overflow:hidden;}
+.pt-selector:hover{border-color:var(--brand);}
+.pt-selector.selected{border-color:var(--brand);background:var(--brand-light);}
+.ps-stripe{height:3px;}
+.pss-critical{background:var(--danger);}
+.pss-warning{background:var(--warn);}
+.pss-stable{background:var(--success);}
+.ps-inner{padding:9px 12px;display:flex;align-items:center;gap:9px;}
+.ps-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;}
+.ps-name{font-size:12px;font-weight:500;}
+.ps-bed{font-size:11px;color:var(--text-3);}
+
+/* ALERTS PANEL */
+.alert-item{display:flex;align-items:flex-start;gap:9px;padding:10px 12px;border-radius:var(--radius);border:1.5px solid;margin-bottom:7px;cursor:pointer;transition:all .15s;}
+.alert-item.critical{border-color:#FCA5A5;background:var(--danger-lt);}
+.alert-item.warning{border-color:#FCD34D;background:var(--warn-lt);}
+.alert-item.info{border-color:#BFDBFE;background:var(--brand-light);}
+.ai-icon{font-size:18px;flex-shrink:0;}
+.ai-title{font-size:12px;font-weight:600;}
+.ai-sub{font-size:11px;color:var(--text-2);margin-top:2px;line-height:1.4;}
+.ai-time{font-size:10px;color:var(--text-3);margin-top:3px;font-family:'DM Mono',monospace;}
+
+/* FORM */
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-group.full{grid-column:1/-1;}
+.fl{font-size:11px;font-weight:600;color:var(--text-2);}
+.fi,.fs{padding:8px 11px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;color:var(--text-1);background:var(--surface-2);outline:none;transition:border-color .15s;width:100%;}
+.fi:focus,.fs:focus{border-color:var(--brand);background:#fff;}
+
+/* BTN */
+.btn{padding:8px 16px;border-radius:var(--radius);border:none;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+.btn-primary{background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(26,94,171,.25);}
+.btn-primary:hover{background:var(--brand-dark);}
+.btn-success{background:var(--success);color:#fff;}
+.btn-success:hover{background:#059669;}
+.btn-outline{background:var(--surface);color:var(--brand);border:1px solid var(--brand);}
+.btn-outline:hover{background:var(--brand-light);}
+.btn-warn{background:var(--warn);color:var(--warn-dark);}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-sm{padding:5px 11px;font-size:12px;}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600;}
+.bd-blue{background:var(--brand-light);color:var(--brand);}
+.bd-green{background:var(--success-lt);color:var(--success);}
+.bd-warn{background:var(--warn-lt);color:var(--warn-dark);}
+.bd-red{background:var(--danger-lt);color:var(--danger);}
+.bd-gray{background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--brand-dark);color:#fff;padding:12px 20px;border-radius:var(--radius);font-size:13px;font-weight:500;z-index:999;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* PROGRESS */
+.prog-bar{height:4px;background:var(--border);border-radius:4px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:4px;transition:width .5s;}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo-wrap">
+    <div class="logo-mark">Dx</div>
+    <div><div class="logo-text">Diagnotica HMS</div><div class="logo-sub">Nursing Station — Ward B · Shift B</div></div>
+  </div>
+  <div class="topbar-right">
+    <div class="t-chip alert">🔴 2 Critical Alerts</div>
+    <div class="t-chip alert">💊 5 MAR Due Now</div>
+    <div class="t-chip" onclick="showToast('Opening new vitals entry form','📊')">＋ Record Vitals</div>
+    <div class="t-chip" onclick="showToast('Shift handover report generating...','🔄')">🔄 Handover</div>
+    <div class="shift-badge">
+      <div class="sb-pill b">Shift B · 14:00–22:00</div>
+      <div class="clock" id="live-clock">--:--:--</div>
+    </div>
+    <div class="user-chip">
+      <div class="user-av">SW</div>
+      <span style="color:#D4E8FF;font-size:12px;">Nurse — Suma W.</span>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-label">Nursing</div>
+  <div class="nav-item active">📊 Patient Monitor <span class="nb r">2</span></div>
+  <div class="nav-item">📈 Vitals Entry</div>
+  <div class="nav-item">💊 MAR — Medications <span class="nb w">5</span></div>
+  <div class="nav-item">📝 Nursing Notes</div>
+  <div class="nav-item">🔄 Shift Handover</div>
+  <div class="nav-item">📋 Task Checklist <span class="nb b">8</span></div>
+  <div class="sb-label">Ward B Patients</div>
+  <div class="nav-item">🔴 Deepak Kumar <span class="nb r">!</span></div>
+  <div class="nav-item">🟡 Karthik Rajan</div>
+  <div class="nav-item">🟢 Anjali Menon</div>
+  <div class="nav-item">🟢 Rajan Pillai</div>
+  <div class="nav-item">🟢 Priya Devi</div>
+  <div class="nav-item">🟢 Suresh Kumar</div>
+  <div class="sb-label">Quick Access</div>
+  <div class="nav-item">📟 Call Doctor</div>
+  <div class="nav-item">🚨 Emergency Code</div>
+  <div class="nav-item">🧪 Lab Requests</div>
+</nav>
+
+<div class="main">
+<!-- KPI BANNER -->
+<div class="kpi-banner">
+  <div class="kpi-item"><div class="kpi-val">14</div><div class="kpi-label">Patients — Ward B</div><div class="kpi-trend" style="color:#6EF0DC;">2 new admissions</div></div>
+  <div class="kpi-sep"></div>
+  <div class="kpi-item"><div class="kpi-val" style="color:#FCA5A5;">2</div><div class="kpi-label">Critical</div><div class="kpi-trend" style="color:#FCA5A5;">Immediate attention</div></div>
+  <div class="kpi-sep"></div>
+  <div class="kpi-item"><div class="kpi-val" style="color:#FCD34D;">5</div><div class="kpi-label">MAR Due</div><div class="kpi-trend" style="color:#FCD34D;">Next: 18:00</div></div>
+  <div class="kpi-sep"></div>
+  <div class="kpi-item"><div class="kpi-val" style="color:#6EF0DC;">9</div><div class="kpi-label">Vitals Recorded</div><div class="kpi-trend" style="color:#6EF0DC;">Last: 14:30</div></div>
+  <div class="kpi-sep"></div>
+  <div class="kpi-item"><div class="kpi-val">3</div><div class="kpi-label">Discharges Today</div><div class="kpi-trend" style="color:#6EF0DC;">All paperwork done</div></div>
+  <div class="kpi-sep"></div>
+  <div class="kpi-item"><div class="kpi-val" style="color:#6EF0DC;">4h 00m</div><div class="kpi-label">Shift Remaining</div><div class="kpi-trend" style="color:#8BAFD4;">Ends 22:00</div></div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- LEFT COLUMN -->
+  <div style="display:flex;flex-direction:column;gap:0;">
+
+    <div class="card">
+      <div class="tabs-row">
+        <button class="tab-btn active" onclick="switchTab('monitor',this)">📊 Patient Monitor</button>
+        <button class="tab-btn" onclick="switchTab('vitals',this)">📈 Vitals Input</button>
+        <button class="tab-btn" onclick="switchTab('mar',this)">💊 MAR</button>
+        <button class="tab-btn" onclick="switchTab('notes',this)">📝 Nursing Notes</button>
+        <button class="tab-btn" onclick="switchTab('handover',this)">🔄 Handover</button>
+      </div>
+
+      <!-- ── PATIENT MONITOR TAB ── -->
+      <div class="tab-pane active" id="pane-monitor">
+        <div style="padding:12px 16px 4px;display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:13px;font-weight:600;">Ward B — Live Patient Status</div>
+          <div style="display:flex;gap:6px;">
+            <select style="padding:5px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:12px;background:var(--surface-2);outline:none;">
+              <option>Ward B — All Patients</option><option>Ward A</option><option>ICU</option>
+            </select>
+            <button class="btn btn-outline btn-sm" onclick="showToast('Refreshing patient monitors...','🔄')">🔄 Refresh</button>
+          </div>
+        </div>
+        <div class="monitor-grid" id="monitor-grid"></div>
+      </div>
+
+      <!-- ── VITALS INPUT TAB ── -->
+      <div class="tab-pane" id="pane-vitals">
+        <div style="padding:12px 16px 0;display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <div>
+            <div style="font-size:13px;font-weight:600;">Vitals Entry — Deepak Kumar</div>
+            <div style="font-size:12px;color:var(--text-3);">Ward B · Bed B-04 · Post-op Day 7 · 14:35</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <select style="padding:5px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:12px;background:var(--surface-2);outline:none;" onchange="showToast('Loading patient: '+this.options[this.selectedIndex].text,'👤')">
+              <option>Deepak Kumar · B-04</option>
+              <option>Karthik Rajan · B-08</option>
+              <option>Anjali Menon · B-03</option>
+              <option>Rajan Pillai · A-09</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="saveVitals()">💾 Save Vitals</button>
+          </div>
+        </div>
+
+        <!-- LIVE VITALS INPUT CARDS -->
+        <div class="vitals-input-grid" id="vitals-input-grid">
+          <!-- BP -->
+          <div class="vi-card" id="vi-bp">
+            <div class="vi-label"><span class="vi-icon">❤</span> Blood Pressure</div>
+            <input class="vi-input" id="inp-bp" value="124/78" oninput="checkVital('bp',this.value)"/>
+            <div class="vi-unit">mmHg</div>
+            <div class="vi-range">Normal: 90–130 / 60–90</div>
+            <svg class="sparkline" id="spark-bp" viewBox="0 0 120 32"></svg>
+            <div class="vi-trend stable" id="trend-bp">↓ from 128/82 · Improving</div>
+          </div>
+          <!-- HR -->
+          <div class="vi-card" id="vi-hr">
+            <div class="vi-label"><span class="vi-icon">💓</span> Heart Rate</div>
+            <input class="vi-input" id="inp-hr" value="80" oninput="checkVital('hr',this.value)"/>
+            <div class="vi-unit">beats per minute</div>
+            <div class="vi-range">Normal: 60–100 bpm</div>
+            <svg class="sparkline" id="spark-hr" viewBox="0 0 120 32"></svg>
+            <div class="vi-trend stable" id="trend-hr">↔ Stable</div>
+          </div>
+          <!-- TEMP -->
+          <div class="vi-card" id="vi-temp">
+            <div class="vi-label"><span class="vi-icon">🌡</span> Temperature</div>
+            <input class="vi-input" id="inp-temp" value="37.1" oninput="checkVital('temp',this.value)"/>
+            <div class="vi-unit">°C (Normal 36.5–37.5)</div>
+            <div class="vi-range">Fever: >38°C · Hypothermia: &lt;36°C</div>
+            <svg class="sparkline" id="spark-temp" viewBox="0 0 120 32"></svg>
+            <div class="vi-trend stable" id="trend-temp">↔ Afebrile</div>
+          </div>
+          <!-- SPO2 -->
+          <div class="vi-card" id="vi-spo2">
+            <div class="vi-label"><span class="vi-icon">🫁</span> SpO₂</div>
+            <input class="vi-input" id="inp-spo2" value="98" oninput="checkVital('spo2',this.value)"/>
+            <div class="vi-unit">% oxygen saturation</div>
+            <div class="vi-range">Normal: ≥95% · Alert: &lt;90%</div>
+            <svg class="sparkline" id="spark-spo2" viewBox="0 0 120 32"></svg>
+            <div class="vi-trend stable" id="trend-spo2">↔ Normal</div>
+          </div>
+          <!-- RR -->
+          <div class="vi-card" id="vi-rr">
+            <div class="vi-label"><span class="vi-icon">🌬</span> Resp. Rate</div>
+            <input class="vi-input" id="inp-rr" value="16" oninput="checkVital('rr',this.value)"/>
+            <div class="vi-unit">breaths per minute</div>
+            <div class="vi-range">Normal: 12–20 /min</div>
+            <svg class="sparkline" id="spark-rr" viewBox="0 0 120 32"></svg>
+            <div class="vi-trend stable" id="trend-rr">↔ Normal</div>
+          </div>
+          <!-- PAIN -->
+          <div class="vi-card" id="vi-pain">
+            <div class="vi-label"><span class="vi-icon">⚡</span> Pain Score</div>
+            <input class="vi-input" id="inp-pain" value="4" oninput="checkVital('pain',this.value)" max="10" min="0" type="number"/>
+            <div class="vi-unit">NRS 0–10 Scale</div>
+            <div class="vi-range">Action: ≥5 · Severe: ≥7</div>
+            <svg class="sparkline" id="spark-pain" viewBox="0 0 120 32"></svg>
+            <div class="vi-trend down" id="trend-pain">↓ from 6 · Improving</div>
+          </div>
+          <!-- BGL -->
+          <div class="vi-card" id="vi-bgl">
+            <div class="vi-label"><span class="vi-icon">💉</span> Blood Sugar</div>
+            <input class="vi-input" id="inp-bgl" value="142" oninput="checkVital('bgl',this.value)"/>
+            <div class="vi-unit">mg/dL (pre-meal)</div>
+            <div class="vi-range">Target: 80–180 mg/dL (IPD)</div>
+            <svg class="sparkline" id="spark-bgl" viewBox="0 0 120 32"></svg>
+            <div class="vi-trend up" id="trend-bgl">↑ mild elevation · Monitor</div>
+          </div>
+          <!-- URINE OUTPUT -->
+          <div class="vi-card" id="vi-uo">
+            <div class="vi-label"><span class="vi-icon">🧪</span> Urine Output</div>
+            <input class="vi-input" id="inp-uo" value="320" oninput="checkVital('uo',this.value)"/>
+            <div class="vi-unit">mL (last 4 hours)</div>
+            <div class="vi-range">Min: 0.5 mL/kg/hr (>160mL/4h)</div>
+            <svg class="sparkline" id="spark-uo" viewBox="0 0 120 32"></svg>
+            <div class="vi-trend stable" id="trend-uo">↔ Adequate</div>
+          </div>
+        </div>
+
+        <!-- VITALS HISTORY TABLE -->
+        <div style="padding:0 16px 16px;">
+          <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px;">Vitals Trend — Today</div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+              <thead><tr style="background:var(--surface-2);">
+                <th style="padding:7px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;border-bottom:1px solid var(--border);">Time</th>
+                <th style="padding:7px 12px;border-bottom:1px solid var(--border);">BP</th>
+                <th style="padding:7px 12px;border-bottom:1px solid var(--border);">HR</th>
+                <th style="padding:7px 12px;border-bottom:1px solid var(--border);">Temp</th>
+                <th style="padding:7px 12px;border-bottom:1px solid var(--border);">SpO₂</th>
+                <th style="padding:7px 12px;border-bottom:1px solid var(--border);">RR</th>
+                <th style="padding:7px 12px;border-bottom:1px solid var(--border);">Pain</th>
+                <th style="padding:7px 12px;border-bottom:1px solid var(--border);">BGL</th>
+                <th style="padding:7px 12px;border-bottom:1px solid var(--border);">Recorded By</th>
+              </tr></thead>
+              <tbody id="vitals-history"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── MAR TAB ── -->
+      <div class="tab-pane" id="pane-mar">
+        <div style="padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
+          <div style="font-size:13px;font-weight:600;">Medication Administration Record — Deepak Kumar · Ward B-04</div>
+          <div style="display:flex;gap:6px;">
+            <span class="badge bd-warn">5 Due</span>
+            <button class="btn btn-outline btn-sm" onclick="showToast('Printing MAR...','🖨')">🖨 Print MAR</button>
+            <button class="btn btn-primary btn-sm" onclick="showToast('Adding PRN medication...','💊')">＋ PRN</button>
+          </div>
+        </div>
+        <div style="background:var(--danger-lt);border-left:4px solid var(--danger);padding:9px 14px;font-size:12px;color:var(--danger-dark);font-weight:500;">
+          ⚠ Allergy Alert: Patient allergic to <b>Penicillin</b>. Avoid all beta-lactam antibiotics unless directed by physician.
+        </div>
+        <div class="mar-wrap">
+          <table class="mar-table" id="mar-table">
+            <thead><tr>
+              <th style="min-width:200px;">Drug / Dose / Route</th>
+              <th>Frequency</th>
+              <th>06:00</th><th>08:00</th><th>10:00</th><th>12:00</th><th>14:00</th><th>18:00</th><th>22:00</th>
+              <th>Notes</th>
+            </tr></thead>
+            <tbody id="mar-body"></tbody>
+          </table>
+        </div>
+        <div style="padding:10px 16px;background:var(--surface-2);border-top:1px solid var(--border);font-size:12px;color:var(--text-3);display:flex;gap:16px;flex-wrap:wrap;">
+          <span>✓ Given &nbsp;|&nbsp; DUE = Pending &nbsp;|&nbsp; HOLD = Held &nbsp;|&nbsp; — = Not applicable</span>
+          <span style="margin-left:auto;">Last updated: 14:35 · Suma W.</span>
+        </div>
+      </div>
+
+      <!-- ── NURSING NOTES TAB ── -->
+      <div class="tab-pane" id="pane-notes">
+        <div style="padding:12px 16px 0;display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:13px;font-weight:600;">Nursing Progress Notes — Ward B-04 · Deepak Kumar</div>
+          <div style="display:flex;gap:6px;">
+            <select style="padding:5px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:12px;background:var(--surface-2);outline:none;">
+              <option>Suma W. — Shift B</option>
+              <option>Rani P. — Shift A</option>
+            </select>
+          </div>
+        </div>
+        <div style="border:1.5px solid var(--border);border-radius:var(--radius);margin:12px 16px;overflow:hidden;transition:border-color .15s;" id="note-wrap">
+          <div class="notes-toolbar">
+            <button class="toolbar-btn" onclick="showToast('SBAR template loaded','📋')">📋 SBAR Template</button>
+            <button class="toolbar-btn" onclick="showToast('Focus charting template loaded','📝')">📝 Focus Chart</button>
+            <button class="toolbar-btn" onclick="showToast('Voice dictation started','🎙')">🎙 Dictate</button>
+            <button class="toolbar-btn" onclick="showToast('Importing vitals into note','📊')">📊 Import Vitals</button>
+            <button class="toolbar-btn" onclick="showToast('Symptom checklist opened','✅')">✅ Symptom Check</button>
+            <div style="margin-left:auto;font-size:11px;color:var(--text-3);">Auto-saving every 30s</div>
+          </div>
+          <textarea class="note-area" id="note-textarea">NURSING NOTE — 14 Mar 2024 · 14:35 · Nurse Suma W.
+
+PATIENT: Deepak Kumar · Ward B · Bed B-04 · Post-op Day 7 (L-TKR)
+
+ASSESSMENT:
+Patient alert and oriented × 3. GCS 15/15. Communicating verbally in Tamil and English.
+
+Wound: Surgical site clean and dry. No signs of infection — no redness, swelling, or purulent discharge. Dressing intact. Drain removed yesterday per surgical order.
+
+Pain: Reports 4/10 at rest, 5/10 on movement. Last analgesia: Tramadol 50mg IV at 13:00 — adequate relief reported. Patient declined additional PRN at this time.
+
+Mobility: Mobilised to chair × 2 today with physiotherapist (Mr. Vijay). Able to stand and take 3 steps with walker. Improving from yesterday.
+
+Elimination: Voided × 3 since morning shift. UO = 320 mL/4h — adequate. Bowel opened yesterday.
+
+Nutrition: Tolerating oral soft diet well. Oral fluids encouraged. IV fluids discontinued as of 12:00.
+
+IV Line: Right forearm IV patent, no signs of phlebitis. IV antibiotics (Cefazolin) completed at 14:00 — final dose.
+
+Compression stockings in place bilaterally. Limb circulation check: warm, capillary refill < 2 seconds.
+
+PLAN: Continue physiotherapy TID. Review for discharge planning by Dr. Ramesh. Discharge medications to be dispensed.
+
+SIGNATURE: Suma W. — RN (Reg. No. 2018-TN-04821)</textarea>
+          <div class="note-meta">
+            <span>14 Mar 2024 · 14:35 · Post-op Day 7 · Ward B-04</span>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-outline btn-sm" onclick="showToast('Draft saved','💾')">Save Draft</button>
+              <button class="btn btn-success btn-sm" onclick="showToast('Note countersigned and locked ✓','✅')">✅ Countersign &amp; Lock</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PREVIOUS NOTES -->
+        <div style="padding:0 16px 16px;">
+          <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px;">Previous Notes — Today</div>
+          <div id="previous-notes"></div>
+        </div>
+      </div>
+
+      <!-- ── HANDOVER TAB ── -->
+      <div class="tab-pane" id="pane-handover">
+        <div style="background:linear-gradient(135deg,var(--brand-dark),var(--brand));padding:16px 20px;color:#fff;">
+          <div style="font-size:14px;font-weight:700;margin-bottom:4px;">🔄 Shift Handover Report — Ward B</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.7);">Outgoing: Suma W. (Shift B 14:00–22:00) → Incoming: Rani P. (Shift C 22:00–06:00)</div>
+          <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;">
+            <span style="background:rgba(255,255,255,.15);border-radius:20px;padding:3px 12px;font-size:11px;font-weight:600;">14 Patients Total</span>
+            <span style="background:rgba(239,68,68,.25);border-radius:20px;padding:3px 12px;font-size:11px;font-weight:600;">2 Critical</span>
+            <span style="background:rgba(245,158,11,.25);border-radius:20px;padding:3px 12px;font-size:11px;font-weight:600;">5 Medications Due 22:00</span>
+            <span style="background:rgba(16,185,129,.2);border-radius:20px;padding:3px 12px;font-size:11px;font-weight:600;">3 Planned Discharges Tomorrow</span>
+          </div>
+        </div>
+
+        <div class="handover-section">
+          <div class="hs-title">🔴 Priority Patients — Immediate Attention Required</div>
+          <div id="handover-priority"></div>
+        </div>
+
+        <div class="handover-section">
+          <div class="hs-title">📋 Shift Summary — Completed Tasks</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;" id="shift-summary"></div>
+        </div>
+
+        <div class="handover-section">
+          <div class="hs-title">📌 Pending Tasks for Night Shift</div>
+          <div id="pending-tasks"></div>
+        </div>
+
+        <div style="padding:14px 16px;">
+          <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px;">Additional Handover Notes</div>
+          <textarea style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;resize:vertical;min-height:80px;background:var(--surface-2);transition:border-color .15s;" onfocus="this.style.borderColor='var(--brand)'" onblur="this.style.borderColor='var(--border)'" placeholder="Any additional notes for incoming shift nurse...">Bed B-11 (Gowri Shankar) — patient anxious, needs reassurance. Informed of discharge tomorrow.
+Bed B-08 (Karthik Rajan) — BGL running high since morning. Insulin sliding scale to be checked at 22:00.
+Dr. Ramesh Iyer to be paged if Deepak Kumar (B-04) has pain score >6 overnight.</textarea>
+          <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end;">
+            <button class="btn btn-outline" onclick="showToast('Handover report printed','🖨')">🖨 Print Report</button>
+            <button class="btn btn-primary" onclick="showToast('Handover completed — Rani P. notified ✓','🔄')">✅ Complete Handover</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /card -->
+  </div><!-- /left -->
+
+  <!-- RIGHT COLUMN -->
+  <div style="display:flex;flex-direction:column;gap:14px;">
+
+    <!-- PATIENT QUICK SELECT -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🛏 Ward B Patients</div>
+        <span class="badge bd-blue">14 total</span>
+      </div>
+      <div style="padding:10px;" id="patient-selector"></div>
+    </div>
+
+    <!-- ACTIVE ALERTS -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🔔 Active Alerts</div>
+        <span class="badge bd-red">7 active</span>
+      </div>
+      <div style="padding:10px;" id="alerts-panel"></div>
+    </div>
+
+    <!-- TASK CHECKLIST -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">✅ Shift Tasks</div><span class="badge bd-warn">5 pending</span></div>
+      <div style="padding:12px;" id="task-checklist"></div>
+    </div>
+
+  </div><!-- /right -->
+</div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span id="toast-icon">✅</span><span id="toast-msg">Done</span></div>
+
+<script>
+// ── CLOCK ──
+function updateClock(){
+  const n=new Date();
+  document.getElementById('live-clock').textContent=[n.getHours(),n.getMinutes(),n.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':');
+}
+setInterval(updateClock,1000); updateClock();
+
+// ── PATIENT MONITOR DATA ──
+const patients=[
+  {bed:'B-04',name:'Deepak Kumar',bg:'#1A5EAB',init:'DK',bp:'124/78',hr:80,temp:37.1,spo2:98,pain:4,status:'stable',diag:'Post-op L-TKR D7'},
+  {bed:'B-08',name:'Karthik Rajan',bg:'#F59E0B',init:'KR',bp:'148/92',hr:92,temp:37.4,spo2:96,pain:5,status:'warning',diag:'Hypertensive urgency D3'},
+  {bed:'B-11',name:'Gowri Shankar',bg:'#059669',init:'GS',bp:'118/74',hr:72,temp:36.8,spo2:99,pain:2,status:'stable',diag:'Diabetes foot D9'},
+  {bed:'B-03',name:'Anjali Menon',bg:'#7C3AED',init:'AM',bp:'110/70',hr:78,temp:36.9,spo2:98,pain:3,status:'stable',diag:'Allergic reaction D2'},
+  {bed:'ICU-1',name:'Mohan Kumar',bg:'#DC2626',init:'MK',bp:'88/52',hr:118,temp:38.2,spo2:91,pain:8,status:'critical',diag:'Cardiogenic shock D1'},
+  {bed:'B-07',name:'Priya Devi',bg:'#0891B2',init:'PD',bp:'120/76',hr:80,temp:37.0,spo2:99,pain:1,status:'stable',diag:'Post-partum D1'},
+];
+const mg=document.getElementById('monitor-grid');
+patients.forEach(p=>{
+  const bpParts=p.bp.split('/').map(Number);
+  const bpHigh=bpParts[0]>140||bpParts[1]>90;
+  const hrHigh=p.hr>100;
+  const tempHigh=p.temp>38;
+  const spo2Low=p.spo2<95;
+  mg.innerHTML+=`<div class="monitor-card ${p.status}" onclick="showToast('Loading ${p.name} vitals','📊')">
+    <div class="mc-top"><span class="mc-bed">Bed ${p.bed}</span><div class="mc-alert-dot"></div></div>
+    <div class="mc-name">${p.name}</div>
+    <div style="font-size:10px;color:var(--text-3);margin-bottom:7px;">${p.diag}</div>
+    <div class="mc-vitals">
+      <div class="mc-vital ${bpHigh?'hi':'ok'}"><div class="mcv-val">${p.bp}</div><div class="mcv-label">BP mmHg</div></div>
+      <div class="mc-vital ${hrHigh?'hi':'ok'}"><div class="mcv-val">${p.hr}</div><div class="mcv-label">HR bpm</div></div>
+      <div class="mc-vital ${tempHigh?'hi':'ok'}"><div class="mcv-val">${p.temp}</div><div class="mcv-label">Temp °C</div></div>
+      <div class="mc-vital ${spo2Low?'lo':'ok'}"><div class="mcv-val">${p.spo2}%</div><div class="mcv-label">SpO₂</div></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:8px;align-items:center;">
+      <span class="badge ${p.status==='critical'?'bd-red':p.status==='warning'?'bd-warn':'bd-green'}">${p.status==='critical'?'Critical':p.status==='warning'?'Warning':'Stable'}</span>
+      <span style="font-size:10px;color:var(--text-3);">Pain: ${p.pain}/10</span>
+    </div>
+  </div>`;
+});
+
+// ── VITAL SPARKLINES ──
+const vitalHistory={
+  bp:[[120,80],[122,80],[124,82],[126,82],[128,84],[125,82],[124,78]],
+  hr:[84,82,82,80,82,80,80],
+  temp:[37.0,37.1,37.2,37.1,37.2,37.1,37.1],
+  spo2:[97,97,98,98,98,98,98],
+  rr:[16,16,17,16,16,16,16],
+  pain:[7,6,6,5,5,4,4],
+  bgl:[168,155,148,142,145,140,142],
+  uo:[200,240,260,280,300,310,320],
+};
+function drawSparkline(id,data,col){
+  const svg=document.getElementById(id);
+  if(!svg) return;
+  const vals=Array.isArray(data[0])?data.map(v=>v[0]):data;
+  const min=Math.min(...vals);
+  const max=Math.max(...vals);
+  const range=max-min||1;
+  const pts=vals.map((v,i)=>`${i*(120/(vals.length-1))},${30-((v-min)/range)*28}`).join(' ');
+  svg.innerHTML=`<polyline points="${pts}" fill="none" stroke="${col}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${(vals.length-1)*(120/(vals.length-1))}" cy="${30-((vals[vals.length-1]-min)/range)*28}" r="3" fill="${col}"/>`;
+}
+setTimeout(()=>{
+  drawSparkline('spark-bp',vitalHistory.bp,'#1A5EAB');
+  drawSparkline('spark-hr',vitalHistory.hr,'#DC2626');
+  drawSparkline('spark-temp',vitalHistory.temp,'#F59E0B');
+  drawSparkline('spark-spo2',vitalHistory.spo2,'#10B981');
+  drawSparkline('spark-rr',vitalHistory.rr,'#7C3AED');
+  drawSparkline('spark-pain',vitalHistory.pain,'#EF4444');
+  drawSparkline('spark-bgl',vitalHistory.bgl,'#F59E0B');
+  drawSparkline('spark-uo',vitalHistory.uo,'#0891B2');
+},100);
+
+// ── VITAL ALERTS ──
+function checkVital(type,val){
+  const card=document.getElementById('vi-'+type);
+  const n=parseFloat(val);
+  if(!isNaN(n)){
+    if(type==='hr'&&(n>100||n<60)) card.className='vi-card alert-state';
+    else if(type==='spo2'&&n<95) card.className='vi-card alert-state';
+    else if(type==='temp'&&n>38) card.className='vi-card warn-state';
+    else if(type==='pain'&&n>=7) card.className='vi-card alert-state';
+    else if(type==='bgl'&&n>250) card.className='vi-card warn-state';
+    else card.className='vi-card';
+  }
+}
+
+// ── VITALS HISTORY TABLE ──
+const vitalsData=[
+  {time:'06:00',bp:'130/82',hr:84,temp:37.0,spo2:97,rr:16,pain:7,bgl:168,by:'Rani P.'},
+  {time:'08:00',bp:'128/82',hr:82,temp:37.1,spo2:97,rr:16,pain:6,bgl:155,by:'Rani P.'},
+  {time:'10:00',bp:'126/82',hr:82,temp:37.2,spo2:98,rr:17,pain:6,bgl:148,by:'Rani P.'},
+  {time:'12:00',bp:'126/80',hr:80,temp:37.1,spo2:98,rr:16,pain:5,bgl:142,by:'Rani P.'},
+  {time:'14:00',bp:'126/80',hr:80,temp:37.1,spo2:98,rr:16,pain:5,bgl:145,by:'Suma W.'},
+  {time:'14:35',bp:'124/78',hr:80,temp:37.1,spo2:98,rr:16,pain:4,bgl:142,by:'Suma W. ●'},
+];
+const vh=document.getElementById('vitals-history');
+vitalsData.forEach(r=>{
+  const isLatest=r.by.includes('●');
+  vh.innerHTML+=`<tr style="${isLatest?'background:var(--brand-light);font-weight:500;':''}">
+    <td style="font-family:'DM Mono',monospace;font-weight:${isLatest?'700':'400'}">${r.time}</td>
+    <td style="font-family:'DM Mono',monospace;${r.bp.startsWith('12')?'color:var(--success-dark);':''}">${r.bp}</td>
+    <td style="font-family:'DM Mono',monospace;">${r.hr}</td>
+    <td style="font-family:'DM Mono',monospace;${r.temp>37.5?'color:var(--danger);font-weight:700;':''}">${r.temp}</td>
+    <td style="font-family:'DM Mono',monospace;color:var(--success-dark);">${r.spo2}%</td>
+    <td style="font-family:'DM Mono',monospace;">${r.rr}</td>
+    <td style="font-family:'DM Mono',monospace;${r.pain>=6?'color:var(--warn-dark);font-weight:700;':r.pain>=7?'color:var(--danger);font-weight:700;':''}">${r.pain}/10</td>
+    <td style="font-family:'DM Mono',monospace;${r.bgl>140?'color:var(--warn-dark);':''}">${r.bgl}</td>
+    <td style="font-size:11px;color:var(--text-3);">${r.by.replace('●','')}</td>
+  </tr>`;
+});
+
+// ── MAR DATA ──
+const marDrugs=[
+  {name:'Cefazolin 1g IV',dose:'1g',route:'IV',freq:'8-hourly',sched:[null,null,'given','given',null,'due',null],flag:null,note:'Final dose 14:00'},
+  {name:'Tramadol 50mg',dose:'50mg',route:'IV',freq:'PRN (pain>5)',sched:[null,null,null,'given',null,null,null],flag:null,note:'PRN only'},
+  {name:'Paracetamol 1g',dose:'1g',route:'Oral',freq:'TDS',sched:[null,'given',null,'given',null,'due',null],flag:null,note:''},
+  {name:'Pantoprazole 40mg',dose:'40mg',route:'Oral',freq:'OD',sched:[null,'given',null,null,null,null,null],flag:null,note:'Morning'},
+  {name:'Enoxaparin 40mg',dose:'40mg',route:'SC',freq:'OD',sched:['given',null,null,null,null,null,null],flag:null,note:'06:00 abdomen'},
+  {name:'Metformin 500mg',dose:'500mg',route:'Oral',freq:'BD',sched:[null,null,null,'held',null,null,null],flag:null,note:'Held post-op'},
+  {name:'Atorvastatin 20mg',dose:'20mg',route:'Oral',freq:'ON',sched:[null,null,null,null,null,null,'due'],flag:null,note:'Night dose'},
+  {name:'Amoxicillin 500mg',dose:'500mg',route:'Oral',freq:'TDS',sched:[null,'held','held','held',null,'held',null],flag:'allergy',note:'⚠ ALLERGY — HOLD'},
+];
+const schedTimes=['06:00','08:00','10:00','12:00','14:00','18:00','22:00'];
+const mb=document.getElementById('mar-body');
+marDrugs.forEach(d=>{
+  let row=`<tr>
+    <td><div class="drug-name-cell">${d.name}${d.flag==='allergy'?'<span class="allergy-warn">ALLERGY</span>':''}</div><div class="drug-route">${d.dose} · ${d.route}</div></td>
+    <td><span class="badge bd-blue" style="font-size:10px;">${d.freq}</span></td>`;
+  d.sched.forEach((s,si)=>{
+    if(s===null) row+=`<td><div class="mar-cell mc-na" title="${schedTimes[si]}">—</div></td>`;
+    else if(s==='given') row+=`<td><div class="mar-cell mc-given" title="${schedTimes[si]}" onclick="showToast('${d.name} at ${schedTimes[si]} — given ✓','✅')">✓</div></td>`;
+    else if(s==='due') row+=`<td><div class="mar-cell mc-due" title="${schedTimes[si]}" onclick="showToast('Marking ${d.name} given at ${schedTimes[si]}...','💊')">DUE</div></td>`;
+    else if(s==='held') row+=`<td><div class="mar-cell mc-held" title="${schedTimes[si]}">HOLD</div></td>`;
+  });
+  row+=`<td style="font-size:11px;color:var(--text-3);">${d.note}</td></tr>`;
+  mb.innerHTML+=row;
+});
+
+// ── PREVIOUS NOTES ──
+const prevNotes=[
+  {time:'08:10',nurse:'Rani P. — Shift A',text:'Patient comfortable post physiotherapy session. Pain 6/10 — Tramadol given. Bowel opened. Wound checked — intact.'},
+  {time:'06:00',nurse:'Rani P. — Shift A',text:'Shift A takeover. All vitals recorded. IV antibiotics started. Patient sleeping, not disturbed.'},
+];
+const pn=document.getElementById('previous-notes');
+prevNotes.forEach(n=>{
+  pn.innerHTML+=`<div class="previous-note" onclick="showToast('Loading note from ${n.time}','📝')">
+    <div class="pn-meta">${n.time} · ${n.nurse}</div>
+    <div class="pn-text">${n.text}</div>
+  </div>`;
+});
+
+// ── HANDOVER PRIORITY ──
+const handoverPts=[
+  {init:'MK',name:'Mohan Kumar',bed:'ICU-1',bg:'#DC2626',note:'BP unstable — monitor q15min. Cardiology to be called if SBP<90.',priority:'hpri-high',priLabel:'CRITICAL'},
+  {init:'KR',name:'Karthik Rajan',bed:'B-08',bg:'#F59E0B',note:'BGL 148 at 14:00 — check insulin sliding scale at 22:00.',priority:'hpri-med',priLabel:'Watch'},
+  {init:'DK',name:'Deepak Kumar',bed:'B-04',bg:'#1A5EAB',note:'Pain managed. Final dose Cefazolin given. Discharge planning tomorrow.',priority:'hpri-low',priLabel:'Stable'},
+];
+const hp=document.getElementById('handover-priority');
+handoverPts.forEach(p=>{
+  hp.innerHTML+=`<div class="handover-patient-row" onclick="showToast('${p.name} — ${p.note}','👤')">
+    <div class="hp-av" style="background:${p.bg};">${p.init}</div>
+    <div style="flex:1;"><div class="hp-name">${p.name} · ${p.bed}</div><div class="hp-meta">${p.note}</div></div>
+    <span class="hp-priority ${p.priority}">${p.priLabel}</span>
+  </div>`;
+});
+
+// ── SHIFT SUMMARY ──
+const shiftTasks=[
+  '✅ Vitals recorded × 9 patients','✅ MAR administered — morning doses',
+  '✅ Wound dressings × 3 patients','✅ IV antibiotics completed',
+  '✅ Physiotherapy supervised','✅ 2 new admissions processed',
+  '✅ 1 discharge completed','✅ Doctor rounds attended',
+];
+const ss=document.getElementById('shift-summary');
+shiftTasks.forEach(t=>{
+  ss.innerHTML+=`<div style="font-size:12px;color:var(--success-dark);padding:4px 0;">${t}</div>`;
+});
+
+// ── PENDING TASKS ──
+const pending=[
+  {icon:'💊',text:'Administer 18:00 MAR (Paracetamol, Cefazolin last dose)',urgent:true},
+  {icon:'💉',text:'Insulin sliding scale check — Karthik Rajan (B-08) at 22:00',urgent:true},
+  {icon:'📊',text:'Vitals round — all patients at 22:00',urgent:false},
+  {icon:'📋',text:'Discharge summary review — Deepak Kumar (for tomorrow)',urgent:false},
+  {icon:'🩸',text:'BGL check — Gowri Shankar (B-11) at 21:00',urgent:false},
+];
+const pt=document.getElementById('pending-tasks');
+pending.forEach(p=>{
+  pt.innerHTML+=`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--radius);border:1.5px solid ${p.urgent?'#FCD34D':'var(--border)'};background:${p.urgent?'var(--warn-lt)':'var(--surface-2)'};margin-bottom:5px;font-size:12px;cursor:pointer;" onclick="showToast('${p.text}','${p.icon}')">
+    <span>${p.icon}</span>
+    <span style="flex:1;color:var(--text-2);">${p.text}</span>
+    ${p.urgent?'<span class="badge bd-warn" style="font-size:10px;">Tonight</span>':''}
+  </div>`;
+});
+
+// ── PATIENT SELECTOR ──
+const psData=[
+  {init:'MK',name:'Mohan Kumar',bed:'ICU-1',bg:'#DC2626',state:'critical',sCls:'pss-critical'},
+  {init:'KR',name:'Karthik Rajan',bed:'B-08',bg:'#F59E0B',state:'warning',sCls:'pss-warning'},
+  {init:'DK',name:'Deepak Kumar',bed:'B-04',bg:'#1A5EAB',state:'stable',sCls:'pss-stable',selected:true},
+  {init:'AM',name:'Anjali Menon',bed:'B-03',bg:'#7C3AED',state:'stable',sCls:'pss-stable'},
+  {init:'GS',name:'Gowri Shankar',bed:'B-11',bg:'#059669',state:'stable',sCls:'pss-stable'},
+  {init:'PD',name:'Priya Devi',bed:'B-07',bg:'#0891B2',state:'stable',sCls:'pss-stable'},
+];
+const psel=document.getElementById('patient-selector');
+psData.forEach(p=>{
+  psel.innerHTML+=`<div class="pt-selector${p.selected?' selected':''}" onclick="selectPatient(this,'${p.name}')">
+    <div class="ps-stripe ${p.sCls}"></div>
+    <div class="ps-inner">
+      <div class="ps-av" style="background:${p.bg};">${p.init}</div>
+      <div style="flex:1;"><div class="ps-name">${p.name}</div><div class="ps-bed">${p.bed} · ${p.state}</div></div>
+    </div>
+  </div>`;
+});
+function selectPatient(el,name){
+  document.querySelectorAll('.pt-selector').forEach(p=>p.classList.remove('selected'));
+  el.classList.add('selected');
+  showToast(`Loading ${name} chart...`,'👤');
+}
+
+// ── ALERTS PANEL ──
+const alerts=[
+  {type:'critical',icon:'🔴',title:'SpO₂ LOW — Mohan Kumar · ICU-1',sub:'SpO₂ 91% — O₂ therapy in progress. Check every 15 min.',time:'14:28'},
+  {type:'critical',icon:'🔴',title:'BP HIGH — Karthik Rajan · B-08',sub:'BP 148/92 · Dr. Anand notified. PRN Amlodipine ordered.',time:'14:22'},
+  {type:'warning',icon:'🟡',title:'5 Medications Due at 18:00',sub:'Paracetamol, Cefazolin × 2 patients, Atorvastatin × 3',time:'14:00'},
+  {type:'warning',icon:'🟡',title:'Insulin check due — Karthik Rajan',sub:'BGL 148 at 12:00. Sliding scale insulin at 22:00.',time:'12:00'},
+  {type:'info',icon:'🔵',title:'Discharge planned — Deepak Kumar',sub:'Target tomorrow. Discharge summary to be prepared.',time:'13:30'},
+  {type:'info',icon:'🔵',title:'Physiotherapy 16:00 — Deepak Kumar',sub:'Mr. Vijay confirmed for PM session, B-04.',time:'15:00'},
+  {type:'info',icon:'🔵',title:'Lab results ready — Karthik Rajan',sub:'CBC + CRP resulted. Review pending.',time:'14:10'},
+];
+const ap=document.getElementById('alerts-panel');
+alerts.forEach(a=>{
+  ap.innerHTML+=`<div class="alert-item ${a.type}" onclick="showToast('${a.title}','${a.icon}')">
+    <div class="ai-icon">${a.icon}</div>
+    <div style="flex:1;"><div class="ai-title">${a.title}</div><div class="ai-sub">${a.sub}</div><div class="ai-time">${a.time}</div></div>
+  </div>`;
+});
+
+// ── TASK CHECKLIST ──
+const tasks=[
+  {done:true,text:'Morning vitals round — all patients'},
+  {done:true,text:'08:00 MAR administered'},
+  {done:true,text:'12:00 MAR administered'},
+  {done:true,text:'Wound dressing — B-04, B-08'},
+  {done:true,text:'Discharge — Gowri Shankar (B-11)'},
+  {done:false,text:'18:00 MAR due'},
+  {done:false,text:'Evening vitals round'},
+  {done:false,text:'Handover report to Night shift'},
+];
+const tc=document.getElementById('task-checklist');
+tasks.forEach((t,i)=>{
+  tc.innerHTML+=`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer;font-size:12px;" onclick="toggleTask(this,${i})">
+    <div style="width:18px;height:18px;border-radius:5px;border:2px solid ${t.done?'var(--success)':'var(--border)'};background:${t.done?'var(--success)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;">
+      ${t.done?'<span style="color:#fff;font-size:11px;font-weight:700;">✓</span>':''}
+    </div>
+    <span style="${t.done?'text-decoration:line-through;color:var(--text-3);':'color:var(--text-1);'}">${t.text}</span>
+  </div>`;
+});
+function toggleTask(el,i){
+  const box=el.querySelector('div');
+  const span=el.querySelector('span');
+  const isDone=box.style.background.includes('success');
+  if(isDone){box.style.background='transparent';box.style.borderColor='var(--border)';box.innerHTML='';span.style.textDecoration='none';span.style.color='var(--text-1)';}
+  else{box.style.background='var(--success)';box.style.borderColor='var(--success)';box.innerHTML='<span style="color:#fff;font-size:11px;font-weight:700;">✓</span>';span.style.textDecoration='line-through';span.style.color='var(--text-3)';}
+}
+
+function saveVitals(){showToast('Vitals saved and charted ✓ — 14:35 · Suma W.','📊');}
+
+// ── TABS ──
+function switchTab(id,btn){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pane-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── TOAST ──
+let tt;
+function showToast(msg,icon='✅'){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').innerHTML=msg;
+  document.getElementById('toast-icon').textContent=icon;
+  t.classList.add('show');clearTimeout(tt);
+  tt=setTimeout(()=>t.classList.remove('show'),3200);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Diagnotica HMS — Pharmacy Management</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --brand:#1A5EAB;--brand-dark:#0F3F78;--brand-light:#E8F1FB;--brand-mid:#2E7DD6;
+  --accent:#00C0A3;--accent-lt:#E0F9F5;--accent-dark:#007A68;
+  --warn:#F59E0B;--warn-lt:#FEF3C7;--warn-dark:#92400E;
+  --danger:#EF4444;--danger-lt:#FEE2E2;--danger-dark:#7F1D1D;
+  --success:#10B981;--success-lt:#D1FAE5;--success-dark:#065F46;
+  --purple:#7C3AED;--purple-lt:#EDE9FE;
+  --text-1:#0F1C2E;--text-2:#3A4D63;--text-3:#7A8FA6;
+  --border:#DDE6F0;--bg:#F0F5FB;--surface:#FFFFFF;--surface-2:#F7FAFD;
+  --radius:10px;--radius-lg:16px;
+  --shadow:0 1px 4px rgba(26,94,171,.08),0 4px 16px rgba(26,94,171,.06);
+  --shadow-lg:0 8px 32px rgba(26,94,171,.14);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-1);min-height:100vh;font-size:14px;}
+
+/* TOPBAR */
+.topbar{background:var(--brand-dark);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:52px;position:sticky;top:0;z-index:100;}
+.logo-wrap{display:flex;align-items:center;gap:10px;}
+.logo-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#00C0A3,#2E7DD6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;}
+.logo-text{color:#fff;font-size:15px;font-weight:600;}
+.logo-sub{color:#8BAFD4;font-size:11px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.t-chip{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#D4E8FF;border-radius:6px;padding:5px 12px;font-size:12px;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;}
+.t-chip:hover{background:rgba(255,255,255,.18);}
+.t-chip.alert{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.38);color:#FCA5A5;animation:alertPulse 2s infinite;}
+@keyframes alertPulse{0%,100%{background:rgba(239,68,68,.18);}50%{background:rgba(239,68,68,.3);}}
+.user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border-radius:20px;padding:4px 12px 4px 4px;}
+.user-av{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+
+/* SHELL */
+.shell{display:flex;height:calc(100vh - 52px);overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:196px;background:var(--surface);border-right:1px solid var(--border);padding:14px 0;flex-shrink:0;overflow-y:auto;}
+.sb-label{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;padding:8px 14px 4px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:var(--radius);margin:0 8px 2px;cursor:pointer;color:var(--text-2);font-size:13px;transition:all .15s;position:relative;}
+.nav-item:hover{background:var(--brand-light);color:var(--brand);}
+.nav-item.active{background:var(--brand-light);color:var(--brand);font-weight:500;}
+.nav-item.active::before{content:'';position:absolute;left:-4px;top:6px;bottom:6px;width:3px;background:var(--brand);border-radius:0 3px 3px 0;}
+.nb{margin-left:auto;font-size:10px;font-weight:700;border-radius:10px;padding:1px 6px;color:#fff;}
+.nb.b{background:var(--brand);}.nb.g{background:var(--success);}.nb.r{background:var(--danger);}.nb.w{background:var(--warn);color:var(--warn-dark);}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+
+/* KPI BANNER */
+.kpi-banner{background:linear-gradient(135deg,var(--brand-dark),#1563B8);padding:14px 24px;display:flex;gap:0;align-items:center;flex-shrink:0;}
+.kpi-item{text-align:center;min-width:100px;}
+.kpi-val{font-size:22px;font-weight:700;color:#fff;line-height:1;}
+.kpi-label{font-size:10px;color:#8BAFD4;margin-top:3px;text-transform:uppercase;letter-spacing:.05em;}
+.kpi-trend{font-size:11px;margin-top:2px;}
+.kpi-sep{width:1px;background:rgba(255,255,255,.1);margin:0 12px;height:30px;}
+
+/* CONTENT */
+.content{padding:16px 20px;display:grid;grid-template-columns:1fr 340px;gap:16px;flex:1;}
+
+/* CARD */
+.card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px;}
+.card:last-child{margin-bottom:0;}
+.card-header{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);}
+.card-title{font-size:14px;font-weight:600;color:var(--text-1);display:flex;align-items:center;gap:8px;}
+
+/* TABS */
+.tabs-row{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface-2);}
+.tab-btn{padding:10px 16px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:500;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap;}
+.tab-btn:hover{color:var(--text-1);}
+.tab-btn.active{color:var(--brand);border-bottom-color:var(--brand);}
+.tab-pane{display:none;padding:16px;}
+.tab-pane.active{display:block;}
+
+/* SEARCH ROW */
+.search-row{display:flex;gap:8px;margin-bottom:14px;}
+.search-wrap{flex:1;position:relative;}
+.si{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:14px;pointer-events:none;}
+.search-input{width:100%;padding:9px 12px 9px 34px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;color:var(--text-1);background:var(--surface-2);outline:none;transition:border-color .15s;}
+.search-input:focus{border-color:var(--brand);background:#fff;}
+
+/* INVENTORY TABLE */
+.inv-table{width:100%;border-collapse:collapse;font-size:13px;}
+.inv-table th{padding:9px 12px;background:var(--surface-2);text-align:left;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:1;}
+.inv-table td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.inv-table tr:hover td{background:var(--brand-light);cursor:pointer;}
+.stock-bar{height:5px;background:var(--border);border-radius:4px;overflow:hidden;margin-top:4px;width:80px;}
+.stock-fill{height:100%;border-radius:4px;}
+.sf-ok{background:var(--success);}
+.sf-low{background:var(--warn);}
+.sf-critical{background:var(--danger);}
+.stock-qty{font-family:'DM Mono',monospace;font-size:12px;font-weight:700;}
+.qty-ok{color:var(--success-dark);}
+.qty-low{color:var(--warn-dark);}
+.qty-critical{color:var(--danger);}
+.expiry-cell{font-family:'DM Mono',monospace;font-size:12px;}
+.exp-ok{color:var(--success-dark);}
+.exp-warn{color:var(--warn-dark);}
+.exp-critical{color:var(--danger);font-weight:700;}
+.low-badge{font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;margin-left:5px;}
+.lb-low{background:var(--warn-lt);color:var(--warn-dark);}
+.lb-crit{background:var(--danger-lt);color:var(--danger);}
+.lb-exp{background:var(--purple-lt);color:var(--purple);}
+.category-chip{font-size:10px;font-weight:600;padding:2px 7px;border-radius:5px;}
+.cc-tablet{background:#EFF6FF;color:var(--brand);}
+.cc-injection{background:var(--danger-lt);color:var(--danger);}
+.cc-syrup{background:var(--accent-lt);color:var(--accent-dark);}
+.cc-topical{background:var(--success-lt);color:var(--success-dark);}
+.cc-inhaler{background:var(--purple-lt);color:var(--purple);}
+.cc-drops{background:var(--warn-lt);color:var(--warn-dark);}
+
+/* DISPENSE QUEUE */
+.rx-card{border-radius:var(--radius-lg);border:1.5px solid var(--border);margin-bottom:9px;overflow:hidden;cursor:pointer;transition:all .15s;}
+.rx-card:hover{border-color:var(--brand);box-shadow:var(--shadow);}
+.rx-card.urgent{border-color:#FCA5A5;background:var(--danger-lt);}
+.rx-card.inpatient{border-color:#BFDBFE;}
+.rx-card.dispensed{border-color:#6EE7B7;background:var(--success-lt);opacity:.75;}
+.rx-stripe{height:3px;}
+.rs-urgent{background:var(--danger);}
+.rs-opd{background:var(--brand);}
+.rs-ipd{background:var(--purple);}
+.rs-dispensed{background:var(--success);}
+.rx-inner{padding:11px 14px;display:flex;align-items:flex-start;gap:12px;}
+.rx-token{width:36px;height:36px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;color:#fff;}
+.rx-info{flex:1;}
+.rx-patient{font-size:13px;font-weight:600;margin-bottom:2px;}
+.rx-doctor{font-size:11px;color:var(--text-3);margin-bottom:5px;}
+.rx-drugs{display:flex;gap:4px;flex-wrap:wrap;}
+.rx-drug-chip{font-size:10px;font-weight:500;padding:2px 8px;border-radius:10px;background:var(--brand-light);color:var(--brand);border:1px solid #BFDBFE;}
+.rx-right{text-align:right;flex-shrink:0;}
+.rx-time{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-3);}
+.rx-status{font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;margin-top:4px;display:inline-block;}
+.rss-pending{background:var(--warn-lt);color:var(--warn-dark);}
+.rss-ready{background:var(--brand-light);color:var(--brand);}
+.rss-dispensed{background:var(--success-lt);color:var(--success-dark);}
+.rss-urgent{background:var(--danger-lt);color:var(--danger);animation:alertPulse 1.5s infinite;}
+
+/* BATCH TRACKER */
+.batch-row{display:grid;grid-template-columns:140px 100px 90px 90px 80px 1fr 80px;gap:8px;align-items:center;padding:9px 12px;border-radius:var(--radius);font-size:12px;cursor:pointer;transition:background .12s;}
+.batch-row:hover{background:var(--brand-light);}
+.batch-row.header{background:var(--surface-2);font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.04em;cursor:default;border-radius:var(--radius) var(--radius) 0 0;}
+.batch-row.header:hover{background:var(--surface-2);}
+.expiry-bar{height:5px;background:var(--border);border-radius:4px;overflow:hidden;}
+.eb-fill{height:100%;border-radius:4px;}
+
+/* E-PRESCRIBING */
+.epx-card{border-radius:var(--radius-lg);border:1.5px solid var(--border);padding:14px;margin-bottom:10px;transition:all .15s;cursor:pointer;}
+.epx-card:hover{border-color:var(--brand);box-shadow:var(--shadow);}
+.epx-card.verified{border-color:#6EE7B7;background:var(--success-lt);}
+.epx-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.epx-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;}
+.epx-name{font-size:13px;font-weight:600;}
+.epx-doctor{font-size:11px;color:var(--text-3);}
+.epx-drugs-list{display:flex;flex-direction:column;gap:4px;}
+.epx-drug-row{display:flex;align-items:center;justify-content:space-between;font-size:12px;padding:4px 8px;border-radius:6px;background:var(--surface-2);}
+.epx-drug-name{font-weight:500;}
+.epx-drug-detail{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-3);}
+
+/* INTERACTION SEVERITY */
+.interaction-row{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:var(--radius);margin-bottom:8px;border:1.5px solid var(--border);cursor:pointer;transition:all .15s;}
+.interaction-row:hover{border-color:var(--danger);}
+.interaction-row.severe{border-color:#FCA5A5;background:var(--danger-lt);}
+.interaction-row.moderate{border-color:#FCD34D;background:var(--warn-lt);}
+.interaction-row.mild{border-color:#BFDBFE;background:var(--brand-light);}
+.ir-icon{font-size:20px;flex-shrink:0;}
+.ir-title{font-size:13px;font-weight:600;}
+.ir-desc{font-size:12px;color:var(--text-2);margin-top:2px;line-height:1.5;}
+.ir-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:auto;flex-shrink:0;}
+.irb-severe{background:var(--danger-lt);color:var(--danger);}
+.irb-moderate{background:var(--warn-lt);color:var(--warn-dark);}
+.irb-mild{background:var(--brand-light);color:var(--brand);}
+
+/* FORM */
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-group.full{grid-column:1/-1;}
+.fl{font-size:11px;font-weight:600;color:var(--text-2);}
+.fi,.fs{padding:8px 11px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;color:var(--text-1);background:var(--surface-2);outline:none;transition:border-color .15s;width:100%;}
+.fi:focus,.fs:focus{border-color:var(--brand);background:#fff;}
+.fi-mono{font-family:'DM Mono',monospace;}
+
+/* PROGRESS BAR */
+.prog-bar{height:5px;background:var(--border);border-radius:4px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:4px;transition:width .5s;}
+
+/* BTN */
+.btn{padding:8px 16px;border-radius:var(--radius);border:none;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+.btn-primary{background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(26,94,171,.25);}
+.btn-primary:hover{background:var(--brand-dark);}
+.btn-success{background:var(--success);color:#fff;}
+.btn-success:hover{background:#059669;}
+.btn-outline{background:var(--surface);color:var(--brand);border:1px solid var(--brand);}
+.btn-outline:hover{background:var(--brand-light);}
+.btn-warn{background:var(--warn);color:var(--warn-dark);}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-sm{padding:5px 11px;font-size:12px;}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600;}
+.bd-blue{background:var(--brand-light);color:var(--brand);}
+.bd-green{background:var(--success-lt);color:var(--success);}
+.bd-warn{background:var(--warn-lt);color:var(--warn-dark);}
+.bd-red{background:var(--danger-lt);color:var(--danger);}
+.bd-purple{background:var(--purple-lt);color:var(--purple);}
+.bd-gray{background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--brand-dark);color:#fff;padding:12px 20px;border-radius:var(--radius);font-size:13px;font-weight:500;z-index:999;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* MODAL */
+.modal-backdrop{position:fixed;inset:0;background:rgba(15,28,46,.55);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-backdrop.show{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:540px;max-width:94vw;max-height:90vh;overflow-y:auto;transform:translateY(20px) scale(.97);transition:transform .25s cubic-bezier(.34,1.4,.64,1);}
+.modal-backdrop.show .modal{transform:none;}
+.modal-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);position:sticky;top:0;z-index:2;}
+.modal-title{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.modal-close{width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.modal-body{padding:20px;}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:var(--surface-2);}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo-wrap">
+    <div class="logo-mark">Dx</div>
+    <div><div class="logo-text">Diagnotica HMS</div><div class="logo-sub">Pharmacy Management</div></div>
+  </div>
+  <div class="topbar-right">
+    <div class="t-chip alert" onclick="openInteractionModal()">⚠ 3 Drug Interactions</div>
+    <div class="t-chip alert" onclick="switchTab('inventory',document.querySelector('[data-tab=inventory]'))">🔴 7 Low Stock</div>
+    <div class="t-chip" onclick="openModal('dispense')">＋ Dispense Prescription</div>
+    <div class="t-chip" onclick="showToast('Reorder report generated','📦')">📦 Reorder List</div>
+    <div class="user-chip">
+      <div class="user-av">PM</div>
+      <span style="color:#D4E8FF;font-size:12px;">Pharmacist — Meera P.</span>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-label">Pharmacy</div>
+  <div class="nav-item active">💊 Dispense Queue <span class="nb b">18</span></div>
+  <div class="nav-item">📦 Drug Inventory <span class="nb r">7</span></div>
+  <div class="nav-item">📋 E-Prescriptions <span class="nb g">12</span></div>
+  <div class="nav-item">⚠ Interactions <span class="nb r">3</span></div>
+  <div class="nav-item">🗓 Batch / Expiry <span class="nb w">4</span></div>
+  <div class="nav-item">📤 Dispensing Hist.</div>
+  <div class="sb-label">Inventory</div>
+  <div class="nav-item">💉 Injectables</div>
+  <div class="nav-item">🔵 Oral Drugs</div>
+  <div class="nav-item">🧴 Topicals</div>
+  <div class="nav-item">🌡 Controlled Drugs</div>
+  <div class="sb-label">Reports</div>
+  <div class="nav-item">📊 Consumption Report</div>
+  <div class="nav-item">🔄 Reorder Report</div>
+  <div class="nav-item">🧮 Drug Expenditure</div>
+</nav>
+
+<div class="main">
+<!-- KPI BANNER -->
+<div class="kpi-banner">
+  <div class="kpi-item"><div class="kpi-val">284</div><div class="kpi-label">Dispensed Today</div><div class="kpi-trend" style="color:#6EF0DC;">↑ 22 vs yesterday</div></div>
+  <div class="kpi-sep"></div>
+  <div class="kpi-item"><div class="kpi-val" style="color:#FCD34D;">18</div><div class="kpi-label">Queue Pending</div><div class="kpi-trend" style="color:#FCD34D;">Avg wait 8 min</div></div>
+  <div class="kpi-sep"></div>
+  <div class="kpi-item"><div class="kpi-val" style="color:#FCA5A5;">7</div><div class="kpi-label">Low Stock Alerts</div><div class="kpi-trend" style="color:#FCA5A5;">2 critical</div></div>
+  <div class="kpi-sep"></div>
+  <div class="kpi-item"><div class="kpi-val" style="color:#C4B5FD;">4</div><div class="kpi-label">Expiring Soon</div><div class="kpi-trend" style="color:#C4B5FD;">Within 30 days</div></div>
+  <div class="kpi-sep"></div>
+  <div class="kpi-item"><div class="kpi-val" style="color:#FCA5A5;">3</div><div class="kpi-label">Drug Interactions</div><div class="kpi-trend" style="color:#FCA5A5;">1 severe</div></div>
+  <div class="kpi-sep"></div>
+  <div class="kpi-item"><div class="kpi-val">₹48,240</div><div class="kpi-label">Today's Revenue</div><div class="kpi-trend" style="color:#6EF0DC;">↑ 8%</div></div>
+  <div class="kpi-sep"></div>
+  <div class="kpi-item"><div class="kpi-val">1,842</div><div class="kpi-label">SKUs in Stock</div><div class="kpi-trend" style="color:#6EF0DC;">98.2% availability</div></div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- LEFT -->
+  <div style="display:flex;flex-direction:column;gap:0;">
+    <div class="card">
+      <div class="tabs-row">
+        <button class="tab-btn active" data-tab="queue" onclick="switchTab('queue',this)">💊 Dispense Queue</button>
+        <button class="tab-btn" data-tab="inventory" onclick="switchTab('inventory',this)">📦 Inventory</button>
+        <button class="tab-btn" data-tab="eprescribe" onclick="switchTab('eprescribe',this)">📋 e-Prescriptions</button>
+        <button class="tab-btn" data-tab="batch" onclick="switchTab('batch',this)">🗓 Batch / Expiry</button>
+        <button class="tab-btn" data-tab="interactions" onclick="switchTab('interactions',this)">⚠ Interactions</button>
+      </div>
+
+      <!-- DISPENSE QUEUE TAB -->
+      <div class="tab-pane active" id="pane-queue">
+        <div class="search-row">
+          <div class="search-wrap"><span class="si">🔍</span>
+            <input class="search-input" placeholder="Search patient, prescription token, drug..."/>
+          </div>
+          <select style="padding:8px 11px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;background:var(--surface-2);outline:none;">
+            <option>All Types</option><option>OPD</option><option>IPD</option><option>ER</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="openModal('dispense')">＋ Manual Entry</button>
+        </div>
+        <div id="dispense-queue"></div>
+      </div>
+
+      <!-- INVENTORY TAB -->
+      <div class="tab-pane" id="pane-inventory">
+        <div class="search-row">
+          <div class="search-wrap"><span class="si">🔍</span>
+            <input class="search-input" placeholder="Search drug name, brand, composition..."/>
+          </div>
+          <select style="padding:8px 11px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;background:var(--surface-2);outline:none;">
+            <option>All Categories</option><option>Tablets</option><option>Injections</option><option>Syrups</option><option>Topicals</option>
+          </select>
+          <select style="padding:8px 11px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;background:var(--surface-2);outline:none;">
+            <option>All Stock</option><option>Low Stock</option><option>Critical</option><option>Expiring Soon</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="showToast('Adding new drug item...','＋')">＋ Add Drug</button>
+        </div>
+        <!-- LOW STOCK ALERTS -->
+        <div style="background:var(--danger-lt);border:1.5px solid #FCA5A5;border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:18px;">🔴</span>
+          <div style="flex:1;font-size:12px;color:var(--danger-dark);">
+            <b>7 drugs below reorder level</b> — 2 critical (Amlodipine, Metformin) · 4 expiring within 30 days
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="showToast('Reorder request sent to purchase dept','📦')">📦 Auto-Reorder</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="inv-table" id="inventory-table">
+            <thead>
+              <tr>
+                <th>Drug Name</th>
+                <th>Category</th>
+                <th>Available Stock</th>
+                <th>Reorder Qty</th>
+                <th>Batch No.</th>
+                <th>Expiry</th>
+                <th>MRP / Unit</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="inventory-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- E-PRESCRIPTIONS TAB -->
+      <div class="tab-pane" id="pane-eprescribe">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="font-size:13px;font-weight:600;">Incoming e-Prescriptions from EMR</div>
+          <div style="display:flex;gap:6px;">
+            <span class="badge bd-green">12 New</span>
+            <button class="btn btn-outline btn-sm" onclick="showToast('Syncing with EMR...','🔄')">🔄 Sync EMR</button>
+          </div>
+        </div>
+        <!-- ALLERGY CHECK BANNER -->
+        <div style="background:var(--danger-lt);border:1.5px solid #FCA5A5;border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:18px;">⚠️</span>
+          <div style="flex:1;font-size:12px;font-weight:500;color:var(--danger-dark);">
+            Allergy Alert: Ravi Kumar has documented allergy to <b>Penicillin</b>. Prescription contains Amoxicillin — please confirm before dispensing.
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="openInteractionModal()">Review</button>
+        </div>
+        <div id="eprescriptions"></div>
+      </div>
+
+      <!-- BATCH / EXPIRY TAB -->
+      <div class="tab-pane" id="pane-batch">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:13px;font-weight:600;">Batch Tracking &amp; Expiry Monitor</div>
+          <div style="display:flex;gap:6px;">
+            <span class="badge bd-purple">4 Expiring ≤30d</span>
+            <span class="badge bd-red">2 Expired</span>
+            <button class="btn btn-outline btn-sm" onclick="showToast('Expiry report exported','📊')">📊 Export</button>
+          </div>
+        </div>
+        <!-- EXPIRY ALERT STRIP -->
+        <div style="background:var(--purple-lt);border:1px solid #C4B5FD;border-radius:var(--radius);padding:9px 14px;margin-bottom:12px;font-size:12px;color:var(--purple);">
+          🗓 <b>4 batches expiring within 30 days.</b> Review and initiate return/disposal as per CDSCO guidelines.
+        </div>
+        <div class="batch-row header">
+          <span>Drug Name</span><span>Batch No.</span><span>Qty</span><span>Mfg Date</span><span>Expiry</span><span>Days Left</span><span>Status</span>
+        </div>
+        <div id="batch-list"></div>
+      </div>
+
+      <!-- INTERACTIONS TAB -->
+      <div class="tab-pane" id="pane-interactions">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div>
+            <div style="font-size:13px;font-weight:600;">Active Drug Interaction Alerts</div>
+            <div style="font-size:12px;color:var(--text-3);">AI-powered interaction screening — Ravi Kumar · Current prescription</div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <span class="badge bd-red">1 Severe</span>
+            <span class="badge bd-warn">1 Moderate</span>
+            <span class="badge bd-blue">1 Mild</span>
+          </div>
+        </div>
+        <div id="interactions-list"></div>
+        <div style="margin-top:12px;padding:12px 14px;background:var(--brand-light);border:1px solid #BFDBFE;border-radius:var(--radius);">
+          <div style="font-size:12px;font-weight:600;color:var(--brand);margin-bottom:4px;">🤖 AI Drug Checker — All current medications screened</div>
+          <div style="font-size:12px;color:var(--text-2);">Database: Micromedex DrugRefer + Diagnotica formulary · Last updated: 14 Mar 2024 · 4,80,000+ drug pairs checked</div>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /left -->
+
+  <!-- RIGHT COLUMN -->
+  <div style="display:flex;flex-direction:column;gap:14px;">
+
+    <!-- DISPENSE PANEL -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">⚡ Quick Dispense</div>
+        <span class="badge bd-warn">Token: RX-127</span>
+      </div>
+      <div style="padding:14px;">
+        <!-- PATIENT INFO -->
+        <div style="background:var(--brand-light);border:1px solid #BFDBFE;border-radius:var(--radius);padding:10px 13px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:50%;background:var(--brand);color:#fff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;">RK</div>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:600;">Ravi Kumar</div>
+            <div style="font-size:11px;color:var(--text-3);">OPD-127 · Dr. Anand · 42M</div>
+          </div>
+          <span class="badge bd-red" style="font-size:10px;">⚠ Allergies</span>
+        </div>
+        <!-- DRUG LIST FOR DISPENSE -->
+        <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px;">Drugs to Dispense</div>
+        <div id="dispense-drugs"></div>
+        <div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+            <span style="color:var(--text-2);">Total Amount</span>
+            <span style="font-family:'DM Mono',monospace;font-weight:700;color:var(--brand);">₹1,670</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-3);margin-bottom:10px;">
+            <span>Insurance covered</span>
+            <span style="font-family:'DM Mono',monospace;color:var(--success);">— ₹334 (20%)</span>
+          </div>
+          <div style="display:flex;gap:7px;">
+            <button class="btn btn-outline btn-sm" style="flex:1;justify-content:center;" onclick="openInteractionModal()">⚠ Check Interactions</button>
+            <button class="btn btn-success" style="flex:1;justify-content:center;" onclick="showToast('Prescription dispensed ✓ — Receipt printed','✅')">✅ Dispense</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CATEGORY STOCK OVERVIEW -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">📊 Category Stock Levels</div></div>
+      <div style="padding:12px 16px;" id="category-stock"></div>
+    </div>
+
+    <!-- RECENT ACTIVITY -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">🕐 Recent Dispensing</div></div>
+      <div style="padding:10px;" id="recent-dispensing"></div>
+    </div>
+
+  </div><!-- /right -->
+</div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- DRUG INTERACTION MODAL -->
+<div class="modal-backdrop" id="modal-interaction">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" style="color:var(--danger);">⚠ Drug Interaction Alert — Ravi Kumar</div>
+      <button class="modal-close" onclick="closeModal('interaction')">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--danger-lt);border:1px solid #FCA5A5;border-radius:var(--radius);padding:12px 14px;margin-bottom:16px;">
+        <div style="font-size:13px;font-weight:700;color:var(--danger);margin-bottom:4px;">🚨 1 Severe Interaction Detected</div>
+        <div style="font-size:12px;color:var(--danger-dark);">Prescriber notification required. Do not dispense until doctor confirms or modifies prescription.</div>
+      </div>
+
+      <!-- INTERACTION 1: SEVERE -->
+      <div style="border:1.5px solid #FCA5A5;background:var(--danger-lt);border-radius:var(--radius-lg);padding:14px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-size:20px;">🚨</span>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;color:var(--danger);">Losartan + Potassium Chloride</div>
+            <div style="font-size:11px;color:var(--danger-dark);">Severity: SEVERE · Class: Hyperkalaemia Risk</div>
+          </div>
+          <span class="badge bd-red">Severe</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-2);line-height:1.6;margin-bottom:8px;">ACE inhibitors and ARBs (Losartan) used concurrently with potassium supplements may cause dangerously elevated serum potassium levels (hyperkalemia), potentially leading to cardiac arrhythmias. Patient's serum K⁺ = 4.2 mEq/L — monitor closely.</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn btn-danger btn-sm" onclick="showToast('Prescriber Dr. Anand notified via alert','📟')">📟 Notify Prescriber</button>
+          <button class="btn btn-outline btn-sm" onclick="showToast('Potassium supplement removed from prescription','🗑')">Remove K⁺ Supplement</button>
+          <button class="btn btn-outline btn-sm" onclick="showToast('Override with Dr. authorization logged','⚠')">Override with Auth</button>
+        </div>
+      </div>
+
+      <!-- INTERACTION 2: MODERATE -->
+      <div style="border:1.5px solid #FCD34D;background:var(--warn-lt);border-radius:var(--radius-lg);padding:14px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-size:20px;">⚠️</span>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;color:var(--warn-dark);">Amlodipine + Simvastatin</div>
+            <div style="font-size:11px;color:var(--warn-dark);">Severity: MODERATE · Class: CYP3A4 Inhibition</div>
+          </div>
+          <span class="badge bd-warn">Moderate</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-2);line-height:1.6;margin-bottom:8px;">Amlodipine may increase plasma concentrations of simvastatin by inhibiting CYP3A4 metabolism. This can increase the risk of myopathy/rhabdomyolysis. Recommendation: switch simvastatin to atorvastatin or limit simvastatin dose to 20mg.</div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-warn btn-sm" onclick="showToast('Switching to Atorvastatin 20mg','💊')">Switch to Atorvastatin</button>
+          <button class="btn btn-outline btn-sm" onclick="showToast('Interaction acknowledged and logged','✅')">Acknowledge</button>
+        </div>
+      </div>
+
+      <!-- INTERACTION 3: MILD -->
+      <div style="border:1.5px solid #BFDBFE;background:var(--brand-light);border-radius:var(--radius-lg);padding:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-size:20px;">ℹ️</span>
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;color:var(--brand);">Metformin + Alcohol (Patient advisory)</div>
+            <div style="font-size:11px;color:var(--brand);">Severity: MILD · Class: Lactic Acidosis Risk</div>
+          </div>
+          <span class="badge bd-blue">Mild</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-2);line-height:1.6;">Advise patient to avoid excessive alcohol consumption while on Metformin. Alcohol potentiates the hypoglycemic effect and may precipitate lactic acidosis in susceptible patients.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('interaction')">Cancel Dispensing</button>
+      <button class="btn btn-warn" onclick="closeModal('interaction');showToast('Dispensed with pharmacist override — interaction documented','⚠')">Dispense with Override</button>
+      <button class="btn btn-primary" onclick="closeModal('interaction');showToast('Prescription sent back to Dr. Anand for review','📋')">📋 Return to Prescriber</button>
+    </div>
+  </div>
+</div>
+
+<!-- DISPENSE MANUAL MODAL -->
+<div class="modal-backdrop" id="modal-dispense">
+  <div class="modal" style="width:500px;">
+    <div class="modal-header">
+      <div class="modal-title">💊 Manual Prescription Entry</div>
+      <button class="modal-close" onclick="closeModal('dispense')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="fg2" style="gap:10px;margin-bottom:12px;">
+        <div class="form-group full"><label class="fl">Patient UHID / Name</label><input class="fi" placeholder="Scan wristband or enter UHID..."/></div>
+        <div class="form-group"><label class="fl">Prescription Type</label><select class="fs"><option>OPD</option><option>IPD</option><option>ER</option><option>Discharge</option></select></div>
+        <div class="form-group"><label class="fl">Prescribing Doctor</label><select class="fs"><option>Dr. Anand Krishnan</option><option>Dr. Meera Suresh</option><option>Dr. Ramesh Iyer</option></select></div>
+        <div class="form-group full"><label class="fl">Drug Name</label><input class="fi" placeholder="Start typing drug name to search formulary..."/></div>
+        <div class="form-group"><label class="fl">Dose / Strength</label><input class="fi" placeholder="e.g. 500mg"/></div>
+        <div class="form-group"><label class="fl">Frequency</label><select class="fs"><option>OD</option><option>BD</option><option>TDS</option><option>QID</option><option>SOS</option><option>ON</option></select></div>
+        <div class="form-group"><label class="fl">Duration</label><input class="fi" placeholder="e.g. 7 days"/></div>
+        <div class="form-group"><label class="fl">Quantity to Dispense</label><input class="fi" type="number" placeholder="Qty"/></div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="showToast('Drug row added','＋')">＋ Add Another Drug</button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('dispense')">Cancel</button>
+      <button class="btn btn-primary" onclick="closeModal('dispense');showToast('Prescription saved — dispensing queued','💊')">💊 Add to Queue</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span id="toast-icon">✅</span><span id="toast-msg">Done</span></div>
+
+<script>
+// ── DISPENSE QUEUE ──
+const queue=[
+  {token:'RX-127',pt:'Ravi Kumar',doctor:'Dr. Anand',type:'OPD',drugs:['Amlodipine 10mg','Losartan 50mg','Metformin 500mg'],time:'14:28',status:'pending',stripCls:'rs-opd',stCls:'rss-pending',stLabel:'Pending'},
+  {token:'RX-ER-04',pt:'Mohan Kumar',doctor:'Dr. Ramesh (ER)',type:'ER',drugs:['Dopamine 200mg','Furosemide 40mg'],time:'14:22',status:'urgent',stripCls:'rs-urgent',stCls:'rss-urgent',stLabel:'STAT'},
+  {token:'RX-128',pt:'Priya Sundaram',doctor:'Dr. Meera',type:'OPD',drugs:['Atorvastatin 20mg','Aspirin 75mg'],time:'14:18',status:'ready',stripCls:'rs-opd',stCls:'rss-ready',stLabel:'Ready'},
+  {token:'RX-IPD-B04',pt:'Deepak Kumar',doctor:'Dr. Ramesh (IPD)',type:'IPD',drugs:['Cefazolin 1g','Tramadol 50mg','Enoxaparin 40mg'],time:'14:10',status:'pending',stripCls:'rs-ipd',stCls:'rss-pending',stLabel:'Pending'},
+  {token:'RX-129',pt:'Karthik Rajan',doctor:'Dr. Anand',type:'OPD',drugs:['Metformin 500mg','Glimepiride 2mg'],time:'13:58',status:'dispensed',stripCls:'rs-dispensed',stCls:'rss-dispensed',stLabel:'Dispensed'},
+  {token:'RX-130',pt:'Anjali Menon',doctor:'Dr. Meera',type:'OPD',drugs:['Cetirizine 10mg','Montelukast 10mg','Prednisolone 20mg'],time:'13:44',status:'dispensed',stripCls:'rs-dispensed',stCls:'rss-dispensed',stLabel:'Dispensed'},
+  {token:'RX-IPD-B08',pt:'Rajan Pillai',doctor:'Dr. Ramesh',type:'IPD',drugs:['Salbutamol nebuliser','Ipratropium','Methylprednisolone'],time:'13:30',status:'pending',stripCls:'rs-ipd',stCls:'rss-pending',stLabel:'Pending'},
+];
+const dq=document.getElementById('dispense-queue');
+const typeColors={OPD:'var(--brand)',ER:'var(--danger)',IPD:'var(--purple)'};
+queue.forEach(q=>{
+  dq.innerHTML+=`<div class="rx-card ${q.status==='urgent'?'urgent':q.status==='dispensed'?'dispensed':q.type==='IPD'?'inpatient':''}" onclick="showToast('Loading ${q.token} — ${q.pt}','💊')">
+    <div class="rx-stripe ${q.stripCls}"></div>
+    <div class="rx-inner">
+      <div class="rx-token" style="background:${typeColors[q.type]||'var(--brand)'};">${q.token.split('-').pop()}<br><span style="font-size:8px;">${q.type}</span></div>
+      <div class="rx-info">
+        <div class="rx-patient">${q.pt}</div>
+        <div class="rx-doctor">Rx by ${q.doctor}</div>
+        <div class="rx-drugs">${q.drugs.map(d=>`<span class="rx-drug-chip">${d}</span>`).join('')}</div>
+      </div>
+      <div class="rx-right">
+        <div class="rx-time">${q.time}</div>
+        <div class="rx-status ${q.stCls}">${q.stLabel}</div>
+        ${q.status!=='dispensed'?`<button class="btn btn-sm btn-primary" style="margin-top:6px;font-size:11px;" onclick="event.stopPropagation();showToast('Dispensing ${q.token}...','✅')">Dispense</button>`:''}
+      </div>
+    </div>
+  </div>`;
+});
+
+// ── INVENTORY ──
+const inventory=[
+  {name:'Amlodipine 10mg',cat:'tablet',qty:120,reorder:200,batch:'AMB2024031',expiry:'2026-08',mrp:'₹4.50',low:true,crit:false},
+  {name:'Metformin 500mg',cat:'tablet',qty:80,reorder:500,batch:'MET2024018',expiry:'2025-09',mrp:'₹3.20',low:true,crit:true},
+  {name:'Losartan 50mg',cat:'tablet',qty:340,reorder:200,batch:'LOS2024022',expiry:'2026-06',mrp:'₹8.80',low:false,crit:false},
+  {name:'Atorvastatin 20mg',cat:'tablet',qty:260,reorder:200,batch:'ATO2024019',expiry:'2026-11',mrp:'₹6.40',low:false,crit:false},
+  {name:'Cefazolin 1g Inj.',cat:'injection',qty:48,reorder:100,batch:'CEF2024009',expiry:'2025-03',mrp:'₹42.00',low:true,crit:false,expWarn:true},
+  {name:'Dopamine 200mg Inj.',cat:'injection',qty:12,reorder:50,batch:'DOP2024007',expiry:'2025-04',mrp:'₹86.00',low:true,crit:true},
+  {name:'Enoxaparin 40mg',cat:'injection',qty:94,reorder:80,batch:'ENX2024011',expiry:'2026-02',mrp:'₹184.00',low:false,crit:false},
+  {name:'Tramadol 50mg',cat:'tablet',qty:420,reorder:200,batch:'TRA2024016',expiry:'2027-01',mrp:'₹7.60',low:false,crit:false},
+  {name:'Paracetamol 500mg',cat:'tablet',qty:1200,reorder:500,batch:'PAR2024031',expiry:'2026-12',mrp:'₹1.80',low:false,crit:false},
+  {name:'Salbutamol Nebule',cat:'inhaler',qty:38,reorder:60,batch:'SAL2024014',expiry:'2025-06',mrp:'₹22.00',low:true,crit:false},
+  {name:'Prednisolone 10mg',cat:'tablet',qty:280,reorder:150,batch:'PRE2024020',expiry:'2026-08',mrp:'₹3.10',low:false,crit:false},
+  {name:'Insulin Glargine',cat:'injection',qty:22,reorder:40,batch:'INS2024008',expiry:'2025-05',mrp:'₹340.00',low:true,crit:false,expWarn:true},
+];
+const catClsMap={tablet:'cc-tablet',injection:'cc-injection',inhaler:'cc-inhaler',syrup:'cc-syrup',topical:'cc-topical'};
+const ib=document.getElementById('inventory-body');
+inventory.forEach(d=>{
+  const pct=Math.min(Math.round((d.qty/d.reorder)*100),100);
+  const sfCls=d.crit?'sf-critical':d.low?'sf-low':'sf-ok';
+  const qtyCls=d.crit?'qty-critical':d.low?'qty-low':'qty-ok';
+  const expDate=new Date(d.expiry+'-01');
+  const today=new Date('2024-03-14');
+  const daysLeft=Math.round((expDate-today)/(1000*60*60*24));
+  const expCls=daysLeft<60?'exp-critical':daysLeft<180?'exp-warn':'exp-ok';
+  ib.innerHTML+=`<tr onclick="showToast('${d.name} — Stock: ${d.qty}','📦')">
+    <td>
+      <div style="font-size:13px;font-weight:500;">${d.name}${d.low?`<span class="low-badge ${d.crit?'lb-crit':'lb-low'}">${d.crit?'CRITICAL':'LOW'}</span>`:''}${d.expWarn?`<span class="low-badge lb-exp">EXP SOON</span>`:''}</div>
+    </td>
+    <td><span class="category-chip ${catClsMap[d.cat]||'cc-tablet'}">${d.cat.charAt(0).toUpperCase()+d.cat.slice(1)}</span></td>
+    <td>
+      <div class="stock-qty ${qtyCls}">${d.qty} units</div>
+      <div class="stock-bar"><div class="stock-fill ${sfCls}" style="width:${pct}%;"></div></div>
+    </td>
+    <td style="font-family:'DM Mono',monospace;font-size:12px;">${d.reorder}</td>
+    <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-3);">${d.batch}</td>
+    <td><span class="expiry-cell ${expCls}">${d.expiry}</span></td>
+    <td style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;">${d.mrp}</td>
+    <td>
+      <div style="display:flex;gap:4px;">
+        <button class="btn btn-outline btn-sm" style="padding:3px 8px;font-size:11px;" onclick="event.stopPropagation();showToast('Reordering ${d.name}...','📦')">Reorder</button>
+        <button class="btn btn-outline btn-sm" style="padding:3px 8px;font-size:11px;" onclick="event.stopPropagation();showToast('Editing ${d.name}...','✏')">Edit</button>
+      </div>
+    </td>
+  </tr>`;
+});
+
+// ── E-PRESCRIPTIONS ──
+const eprescriptions=[
+  {init:'RK',name:'Ravi Kumar',bg:'var(--brand)',doctor:'Dr. Anand Krishnan',token:'EMR-OPD-0127',verified:false,drugs:['Amlodipine 10mg · OD · 30d','Losartan 50mg · OD · 30d','Metformin 500mg · BD · 90d','Atorvastatin 20mg · ON · 90d']},
+  {init:'DK',name:'Deepak Kumar',bg:'var(--purple)',doctor:'Dr. Ramesh Iyer (IPD)',token:'EMR-IPD-B04',verified:true,drugs:['Cefazolin 1g IV · 8-hrly · 48h','Tramadol 50mg IV · PRN','Enoxaparin 40mg SC · OD · 10d']},
+  {init:'AN',name:'Anjali Menon',bg:'var(--success)',doctor:'Dr. Meera Suresh',token:'EMR-OPD-0128',verified:true,drugs:['Cetirizine 10mg · OD · 5d','Montelukast 10mg · ON · 10d','Prednisolone 20mg · OD · 5d']},
+  {init:'KR',name:'Karthik Rajan',bg:'var(--accent-dark)',doctor:'Dr. Anand Krishnan (IPD)',token:'EMR-IPD-B08',verified:true,drugs:['Salbutamol nebuliser · 4-hrly','Ipratropium 0.5mg · 6-hrly','Methylprednisolone 40mg IV · BD']},
+];
+const ep=document.getElementById('eprescriptions');
+eprescriptions.forEach(p=>{
+  ep.innerHTML+=`<div class="epx-card${p.verified?' verified':''}" onclick="showToast('Loading e-Rx: ${p.token}','📋')">
+    <div class="epx-header">
+      <div class="epx-av" style="background:${p.bg};">${p.init}</div>
+      <div style="flex:1;">
+        <div class="epx-name">${p.name} ${p.verified?'<span style="font-size:11px;color:var(--success-dark);">✓ Verified</span>':''}</div>
+        <div class="epx-doctor">Rx by ${p.doctor} · ${p.token}</div>
+      </div>
+      <div style="display:flex;gap:5px;flex-shrink:0;">
+        ${!p.verified?`<button class="btn btn-warn btn-sm" onclick="event.stopPropagation();openInteractionModal()">⚠ Check</button>`:''}
+        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();showToast('Dispensing ${p.token}...','💊')">Dispense</button>
+      </div>
+    </div>
+    <div class="epx-drugs-list">
+      ${p.drugs.map(d=>`<div class="epx-drug-row">
+        <span class="epx-drug-name">${d.split(' · ')[0]}</span>
+        <span class="epx-drug-detail">${d.split(' · ').slice(1).join(' · ')}</span>
+      </div>`).join('')}
+    </div>
+  </div>`;
+});
+
+// ── BATCH TRACKER ──
+const batches=[
+  {name:'Cefazolin 1g Inj.',batch:'CEF2024009',qty:48,mfg:'2022-03',expiry:'2025-03-31',daysLeft:17,color:'var(--danger)'},
+  {name:'Insulin Glargine 100U',batch:'INS2024008',qty:22,mfg:'2022-05',expiry:'2025-05-01',daysLeft:48,color:'var(--warn)'},
+  {name:'Ondansetron 4mg',batch:'OND2024003',qty:110,mfg:'2022-06',expiry:'2025-06-15',daysLeft:93,color:'var(--warn)'},
+  {name:'Metronidazole 400mg',batch:'MET2024005',qty:180,mfg:'2022-08',expiry:'2025-08-30',daysLeft:169,color:'var(--success)'},
+  {name:'Amoxicillin 500mg',batch:'AMX2024002',qty:240,mfg:'2022-02',expiry:'2024-02-28',daysLeft:-14,color:'var(--danger)'},
+  {name:'Chlorphenamine 4mg',batch:'CPM2024001',qty:60,mfg:'2022-01',expiry:'2024-01-15',daysLeft:-59,color:'var(--danger)'},
+  {name:'Paracetamol 500mg',batch:'PAR2024031',qty:1200,mfg:'2023-09',expiry:'2026-12-31',daysLeft:1023,color:'var(--success)'},
+  {name:'Losartan 50mg',batch:'LOS2024022',qty:340,mfg:'2023-10',expiry:'2026-06-30',daysLeft:839,color:'var(--success)'},
+];
+const bl=document.getElementById('batch-list');
+batches.forEach(b=>{
+  const pct=Math.max(0,Math.min(100,Math.round((b.daysLeft/365)*100)));
+  const statusLabel=b.daysLeft<0?'🔴 EXPIRED':b.daysLeft<30?'🟠 Expiring':b.daysLeft<90?'🟡 Watch':'🟢 OK';
+  bl.innerHTML+=`<div class="batch-row" onclick="showToast('${b.name} — Batch: ${b.batch}','🗓')">
+    <span style="font-size:12px;font-weight:500;">${b.name}</span>
+    <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-3);">${b.batch}</span>
+    <span style="font-family:'DM Mono',monospace;font-weight:600;">${b.qty}</span>
+    <span style="font-family:'DM Mono',monospace;font-size:11px;">${b.mfg}</span>
+    <span style="font-family:'DM Mono',monospace;font-size:11px;color:${b.daysLeft<30?'var(--danger)':b.daysLeft<90?'var(--warn-dark)':'var(--success-dark)'};">${b.expiry.slice(0,10)}</span>
+    <div>
+      <div style="font-size:11px;font-weight:700;margin-bottom:3px;color:${b.color};">${b.daysLeft<0?'Expired '+Math.abs(b.daysLeft)+'d ago':b.daysLeft+' days'}</div>
+      <div class="expiry-bar"><div class="eb-fill" style="width:${pct}%;background:${b.color};"></div></div>
+    </div>
+    <span style="font-size:11px;font-weight:600;">${statusLabel}</span>
+  </div>`;
+});
+
+// ── INTERACTIONS LIST ──
+const interactions=[
+  {title:'Losartan + Potassium Supplement',desc:'Hyperkalaemia risk — cardiac arrhythmia potential. Monitor serum K⁺.',sev:'severe',sCls:'severe',badgeCls:'irb-severe',icon:'🚨'},
+  {title:'Amlodipine + Simvastatin',desc:'CYP3A4 inhibition — increased myopathy risk. Limit simvastatin to 20mg or switch to atorvastatin.',sev:'Moderate',sCls:'moderate',badgeCls:'irb-moderate',icon:'⚠️'},
+  {title:'Metformin + Alcohol (advisory)',desc:'Patient counselling required. Avoid alcohol — risk of lactic acidosis and hypoglycaemia.',sev:'Mild',sCls:'mild',badgeCls:'irb-mild',icon:'ℹ️'},
+];
+const il=document.getElementById('interactions-list');
+interactions.forEach(i=>{
+  il.innerHTML+=`<div class="interaction-row ${i.sCls}" onclick="openInteractionModal()">
+    <div class="ir-icon">${i.icon}</div>
+    <div style="flex:1;">
+      <div class="ir-title">${i.title}</div>
+      <div class="ir-desc">${i.desc}</div>
+    </div>
+    <span class="ir-badge ${i.badgeCls}">${i.sev}</span>
+  </div>`;
+});
+
+// ── QUICK DISPENSE DRUGS ──
+const dispenseDrugs=[
+  {name:'Amlodipine 10mg',detail:'1 × 30 tabs · OD',stock:'✓ 120 in stock',amt:'₹135'},
+  {name:'Losartan 50mg',detail:'1 × 30 tabs · OD',stock:'✓ 340 in stock',amt:'₹264'},
+  {name:'Metformin 500mg',detail:'2 × 90 tabs · BD',stock:'⚠ Low: 80 left',amt:'₹576',warn:true},
+  {name:'Atorvastatin 20mg',detail:'1 × 90 tabs · ON',stock:'✓ 260 in stock',amt:'₹576'},
+  {name:'Pantoprazole 40mg',detail:'1 × 30 tabs · OD',stock:'✓ 380 in stock',amt:'₹119'},
+];
+const dd=document.getElementById('dispense-drugs');
+dispenseDrugs.forEach(d=>{
+  dd.innerHTML+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:var(--radius);border:1px solid ${d.warn?'#FCD34D':'var(--border)'};background:${d.warn?'var(--warn-lt)':'var(--surface-2)'};margin-bottom:5px;font-size:12px;cursor:pointer;" onclick="showToast('${d.name} details','💊')">
+    <div>
+      <div style="font-weight:500;">${d.name}</div>
+      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-3);">${d.detail} · ${d.stock}</div>
+    </div>
+    <div style="font-family:'DM Mono',monospace;font-weight:700;color:var(--brand);">${d.amt}</div>
+  </div>`;
+});
+
+// ── CATEGORY STOCK ──
+const cats=[
+  {name:'Tablets / Capsules',icon:'🔵',total:840,avail:812,col:'var(--brand)'},
+  {name:'Injectables',icon:'💉',total:280,avail:248,col:'var(--danger)'},
+  {name:'Syrups / Liquids',icon:'🧴',total:120,avail:118,col:'var(--success)'},
+  {name:'Inhalers / Nebules',icon:'🌬',total:60,avail:52,col:'var(--purple)'},
+  {name:'Topicals / Patches',icon:'🩹',total:80,avail:76,col:'var(--accent-dark)'},
+  {name:'Controlled Drugs',icon:'🔐',total:45,avail:44,col:'var(--warn-dark)'},
+];
+const cs=document.getElementById('category-stock');
+cats.forEach(c=>{
+  const pct=Math.round((c.avail/c.total)*100);
+  cs.innerHTML+=`<div style="margin-bottom:9px;cursor:pointer;" onclick="showToast('${c.name} — ${c.avail}/${c.total} SKUs','📦')">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+      <span style="font-size:12px;font-weight:500;">${c.icon} ${c.name}</span>
+      <span style="font-size:11px;font-weight:700;color:${c.col};">${pct}% · ${c.avail}/${c.total}</span>
+    </div>
+    <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${c.col};"></div></div>
+  </div>`;
+});
+
+// ── RECENT DISPENSING ──
+const recent=[
+  {pt:'Anjali Menon',token:'RX-130',drugs:'3 drugs',time:'13:44',by:'Meera P.'},
+  {pt:'Karthik Rajan',token:'RX-129',drugs:'2 drugs',time:'13:58',by:'Meera P.'},
+  {pt:'Priya S.',token:'RX-126',drugs:'4 drugs',time:'13:12',by:'Rajan T.'},
+  {pt:'Suresh Kumar',token:'RX-IPD-A12',drugs:'5 drugs',time:'12:48',by:'Rajan T.'},
+];
+const rd=document.getElementById('recent-dispensing');
+recent.forEach(r=>{
+  rd.innerHTML+=`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;cursor:pointer;" onclick="showToast('${r.token} — ${r.pt}','💊')">
+    <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-3);min-width:44px;">${r.time}</span>
+    <div style="flex:1;"><div style="font-weight:500;">${r.pt}</div><div style="font-size:11px;color:var(--text-3);">${r.token} · ${r.drugs}</div></div>
+    <span style="font-size:11px;color:var(--text-3);">by ${r.by}</span>
+  </div>`;
+});
+
+// ── TABS ──
+function switchTab(id,btn){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pane-'+id).classList.add('active');
+  if(btn) btn.classList.add('active');
+}
+
+// ── MODALS ──
+function openModal(id){document.getElementById('modal-'+id).classList.add('show');}
+function closeModal(id){document.getElementById('modal-'+id).classList.remove('show');}
+function openInteractionModal(){openModal('interaction');}
+
+// ── TOAST ──
+let tt;
+function showToast(msg,icon='✅'){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').innerHTML=msg;
+  document.getElementById('toast-icon').textContent=icon;
+  t.classList.add('show');clearTimeout(tt);
+  tt=setTimeout(()=>t.classList.remove('show'),3200);
+}
+</script>
+</body>
+</html>

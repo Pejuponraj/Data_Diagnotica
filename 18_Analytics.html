@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Diagnotica HMS — Reporting & Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --brand:#1A5EAB;--brand-dark:#0F3F78;--brand-light:#E8F1FB;
+  --accent:#00C0A3;--accent-lt:#E0F9F5;--accent-dark:#007A68;
+  --warn:#F59E0B;--warn-lt:#FEF3C7;--warn-dark:#92400E;
+  --danger:#EF4444;--danger-lt:#FEE2E2;
+  --success:#10B981;--success-lt:#D1FAE5;--success-dark:#065F46;
+  --purple:#7C3AED;--purple-lt:#EDE9FE;
+  --text-1:#0F1C2E;--text-2:#3A4D63;--text-3:#7A8FA6;
+  --border:#DDE6F0;--bg:#F0F5FB;--surface:#FFFFFF;--surface-2:#F7FAFD;
+  --radius:12px;--radius-lg:18px;
+  --shadow:0 1px 4px rgba(26,94,171,.07),0 4px 18px rgba(26,94,171,.06);
+  --shadow-lg:0 8px 36px rgba(26,94,171,.13);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-1);min-height:100vh;font-size:14px;}
+
+/* TOPBAR */
+.topbar{background:var(--brand-dark);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:52px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.18);}
+.logo-wrap{display:flex;align-items:center;gap:10px;}
+.logo-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#00C0A3,#2E7DD6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;}
+.logo-text{color:#fff;font-size:15px;font-weight:700;}
+.logo-sub{color:#8BAFD4;font-size:11px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.t-chip{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#D4E8FF;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;font-family:inherit;}
+.t-chip:hover{background:rgba(255,255,255,.18);}
+.user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border-radius:20px;padding:4px 12px 4px 4px;}
+.user-av{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+
+/* SHELL */
+.shell{display:flex;height:calc(100vh - 52px);overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:196px;background:var(--surface);border-right:1px solid var(--border);padding:14px 0;flex-shrink:0;overflow-y:auto;}
+.sb-label{font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;padding:8px 14px 4px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:var(--radius);margin:0 8px 2px;cursor:pointer;color:var(--text-2);font-size:13px;transition:all .15s;position:relative;}
+.nav-item:hover{background:var(--brand-light);color:var(--brand);}
+.nav-item.active{background:var(--brand-light);color:var(--brand);font-weight:600;}
+.nav-item.active::before{content:'';position:absolute;left:-4px;top:6px;bottom:6px;width:3px;background:var(--brand);border-radius:0 3px 3px 0;}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+
+/* TABS */
+.top-tabs{display:flex;gap:0;background:var(--surface);border-bottom:2px solid var(--border);padding:0 24px;flex-shrink:0;}
+.top-tab-btn{padding:14px 18px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:500;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:7px;}
+.top-tab-btn:hover{color:var(--text-1);}
+.top-tab-btn.active{color:var(--brand);border-bottom-color:var(--brand);font-weight:600;}
+.tab-page{display:none;flex-direction:column;flex:1;}
+.tab-page.active{display:flex;}
+
+/* PAGE CONTENT */
+.page-body{padding:20px 24px;display:flex;flex-direction:column;gap:18px;flex:1;overflow-y:auto;}
+
+/* KPI STRIP */
+.kpi-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;}
+.kpi-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);box-shadow:var(--shadow);padding:16px 18px;cursor:pointer;transition:all .18s;position:relative;overflow:hidden;}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);}
+.kpi-card::after{content:'';position:absolute;right:-12px;bottom:-12px;width:60px;height:60px;border-radius:50%;background:currentColor;opacity:.05;}
+.kc-icon{font-size:22px;margin-bottom:8px;display:block;}
+.kc-val{font-size:26px;font-weight:800;line-height:1;margin-bottom:3px;}
+.kc-label{font-size:11px;color:var(--text-3);font-weight:500;}
+.kc-trend{font-size:11px;font-weight:600;margin-top:5px;display:flex;align-items:center;gap:3px;}
+.trend-up{color:var(--success);}
+.trend-down{color:var(--danger);}
+.trend-neutral{color:var(--text-3);}
+
+/* CHARTS GRID */
+.charts-2col{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.charts-3col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;}
+.chart-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);box-shadow:var(--shadow);padding:18px;overflow:hidden;}
+.chart-card.wide{grid-column:1/-1;}
+.chart-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;}
+.chart-title{font-size:14px;font-weight:700;color:var(--text-1);}
+.chart-subtitle{font-size:11px;color:var(--text-3);margin-top:2px;}
+.chart-actions{display:flex;gap:5px;flex-shrink:0;}
+.chart-pill{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--surface-2);color:var(--text-2);transition:all .13s;}
+.chart-pill:hover,.chart-pill.active{background:var(--brand);color:#fff;border-color:var(--brand);}
+canvas{display:block;}
+
+/* GAUGE */
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 0;}
+.gauge-val{font-size:36px;font-weight:800;color:var(--brand);margin-top:-20px;text-align:center;line-height:1;}
+.gauge-label{font-size:12px;color:var(--text-3);margin-top:4px;}
+.gauge-legend{display:flex;gap:12px;margin-top:12px;flex-wrap:wrap;justify-content:center;}
+.gl-item{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;}
+.gl-dot{width:10px;height:10px;border-radius:50%;}
+
+/* DEPT PERFORMANCE CARDS */
+.dept-perf-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.dept-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);box-shadow:var(--shadow);padding:16px;cursor:pointer;transition:all .18s;overflow:hidden;position:relative;}
+.dept-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);}
+.dc-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.dc-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.dc-name{font-size:13px;font-weight:700;}
+.dc-specialty{font-size:11px;color:var(--text-3);}
+.dc-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.dcm-item{background:var(--surface-2);border-radius:8px;padding:8px 10px;}
+.dcm-val{font-size:16px;font-weight:800;line-height:1;}
+.dcm-label{font-size:9px;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-top:2px;}
+.dc-progress{margin-top:10px;}
+.dc-prog-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text-3);margin-bottom:3px;}
+.prog-bar{height:5px;background:var(--border);border-radius:4px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:4px;transition:width .6s ease;}
+
+/* REVENUE TABLE */
+.rev-table{width:100%;border-collapse:collapse;font-size:12px;}
+.rev-table th{padding:10px 14px;background:var(--surface-2);text-align:left;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid var(--border);white-space:nowrap;}
+.rev-table td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.rev-table tr:hover td{background:var(--brand-light);cursor:pointer;}
+.rev-table tr.total-row td{background:var(--brand-light);font-weight:700;border-top:2px solid var(--brand);}
+.rev-bar-cell{width:100px;}
+.rev-mini-bar{height:6px;background:var(--border);border-radius:4px;overflow:hidden;margin-top:3px;}
+.rmb-fill{height:100%;border-radius:4px;}
+.rev-positive{color:var(--success-dark);font-weight:600;}
+.rev-negative{color:var(--danger);font-weight:600;}
+
+/* QA INCIDENT TABLE */
+.qa-table{width:100%;border-collapse:collapse;font-size:12px;}
+.qa-table th{padding:9px 14px;background:var(--surface-2);text-align:left;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid var(--border);}
+.qa-table td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.qa-table tr:hover td{background:rgba(239,68,68,.03);cursor:pointer;}
+.severity-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;display:inline-flex;align-items:center;gap:4px;}
+.sev-critical{background:var(--danger-lt);color:var(--danger);}
+.sev-high{background:#FEF3C7;color:#92400E;}
+.sev-medium{background:#EEF2FF;color:#3730A3;}
+.sev-low{background:var(--success-lt);color:var(--success-dark);}
+.qa-status{font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;}
+.qs-open{background:var(--danger-lt);color:var(--danger);}
+.qs-investigating{background:var(--warn-lt);color:var(--warn-dark);}
+.qs-closed{background:var(--success-lt);color:var(--success-dark);}
+.qs-monitoring{background:var(--brand-light);color:var(--brand);}
+.dept-tag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:5px;}
+
+/* SUMMARY STAT ROW */
+.summary-stat-row{display:flex;gap:0;background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;}
+.ssr-item{flex:1;padding:16px 20px;text-align:center;border-right:1px solid var(--border);cursor:pointer;transition:background .15s;}
+.ssr-item:last-child{border-right:none;}
+.ssr-item:hover{background:var(--brand-light);}
+.ssr-val{font-size:24px;font-weight:800;line-height:1;}
+.ssr-label{font-size:10px;color:var(--text-3);margin-top:4px;font-weight:500;text-transform:uppercase;letter-spacing:.05em;}
+.ssr-trend{font-size:11px;margin-top:3px;font-weight:600;}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600;}
+.bd-blue{background:var(--brand-light);color:var(--brand);}
+.bd-green{background:var(--success-lt);color:var(--success);}
+.bd-warn{background:var(--warn-lt);color:var(--warn-dark);}
+.bd-red{background:var(--danger-lt);color:var(--danger);}
+
+/* BTN */
+.btn{padding:7px 14px;border-radius:var(--radius);border:none;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+.btn-primary{background:var(--brand);color:#fff;}
+.btn-primary:hover{background:var(--brand-dark);}
+.btn-outline{background:var(--surface);color:var(--brand);border:1px solid var(--brand);}
+.btn-outline:hover{background:var(--brand-light);}
+.btn-sm{padding:5px 11px;font-size:12px;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--brand-dark);color:#fff;padding:12px 20px;border-radius:var(--radius);font-size:13px;font-weight:500;z-index:999;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:8px;align-items:center;background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);padding:12px 18px;box-shadow:var(--shadow);}
+.fb-label{font-size:12px;font-weight:600;color:var(--text-2);white-space:nowrap;}
+select.fb-select{padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:12px;background:var(--surface-2);outline:none;color:var(--text-1);}
+select.fb-select:focus{border-color:var(--brand);}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo-wrap">
+    <div class="logo-mark">Dx</div>
+    <div><div class="logo-text">Diagnotica HMS</div><div class="logo-sub">Reporting &amp; Analytics</div></div>
+  </div>
+  <div class="topbar-right">
+    <div class="t-chip" onclick="showToast('Generating full PDF report...','📄')">📄 Export PDF</div>
+    <div class="t-chip" onclick="showToast('Exporting Excel data...','📊')">📊 Export Excel</div>
+    <div class="t-chip" onclick="showToast('Scheduling automated report...','📅')">📅 Schedule Report</div>
+    <div class="t-chip" onclick="showToast('Dashboard shared via email','🔗')">🔗 Share Dashboard</div>
+    <div class="user-chip">
+      <div class="user-av">AM</div>
+      <span style="color:#D4E8FF;font-size:12px;">Analytics — Dr. Anand M.</span>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-label">Analytics</div>
+  <div class="nav-item active">📊 Executive Summary</div>
+  <div class="nav-item">🏥 Clinical Analytics</div>
+  <div class="nav-item">💰 Financial Reports</div>
+  <div class="nav-item">🛏 Bed Management</div>
+  <div class="nav-item">⚠ QA &amp; Incidents</div>
+  <div class="nav-item">👥 Patient Flow</div>
+  <div class="sb-label">Reports</div>
+  <div class="nav-item">📋 MIS Reports</div>
+  <div class="nav-item">🏛 Regulatory Reports</div>
+  <div class="nav-item">📈 Trends &amp; Forecasts</div>
+  <div class="nav-item">⭐ Patient Satisfaction</div>
+  <div class="sb-label">Settings</div>
+  <div class="nav-item">⚙ Report Config</div>
+  <div class="nav-item">📧 Email Schedules</div>
+</nav>
+
+<div class="main">
+  <!-- TOP TABS -->
+  <div class="top-tabs">
+    <button class="top-tab-btn active" onclick="switchPage('overview',this)">📊 Overview</button>
+    <button class="top-tab-btn" onclick="switchPage('clinical',this)">🏥 Clinical</button>
+    <button class="top-tab-btn" onclick="switchPage('revenue',this)">💰 Revenue</button>
+    <button class="top-tab-btn" onclick="switchPage('beds',this)">🛏 Beds &amp; Capacity</button>
+    <button class="top-tab-btn" onclick="switchPage('qa',this)">⚠ QA &amp; Incidents</button>
+    <button class="top-tab-btn" onclick="switchPage('deptperf',this)">🏆 Dept. Performance</button>
+  </div>
+
+  <!-- ═══ PAGE: OVERVIEW ═══ -->
+  <div class="tab-page active" id="page-overview">
+    <div class="page-body">
+
+      <!-- FILTER BAR -->
+      <div class="filter-bar">
+        <span class="fb-label">Period:</span>
+        <select class="fb-select" onchange="showToast('Refreshing for '+this.value,'🔄')">
+          <option>March 2024 (Current)</option>
+          <option>February 2024</option>
+          <option>Q1 2024</option>
+          <option>FY 2023–24</option>
+        </select>
+        <select class="fb-select">
+          <option>All Departments</option>
+          <option>OPD</option><option>IPD</option><option>Emergency</option>
+          <option>Surgical</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="showToast('Dashboard refreshed','🔄')">🔄 Refresh</button>
+        <span style="margin-left:auto;font-size:11px;color:var(--text-3);">Last updated: 14 Mar 2024 · 15:02</span>
+      </div>
+
+      <!-- KPI STRIP -->
+      <div class="kpi-strip">
+        <div class="kpi-card" style="color:var(--brand);" onclick="showToast('OPD Patients: 4,281 this month','👥')">
+          <span class="kc-icon">👥</span>
+          <div class="kc-val" style="color:var(--brand);">4,281</div>
+          <div class="kc-label">OPD Patients</div>
+          <div class="kc-trend trend-up">↑ 8.4% vs last month</div>
+        </div>
+        <div class="kpi-card" style="color:var(--purple);" onclick="showToast('IPD Admissions: 842 this month','🛏')">
+          <span class="kc-icon">🛏</span>
+          <div class="kc-val" style="color:var(--purple);">842</div>
+          <div class="kc-label">IPD Admissions</div>
+          <div class="kc-trend trend-up">↑ 5.2% vs last month</div>
+        </div>
+        <div class="kpi-card" style="color:var(--danger);" onclick="showToast('Emergency Cases: 318','🚨')">
+          <span class="kc-icon">🚨</span>
+          <div class="kc-val" style="color:var(--danger);">318</div>
+          <div class="kc-label">Emergency Cases</div>
+          <div class="kc-trend trend-down">↑ 12.1% — review</div>
+        </div>
+        <div class="kpi-card" style="color:var(--success);" onclick="showToast('Surgeries: 214','🔪')">
+          <span class="kc-icon">🔪</span>
+          <div class="kc-val" style="color:var(--success);">214</div>
+          <div class="kc-label">Surgeries Done</div>
+          <div class="kc-trend trend-up">↑ 3.8% vs last month</div>
+        </div>
+        <div class="kpi-card" style="color:var(--accent-dark);" onclick="showToast('Avg LOS: 3.8 days','📅')">
+          <span class="kc-icon">📅</span>
+          <div class="kc-val" style="color:var(--accent-dark);">3.8d</div>
+          <div class="kc-label">Avg Length of Stay</div>
+          <div class="kc-trend trend-up">↓ 0.4d — improving</div>
+        </div>
+        <div class="kpi-card" style="color:var(--warn-dark);" onclick="showToast('Revenue: ₹1.84 Cr','💰')">
+          <span class="kc-icon">💰</span>
+          <div class="kc-val" style="color:var(--warn-dark);">₹1.84Cr</div>
+          <div class="kc-label">Monthly Revenue</div>
+          <div class="kc-trend trend-up">↑ 11.2% vs target</div>
+        </div>
+      </div>
+
+      <!-- CHARTS ROW 1 -->
+      <div class="charts-2col">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div><div class="chart-title">Patient Volume — Daily Trend</div><div class="chart-subtitle">OPD + IPD + ER · March 2024</div></div>
+            <div class="chart-actions">
+              <div class="chart-pill active">Month</div>
+              <div class="chart-pill" onclick="showToast('Switching to week view','📅')">Week</div>
+            </div>
+          </div>
+          <canvas id="patientVolumeChart" height="200"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <div><div class="chart-title">Revenue vs Target</div><div class="chart-subtitle">Monthly actuals vs budget · ₹ Lakhs</div></div>
+            <div class="chart-actions">
+              <div class="chart-pill active">2024</div>
+              <div class="chart-pill" onclick="showToast('Loading 2023 data','📅')">2023</div>
+            </div>
+          </div>
+          <canvas id="revenueChart" height="200"></canvas>
+        </div>
+      </div>
+
+      <!-- CHARTS ROW 2 -->
+      <div class="charts-3col">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div><div class="chart-title">Patient Mix</div><div class="chart-subtitle">OPD / IPD / ER / Surgery</div></div>
+          </div>
+          <canvas id="patientMixChart" height="200"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <div><div class="chart-title">Payer Mix</div><div class="chart-subtitle">Insurance vs Self-pay</div></div>
+          </div>
+          <canvas id="payerMixChart" height="200"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <div><div class="chart-title">Top Diagnoses</div><div class="chart-subtitle">By patient count</div></div>
+          </div>
+          <canvas id="diagnosisChart" height="200"></canvas>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: CLINICAL ═══ -->
+  <div class="tab-page" id="page-clinical">
+    <div class="page-body">
+      <div class="summary-stat-row">
+        <div class="ssr-item" onclick="showToast('Mortality Rate: 1.2%','📊')"><div class="ssr-val" style="color:var(--danger);">1.2%</div><div class="ssr-label">Mortality Rate</div><div class="ssr-trend trend-up">↓ 0.3% — improving</div></div>
+        <div class="ssr-item" onclick="showToast('ALOS: 3.8 days','📅')"><div class="ssr-val" style="color:var(--brand);">3.8d</div><div class="ssr-label">Avg LOS</div><div class="ssr-trend trend-up">↓ 0.4d vs last month</div></div>
+        <div class="ssr-item" onclick="showToast('SSI Rate: 2.4%','🔬')"><div class="ssr-val" style="color:var(--warn-dark);">2.4%</div><div class="ssr-label">SSI Rate</div><div class="ssr-trend trend-down">↑ needs attention</div></div>
+        <div class="ssr-item" onclick="showToast('Readmission: 4.8%','🔄')"><div class="ssr-val" style="color:var(--brand);">4.8%</div><div class="ssr-label">30d Readmission</div><div class="ssr-trend trend-up">↓ 0.6% — good</div></div>
+        <div class="ssr-item" onclick="showToast('C-Section rate: 32%','🏥')"><div class="ssr-val" style="color:var(--purple);">32%</div><div class="ssr-label">C-Section Rate</div><div class="ssr-trend trend-neutral">→ Stable</div></div>
+        <div class="ssr-item" onclick="showToast('CLABSI Rate: 0.8','🧪')"><div class="ssr-val" style="color:var(--success-dark);">0.8</div><div class="ssr-label">CLABSI /1000 days</div><div class="ssr-trend trend-up">↓ Below benchmark</div></div>
+      </div>
+      <div class="charts-2col">
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Clinical Outcomes — Monthly Trend</div><div class="chart-subtitle">Mortality / Readmissions / Complications · %</div></div></div>
+          <canvas id="clinicalTrendChart" height="220"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Surgical Complications</div><div class="chart-subtitle">By procedure type — rate %</div></div></div>
+          <canvas id="surgicalChart" height="220"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header"><div><div class="chart-title">Department-wise LOS Distribution</div><div class="chart-subtitle">Average length of stay (days) by ward/specialty — March 2024</div></div><button class="btn btn-outline btn-sm" onclick="showToast('LOS report exported','📊')">📊 Export</button></div>
+        <canvas id="losChart" height="130"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: REVENUE ═══ -->
+  <div class="tab-page" id="page-revenue">
+    <div class="page-body">
+      <div class="summary-stat-row">
+        <div class="ssr-item"><div class="ssr-val" style="color:var(--brand);">₹1.84Cr</div><div class="ssr-label">Total Revenue</div><div class="ssr-trend trend-up">↑ 11.2% vs target</div></div>
+        <div class="ssr-item"><div class="ssr-val" style="color:var(--success-dark);">₹1.24Cr</div><div class="ssr-label">Collections</div><div class="ssr-trend trend-up">67% collected</div></div>
+        <div class="ssr-item"><div class="ssr-val" style="color:var(--warn-dark);">₹42.8L</div><div class="ssr-label">Pending (AR)</div><div class="ssr-trend trend-down">23% outstanding</div></div>
+        <div class="ssr-item"><div class="ssr-val" style="color:var(--danger);">₹18.4L</div><div class="ssr-label">Write-offs</div><div class="ssr-trend trend-neutral">10% of revenue</div></div>
+        <div class="ssr-item"><div class="ssr-val" style="color:var(--purple);">₹1.24Cr</div><div class="ssr-label">Insurance Claims</div><div class="ssr-trend trend-up">67% via insurance</div></div>
+        <div class="ssr-item"><div class="ssr-val" style="color:var(--accent-dark);">62d</div><div class="ssr-label">Avg Collection Days</div><div class="ssr-trend trend-up">↓ 4d — improving</div></div>
+      </div>
+      <div class="charts-2col">
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Revenue by Department</div><div class="chart-subtitle">March 2024 · ₹ Lakhs</div></div></div>
+          <canvas id="revByDeptChart" height="220"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Monthly Revenue Trend</div><div class="chart-subtitle">FY 2023–24 · Revenue vs Collections</div></div></div>
+          <canvas id="revTrendChart" height="220"></canvas>
+        </div>
+      </div>
+      <!-- REVENUE TABLE -->
+      <div class="chart-card">
+        <div class="chart-header"><div><div class="chart-title">Department Revenue Breakdown — March 2024</div></div><button class="btn btn-outline btn-sm" onclick="showToast('Revenue report exported','💰')">💰 Export</button></div>
+        <div style="overflow-x:auto;">
+          <table class="rev-table" id="rev-table"></table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: BEDS ═══ -->
+  <div class="tab-page" id="page-beds">
+    <div class="page-body">
+      <div class="summary-stat-row">
+        <div class="ssr-item"><div class="ssr-val" style="color:var(--brand);">78%</div><div class="ssr-label">Occupancy Rate</div><div class="ssr-trend trend-up">↑ 3% vs last week</div></div>
+        <div class="ssr-item"><div class="ssr-val" style="color:var(--success-dark);">42</div><div class="ssr-label">Available Beds</div><div class="ssr-trend trend-neutral">of 200 total</div></div>
+        <div class="ssr-item"><div class="ssr-val" style="color:var(--danger);">6</div><div class="ssr-label">ICU Beds Used</div><div class="ssr-trend trend-down">100% — full</div></div>
+        <div class="ssr-item"><div class="ssr-val" style="color:var(--warn-dark);">3.8d</div><div class="ssr-label">Avg LOS</div><div class="ssr-trend trend-up">↓ target: 4.0d</div></div>
+        <div class="ssr-item"><div class="ssr-val" style="color:var(--purple);">22m</div><div class="ssr-label">Avg Bed Turnover</div><div class="ssr-trend trend-up">↓ 4m vs last week</div></div>
+        <div class="ssr-item"><div class="ssr-val" style="color:var(--accent-dark);">94%</div><div class="ssr-label">ICU Utilisation</div><div class="ssr-trend trend-down">Near capacity</div></div>
+      </div>
+      <div class="charts-2col">
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Bed Occupancy Gauge</div><div class="chart-subtitle">Real-time · All wards combined</div></div></div>
+          <div class="gauge-wrap">
+            <canvas id="gaugeChart" height="200"></canvas>
+            <div class="gauge-val">78%</div>
+            <div class="gauge-label">Overall Bed Occupancy</div>
+            <div class="gauge-legend">
+              <div class="gl-item"><div class="gl-dot" style="background:#10B981;"></div>Free (22%)</div>
+              <div class="gl-item"><div class="gl-dot" style="background:#1A5EAB;"></div>Occupied (78%)</div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Occupancy by Ward — 14 Days</div><div class="chart-subtitle">Daily occupancy % trend</div></div></div>
+          <canvas id="occupancyChart" height="230"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header"><div><div class="chart-title">Ward-wise Bed Status — Live</div><div class="chart-subtitle">Current bed occupancy by ward</div></div></div>
+        <canvas id="wardBedChart" height="120"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: QA INCIDENTS ═══ -->
+  <div class="tab-page" id="page-qa">
+    <div class="page-body">
+      <div class="summary-stat-row">
+        <div class="ssr-item"><div class="ssr-val" style="color:var(--danger);">3</div><div class="ssr-label">Open Critical</div><div class="ssr-trend trend-down">Needs immediate action</div></div>
+        <div class="ssr-item"><div class="ssr-val" style="color:var(--warn-dark);">8</div><div class="ssr-label">Total Open</div><div class="ssr-trend trend-down">↑ 2 vs last week</div></div>
+        <div class="ssr-item"><div class="ssr-val" style="color:var(--success-dark);">24</div><div class="ssr-label">Closed This Month</div><div class="ssr-trend trend-up">↑ 6 vs last month</div></div>
+        <div class="ssr-item"><div class="ssr-val" style="color:var(--brand);">4.2d</div><div class="ssr-label">Avg Resolution Time</div><div class="ssr-trend trend-up">↓ 0.8d improving</div></div>
+        <div class="ssr-item"><div class="ssr-val" style="color:var(--purple);">92%</div><div class="ssr-label">CAPA Compliance</div><div class="ssr-trend trend-up">↑ 4% vs target</div></div>
+        <div class="ssr-item"><div class="ssr-val" style="color:var(--accent-dark);">0</div><div class="ssr-label">Sentinel Events</div><div class="ssr-trend trend-up">Zero this quarter ✓</div></div>
+      </div>
+      <div class="charts-2col">
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Incidents by Category</div><div class="chart-subtitle">March 2024 · All severities</div></div></div>
+          <canvas id="incidentCatChart" height="220"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Incident Trend — 6 Months</div><div class="chart-subtitle">Reported vs Closed</div></div></div>
+          <canvas id="incidentTrendChart" height="220"></canvas>
+        </div>
+      </div>
+      <!-- QA INCIDENT TABLE -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div><div class="chart-title">Active Incident Register</div><div class="chart-subtitle">Clinical complications &amp; QA incidents — March 2024</div></div>
+          <div style="display:flex;gap:6px;">
+            <select class="chart-pill" style="border-radius:20px;padding:4px 10px;font-size:11px;font-weight:600;border:1.5px solid var(--border);background:var(--surface-2);cursor:pointer;outline:none;">
+              <option>All Severities</option><option>Critical</option><option>High</option><option>Medium</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="showToast('New incident form opened','⚠')">＋ Report Incident</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="qa-table" id="qa-table"></table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: DEPT PERFORMANCE ═══ -->
+  <div class="tab-page" id="page-deptperf">
+    <div class="page-body">
+      <div class="filter-bar">
+        <span class="fb-label">Period:</span>
+        <select class="fb-select"><option>March 2024</option><option>Q1 2024</option></select>
+        <select class="fb-select"><option>All Specialties</option><option>Medicine</option><option>Surgery</option></select>
+        <span style="margin-left:auto;font-size:11px;color:var(--text-3);">6 departments shown</span>
+      </div>
+      <div class="dept-perf-grid" id="dept-perf-grid"></div>
+      <div class="chart-card">
+        <div class="chart-header"><div><div class="chart-title">Department Performance Radar</div><div class="chart-subtitle">Multi-metric comparison — Quality · Volume · Revenue · Satisfaction</div></div></div>
+        <canvas id="deptRadarChart" height="260"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span id="toast-icon">✅</span><span id="toast-msg">Done</span></div>
+
+<script>
+// ── CHART DEFAULTS ──
+Chart.defaults.font.family="'DM Sans', sans-serif";
+Chart.defaults.font.size=12;
+Chart.defaults.color='#7A8FA6';
+Chart.defaults.plugins.legend.labels.boxWidth=10;
+Chart.defaults.plugins.legend.labels.boxHeight=10;
+Chart.defaults.plugins.legend.labels.padding=16;
+Chart.defaults.plugins.tooltip.padding=10;
+Chart.defaults.plugins.tooltip.cornerRadius=8;
+
+const COLORS={
+  brand:'#1A5EAB',brandA:'rgba(26,94,171,.12)',
+  purple:'#7C3AED',purpleA:'rgba(124,58,237,.12)',
+  success:'#10B981',successA:'rgba(16,185,129,.12)',
+  danger:'#EF4444',dangerA:'rgba(239,68,68,.12)',
+  warn:'#F59E0B',warnA:'rgba(245,158,11,.12)',
+  accent:'#00C0A3',accentA:'rgba(0,192,163,.12)',
+  indigo:'#4F46E5',indigoA:'rgba(79,70,229,.12)',
+};
+
+function mkGradient(ctx,c1,c2){
+  const g=ctx.createLinearGradient(0,0,0,280);
+  g.addColorStop(0,c1); g.addColorStop(1,c2); return g;
+}
+
+// ── 1. PATIENT VOLUME ──
+(()=>{
+  const ctx=document.getElementById('patientVolumeChart').getContext('2d');
+  const labels=Array.from({length:14},(_,i)=>`Mar ${i+1}`);
+  const opd=[182,195,168,210,224,198,176,204,218,231,208,196,224,238];
+  const ipd=[28,32,26,35,38,31,24,36,40,42,38,34,40,44];
+  const er=[10,14,12,18,16,12,9,15,20,18,14,12,16,22];
+  new Chart(ctx,{type:'line',data:{labels,datasets:[
+    {label:'OPD',data:opd,borderColor:COLORS.brand,backgroundColor:mkGradient(ctx,COLORS.brandA,'rgba(26,94,171,0)'),tension:.4,fill:true,pointRadius:2,pointHoverRadius:6,borderWidth:2.5},
+    {label:'IPD',data:ipd,borderColor:COLORS.purple,backgroundColor:'transparent',tension:.4,fill:false,pointRadius:2,pointHoverRadius:6,borderWidth:2,borderDash:[5,3]},
+    {label:'Emergency',data:er,borderColor:COLORS.danger,backgroundColor:'transparent',tension:.4,fill:false,pointRadius:2,pointHoverRadius:6,borderWidth:2,borderDash:[2,4]},
+  ]},options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{y:{grid:{color:'rgba(0,0,0,.05)'},beginAtZero:false},x:{grid:{color:'rgba(0,0,0,.04)'}}}}});
+})();
+
+// ── 2. REVENUE VS TARGET ──
+(()=>{
+  const ctx=document.getElementById('revenueChart').getContext('2d');
+  const months=['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar'];
+  const actual=[142,156,148,168,172,161,178,184,192,168,174,184];
+  const target=[150,150,155,160,165,165,170,175,180,165,170,165];
+  new Chart(ctx,{type:'bar',data:{labels:months,datasets:[
+    {label:'Actual Revenue (₹L)',data:actual,backgroundColor:months.map((_,i)=>i===11?COLORS.brand:COLORS.brandA),borderColor:months.map((_,i)=>i===11?COLORS.brand:'#BFDBFE'),borderWidth:1.5,borderRadius:6},
+    {label:'Target',data:target,type:'line',borderColor:COLORS.warn,backgroundColor:'transparent',tension:.4,pointRadius:3,borderWidth:2,borderDash:[4,3]},
+  ]},options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{y:{grid:{color:'rgba(0,0,0,.05)'},ticks:{callback:v=>'₹'+v+'L'}},x:{grid:{color:'rgba(0,0,0,.04)'}}}}});
+})();
+
+// ── 3. PATIENT MIX DOUGHNUT ──
+(()=>{
+  const ctx=document.getElementById('patientMixChart').getContext('2d');
+  new Chart(ctx,{type:'doughnut',data:{labels:['OPD','IPD','Emergency','Day Surgery'],datasets:[{data:[58,22,10,10],backgroundColor:[COLORS.brand,COLORS.purple,COLORS.danger,COLORS.success],borderWidth:0,hoverOffset:8}]},options:{cutout:'62%',plugins:{legend:{position:'bottom'}}}});
+})();
+
+// ── 4. PAYER MIX ──
+(()=>{
+  const ctx=document.getElementById('payerMixChart').getContext('2d');
+  new Chart(ctx,{type:'doughnut',data:{labels:['PMJAY','Private Insurance','Self-pay','CGHS','ESI'],datasets:[{data:[28,30,24,10,8],backgroundColor:[COLORS.accent,COLORS.brand,COLORS.purple,COLORS.success,COLORS.warn],borderWidth:0,hoverOffset:8}]},options:{cutout:'62%',plugins:{legend:{position:'bottom'}}}});
+})();
+
+// ── 5. TOP DIAGNOSES ──
+(()=>{
+  const ctx=document.getElementById('diagnosisChart').getContext('2d');
+  new Chart(ctx,{type:'bar',data:{labels:['Hypertension','Type 2 DM','Dengue','COPD','Appendicitis','Knee OA','Heart Failure','Pneumonia'],datasets:[{label:'Patient Count',data:[312,284,198,164,142,128,118,104],backgroundColor:[COLORS.brand,COLORS.purple,COLORS.danger,COLORS.warn,COLORS.success,COLORS.accent,COLORS.indigo,'#EC4899'],borderRadius:6,borderWidth:0}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(0,0,0,.05)'},beginAtZero:true},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
+})();
+
+// ── 6. CLINICAL TREND ──
+(()=>{
+  const ctx=document.getElementById('clinicalTrendChart').getContext('2d');
+  const months=['Oct','Nov','Dec','Jan','Feb','Mar'];
+  new Chart(ctx,{type:'line',data:{labels:months,datasets:[
+    {label:'Mortality %',data:[1.8,1.6,1.5,1.4,1.5,1.2],borderColor:COLORS.danger,backgroundColor:COLORS.dangerA,tension:.4,fill:true,pointRadius:4,borderWidth:2.5},
+    {label:'Readmission %',data:[5.8,5.4,5.2,5.0,5.4,4.8],borderColor:COLORS.warn,backgroundColor:'transparent',tension:.4,fill:false,pointRadius:4,borderWidth:2},
+    {label:'Complications %',data:[4.2,3.8,3.5,3.4,3.8,3.1],borderColor:COLORS.purple,backgroundColor:'transparent',tension:.4,fill:false,pointRadius:4,borderWidth:2},
+  ]},options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{y:{grid:{color:'rgba(0,0,0,.05)'},ticks:{callback:v=>v+'%'}},x:{grid:{color:'rgba(0,0,0,.04)'}}}}});
+})();
+
+// ── 7. SURGICAL COMPLICATIONS ──
+(()=>{
+  const ctx=document.getElementById('surgicalChart').getContext('2d');
+  new Chart(ctx,{type:'bar',data:{labels:['General','Ortho','Cardio','Laparo','Neuro','OB/GYN'],datasets:[
+    {label:'SSI %',data:[2.8,3.2,1.8,1.4,2.1,1.2],backgroundColor:COLORS.danger,borderRadius:4},
+    {label:'DVT %',data:[1.4,2.8,3.2,0.8,1.8,0.6],backgroundColor:COLORS.warn,borderRadius:4},
+    {label:'Re-op %',data:[0.8,1.2,2.1,0.6,1.4,0.4],backgroundColor:COLORS.purple,borderRadius:4},
+  ]},options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(0,0,0,.05)'},ticks:{callback:v=>v+'%'}}}}});
+})();
+
+// ── 8. LOS BY DEPT ──
+(()=>{
+  const ctx=document.getElementById('losChart').getContext('2d');
+  new Chart(ctx,{type:'bar',data:{labels:['General Med','Cardiology','Orthopaedics','General Surgery','Neurology','Obstetrics','Paediatrics','ICU'],datasets:[
+    {label:'Avg LOS (days)',data:[4.2,5.8,7.4,3.6,6.2,2.8,3.4,9.2],backgroundColor:[COLORS.brand,COLORS.purple,COLORS.success,COLORS.danger,COLORS.warn,COLORS.accent,COLORS.indigo,'#EC4899'],borderRadius:6},
+    {label:'Target LOS',data:[4.0,5.5,7.0,3.5,6.0,3.0,3.5,8.0],type:'line',borderColor:'rgba(0,0,0,.3)',backgroundColor:'transparent',tension:0,pointRadius:4,borderWidth:1.5,borderDash:[4,3]},
+  ]},options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(0,0,0,.05)'},ticks:{callback:v=>v+'d'}}}}});
+})();
+
+// ── 9. REVENUE BY DEPT ──
+(()=>{
+  const ctx=document.getElementById('revByDeptChart').getContext('2d');
+  new Chart(ctx,{type:'bar',data:{labels:['OPD Consult','IPD Charges','Pharmacy','Lab & Diagnostic','OT & Surgery','Radiology','Others'],datasets:[{label:'Revenue (₹ Lakhs)',data:[32.4,54.8,28.6,22.4,34.8,8.2,3.8],backgroundColor:[COLORS.brand,COLORS.purple,COLORS.success,COLORS.warn,COLORS.danger,COLORS.accent,COLORS.indigo],borderRadius:8,borderWidth:0}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(0,0,0,.05)'},ticks:{callback:v=>'₹'+v+'L'}}}}});
+})();
+
+// ── 10. REVENUE TREND ──
+(()=>{
+  const ctx=document.getElementById('revTrendChart').getContext('2d');
+  const months=['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar'];
+  new Chart(ctx,{type:'line',data:{labels:months,datasets:[
+    {label:'Revenue',data:[142,156,148,168,172,161,178,184,192,168,174,184],borderColor:COLORS.brand,backgroundColor:mkGradient(ctx,'rgba(26,94,171,.15)','rgba(26,94,171,0)'),tension:.4,fill:true,pointRadius:3,borderWidth:2.5},
+    {label:'Collections',data:[110,128,118,142,148,134,152,164,172,146,158,168],borderColor:COLORS.success,backgroundColor:'transparent',tension:.4,fill:false,pointRadius:3,borderWidth:2},
+  ]},options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{y:{grid:{color:'rgba(0,0,0,.05)'},ticks:{callback:v=>'₹'+v+'L'}},x:{grid:{color:'rgba(0,0,0,.04)'}}}}});
+})();
+
+// ── 11. BED GAUGE ──
+(()=>{
+  const ctx=document.getElementById('gaugeChart').getContext('2d');
+  new Chart(ctx,{type:'doughnut',data:{labels:['Occupied','Available'],datasets:[{data:[78,22],backgroundColor:[COLORS.brand,COLORS.successA.replace('12)','30)')],borderWidth:0,hoverOffset:0,circumference:240,rotation:240}]},options:{cutout:'78%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.label+': '+c.raw+'%'}}}}});
+})();
+
+// ── 12. OCCUPANCY TREND ──
+(()=>{
+  const ctx=document.getElementById('occupancyChart').getContext('2d');
+  const days=Array.from({length:14},(_,i)=>`Mar ${i+1}`);
+  new Chart(ctx,{type:'line',data:{labels:days,datasets:[
+    {label:'Ward A',data:[72,74,76,75,78,80,78,76,78,80,82,80,78,80],borderColor:COLORS.brand,backgroundColor:'transparent',tension:.4,pointRadius:2,borderWidth:2},
+    {label:'Ward B',data:[68,72,74,76,74,76,78,80,82,80,82,84,80,82],borderColor:COLORS.purple,backgroundColor:'transparent',tension:.4,pointRadius:2,borderWidth:2},
+    {label:'ICU',data:[82,86,88,90,92,94,96,94,96,98,100,100,96,100],borderColor:COLORS.danger,backgroundColor:'transparent',tension:.4,pointRadius:2,borderWidth:2,borderDash:[3,2]},
+    {label:'Maternity',data:[60,62,58,64,66,68,62,64,66,68,70,68,66,68],borderColor:COLORS.success,backgroundColor:'transparent',tension:.4,pointRadius:2,borderWidth:2},
+  ]},options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{y:{grid:{color:'rgba(0,0,0,.05)'},min:50,max:105,ticks:{callback:v=>v+'%'}},x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:10}}}}}});
+})();
+
+// ── 13. WARD BED BAR ──
+(()=>{
+  const ctx=document.getElementById('wardBedChart').getContext('2d');
+  new Chart(ctx,{type:'bar',data:{labels:['Ward A (40)','Ward B (40)','ICU (6)','Maternity (20)','Paediatrics (20)','Surgical (30)','General (44)'],datasets:[
+    {label:'Occupied',data:[32,34,6,14,14,24,36],backgroundColor:COLORS.brand,borderRadius:4},
+    {label:'Available',data:[8,6,0,6,6,6,8],backgroundColor:COLORS.successA.replace('0.12','0.5'),borderRadius:4},
+  ]},options:{responsive:true,indexAxis:'y',plugins:{legend:{position:'bottom'}},scales:{x:{stacked:true,grid:{color:'rgba(0,0,0,.05)'}},y:{stacked:true,grid:{display:false},ticks:{font:{size:11}}}}}});
+})();
+
+// ── 14. INCIDENT CATEGORIES ──
+(()=>{
+  const ctx=document.getElementById('incidentCatChart').getContext('2d');
+  new Chart(ctx,{type:'pie',data:{labels:['Medication Error','Fall / Injury','SSI','Documentation','Equipment Failure','Wrong Side Surgery','Transfusion Reaction'],datasets:[{data:[12,8,6,5,4,2,1],backgroundColor:[COLORS.danger,COLORS.warn,COLORS.purple,COLORS.brand,COLORS.accent,COLORS.indigo,'#EC4899'],borderWidth:0,hoverOffset:6}]},options:{plugins:{legend:{position:'right',labels:{font:{size:11}}}}}});
+})();
+
+// ── 15. INCIDENT TREND ──
+(()=>{
+  const ctx=document.getElementById('incidentTrendChart').getContext('2d');
+  const months=['Oct','Nov','Dec','Jan','Feb','Mar'];
+  new Chart(ctx,{type:'line',data:{labels:months,datasets:[
+    {label:'Reported',data:[18,22,20,24,28,32],borderColor:COLORS.danger,backgroundColor:mkGradient(ctx,'rgba(239,68,68,.12)','rgba(239,68,68,0)'),tension:.4,fill:true,pointRadius:4,borderWidth:2.5},
+    {label:'Closed',data:[14,18,20,22,24,24],borderColor:COLORS.success,backgroundColor:'transparent',tension:.4,fill:false,pointRadius:4,borderWidth:2},
+  ]},options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{y:{grid:{color:'rgba(0,0,0,.05)'},beginAtZero:true},x:{grid:{color:'rgba(0,0,0,.04)'}}}}});
+})();
+
+// ── REVENUE TABLE ──
+const revData=[
+  {dept:'OPD Consultations',revenue:32.4,target:28.0,collections:31.2,pending:1.2,growth:'+15.7%',pos:true},
+  {dept:'IPD Charges (Bed/Nursing)',revenue:54.8,target:50.0,collections:48.4,pending:6.4,growth:'+9.6%',pos:true},
+  {dept:'Pharmacy Revenue',revenue:28.6,target:30.0,collections:24.8,pending:3.8,growth:'-4.7%',pos:false},
+  {dept:'Laboratory & Diagnostics',revenue:22.4,target:20.0,collections:20.8,pending:1.6,growth:'+12.0%',pos:true},
+  {dept:'OT & Surgery',revenue:34.8,target:32.0,collections:30.4,pending:4.4,growth:'+8.8%',pos:true},
+  {dept:'Radiology & Imaging',revenue:8.2,target:8.0,collections:7.6,pending:0.6,growth:'+2.5%',pos:true},
+  {dept:'Other Services',revenue:3.8,target:4.0,collections:3.4,pending:0.4,growth:'-5.0%',pos:false},
+];
+const rt=document.getElementById('rev-table');
+rt.innerHTML=`<thead><tr><th>Department</th><th>Revenue (₹L)</th><th>Target (₹L)</th><th>Collected (₹L)</th><th>Pending (₹L)</th><th>vs Target</th><th>Volume Bar</th></tr></thead><tbody></tbody>`;
+const rtb=rt.querySelector('tbody');
+let totalRev=0,totalCol=0,totalPend=0;
+revData.forEach(r=>{
+  totalRev+=r.revenue;totalCol+=r.collections;totalPend+=r.pending;
+  const pct=Math.round((r.revenue/54.8)*100);
+  rtb.innerHTML+=`<tr onclick="showToast('${r.dept}: ₹${r.revenue}L revenue','💰')">
+    <td style="font-weight:500;">${r.dept}</td>
+    <td style="font-family:'DM Mono',monospace;font-weight:700;">₹${r.revenue}L</td>
+    <td style="font-family:'DM Mono',monospace;color:var(--text-3);">₹${r.target}L</td>
+    <td style="font-family:'DM Mono',monospace;color:var(--success-dark);">₹${r.collections}L</td>
+    <td style="font-family:'DM Mono',monospace;color:var(--warn-dark);">₹${r.pending}L</td>
+    <td><span class="${r.pos?'rev-positive':'rev-negative'}">${r.growth}</span></td>
+    <td class="rev-bar-cell"><div class="rev-mini-bar"><div class="rmb-fill" style="width:${pct}%;background:${r.pos?'var(--brand)':'var(--danger)'};"></div></div></td>
+  </tr>`;
+});
+rtb.innerHTML+=`<tr class="total-row">
+  <td>TOTAL</td>
+  <td style="font-family:'DM Mono',monospace;">₹${totalRev.toFixed(1)}L</td>
+  <td>—</td>
+  <td style="font-family:'DM Mono',monospace;color:var(--success-dark);">₹${totalCol.toFixed(1)}L</td>
+  <td style="font-family:'DM Mono',monospace;color:var(--warn-dark);">₹${totalPend.toFixed(1)}L</td>
+  <td><span class="rev-positive">+8.4%</span></td>
+  <td></td>
+</tr>`;
+
+// ── QA INCIDENTS TABLE ──
+const incidents=[
+  {id:'INC-2024-0042',type:'Surgical Site Infection',dept:'General Surgery',severity:'critical',patient:'Post-op Hernia Repair',date:'12 Mar',status:'open',owner:'Dr. Anand K.',capa:'Root cause in progress'},
+  {id:'INC-2024-0041',type:'Medication Error',dept:'Ward B',severity:'high',patient:'Metformin double-dose',date:'11 Mar',status:'investigating',owner:'Nurse Suma W.',capa:'Barcode scanning mandated'},
+  {id:'INC-2024-0040',type:'Transfusion Reaction',dept:'Ward A',severity:'high',patient:'Febrile non-haemolytic',date:'14 Mar',status:'monitoring',owner:'Dr. Kavita (BB)',capa:'Unit recalled, investigation open'},
+  {id:'INC-2024-0039',type:'Patient Fall',dept:'Ward B',severity:'medium',patient:'Unassisted ambulation',date:'10 Mar',status:'closed',owner:'Nurse Rani P.',capa:'Bed rails protocol updated'},
+  {id:'INC-2024-0038',type:'Documentation Gap',dept:'ICU',severity:'medium',patient:'Missing consent form',date:'09 Mar',status:'closed',owner:'Dr. Meera S.',capa:'Digital consent system deployed'},
+  {id:'INC-2024-0037',type:'Equipment Failure',dept:'Radiology',severity:'critical',patient:'Autoclave sensor error',date:'08 Mar',status:'investigating',owner:'Biomedical — Suresh',capa:'Engineer on-site, repair pending'},
+  {id:'INC-2024-0036',type:'Near Miss — Wrong Patient',dept:'Pharmacy',severity:'critical',patient:'Drug nearly dispensed to wrong pt.',date:'07 Mar',status:'open',owner:'Pharmacist Meera P.',capa:'Double-check protocol enforced'},
+  {id:'INC-2024-0035',type:'Delayed Diagnosis',dept:'Emergency',severity:'high',patient:'Delayed MI recognition',date:'06 Mar',status:'closed',owner:'Dr. Ramesh I.',capa:'Chest pain protocol refreshed'},
+];
+const sevCls={critical:'sev-critical',high:'sev-high',medium:'sev-medium',low:'sev-low'};
+const stCls={open:'qs-open',investigating:'qs-investigating',closed:'qs-closed',monitoring:'qs-monitoring'};
+const qt=document.getElementById('qa-table');
+qt.innerHTML=`<thead><tr><th>Incident ID</th><th>Type</th><th>Department</th><th>Severity</th><th>Details</th><th>Date</th><th>Status</th><th>Owner</th><th>CAPA</th></tr></thead><tbody></tbody>`;
+const qtb=qt.querySelector('tbody');
+incidents.forEach(i=>{
+  qtb.innerHTML+=`<tr onclick="showToast('${i.type} — ${i.status}','⚠')">
+    <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--brand);">${i.id}</td>
+    <td style="font-weight:500;font-size:12px;">${i.type}</td>
+    <td><span class="dept-tag bd-blue" style="font-size:10px;">${i.dept}</span></td>
+    <td><span class="severity-badge ${sevCls[i.severity]}">${i.severity.charAt(0).toUpperCase()+i.severity.slice(1)}</span></td>
+    <td style="font-size:11px;color:var(--text-2);">${i.patient}</td>
+    <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-3);">${i.date}</td>
+    <td><span class="qa-status ${stCls[i.status]}">${i.status.charAt(0).toUpperCase()+i.status.slice(1)}</span></td>
+    <td style="font-size:11px;">${i.owner}</td>
+    <td style="font-size:11px;color:var(--text-3);max-width:160px;">${i.capa}</td>
+  </tr>`;
+});
+
+// ── DEPT PERFORMANCE CARDS ──
+const depts=[
+  {icon:'🏥',bg:'var(--brand-light)',col:COLORS.brand,name:'General Medicine',spec:'Internal Medicine',patients:1248,los:4.2,satisfaction:4.6,revenue:'₹48.2L',occupancy:82,target:80},
+  {icon:'❤️',bg:'var(--danger-lt)',col:COLORS.danger,name:'Cardiology',spec:'Cardiac Sciences',patients:486,los:5.8,satisfaction:4.7,revenue:'₹62.4L',occupancy:88,target:85},
+  {icon:'🦴',bg:'var(--success-lt)',col:COLORS.success,name:'Orthopaedics',spec:'Bone & Joint',patients:342,los:7.4,satisfaction:4.5,revenue:'₹56.8L',occupancy:72,target:75},
+  {icon:'🔬',bg:'var(--purple-lt)',col:COLORS.purple,name:'General Surgery',spec:'Surgical Sciences',patients:624,los:3.6,satisfaction:4.4,revenue:'₹38.4L',occupancy:68,target:70},
+  {icon:'🧠',bg:'#EEF2FF',col:COLORS.indigo,name:'Neurology',spec:'Neurosciences',patients:218,los:6.2,satisfaction:4.6,revenue:'₹28.6L',occupancy:74,target:72},
+  {icon:'🤰',bg:'var(--accent-lt)',col:COLORS.accent,name:'Obstetrics & GYN',spec:'Women\'s Health',patients:384,los:2.8,satisfaction:4.8,revenue:'₹32.4L',occupancy:78,target:80},
+];
+const dpg=document.getElementById('dept-perf-grid');
+depts.forEach(d=>{
+  const pct=Math.round((d.occupancy/d.target)*100);
+  const onTarget=d.occupancy>=d.target;
+  dpg.innerHTML+=`<div class="dept-card" onclick="showToast('${d.name} — Occupancy ${d.occupancy}%','🏥')">
+    <div class="dc-header">
+      <div class="dc-icon" style="background:${d.bg};">${d.icon}</div>
+      <div><div class="dc-name">${d.name}</div><div class="dc-specialty">${d.spec}</div></div>
+    </div>
+    <div class="dc-metrics">
+      <div class="dcm-item"><div class="dcm-val" style="color:${d.col};">${d.patients.toLocaleString()}</div><div class="dcm-label">Patients</div></div>
+      <div class="dcm-item"><div class="dcm-val" style="color:${d.col};">${d.los}d</div><div class="dcm-label">Avg LOS</div></div>
+      <div class="dcm-item"><div class="dcm-val" style="color:var(--warn-dark);">⭐${d.satisfaction}</div><div class="dcm-label">Satisfaction</div></div>
+      <div class="dcm-item"><div class="dcm-val" style="color:var(--success-dark);">${d.revenue}</div><div class="dcm-label">Revenue</div></div>
+    </div>
+    <div class="dc-progress">
+      <div class="dc-prog-label"><span>Occupancy ${d.occupancy}%</span><span>Target ${d.target}%</span></div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${d.occupancy}%;background:${onTarget?d.col:'var(--warn)'};" ></div></div>
+    </div>
+  </div>`;
+});
+
+// ── DEPT RADAR CHART ──
+(()=>{
+  const ctx=document.getElementById('deptRadarChart').getContext('2d');
+  new Chart(ctx,{type:'radar',data:{labels:['Patient Volume','Avg LOS (inv.)','Revenue','Satisfaction','Occupancy','Complication Rate (inv.)'],datasets:[
+    {label:'Cardiology',data:[72,58,88,94,88,84],borderColor:COLORS.danger,backgroundColor:'rgba(239,68,68,.1)',borderWidth:2,pointRadius:4},
+    {label:'Orthopaedics',data:[48,42,82,90,72,78],borderColor:COLORS.success,backgroundColor:'rgba(16,185,129,.1)',borderWidth:2,pointRadius:4},
+    {label:'General Medicine',data:[88,72,68,92,82,88],borderColor:COLORS.brand,backgroundColor:'rgba(26,94,171,.1)',borderWidth:2,pointRadius:4},
+    {label:'OB/GYN',data:[54,92,64,96,78,90],borderColor:COLORS.accent,backgroundColor:'rgba(0,192,163,.1)',borderWidth:2,pointRadius:4},
+  ]},options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{r:{grid:{color:'rgba(0,0,0,.08)'},pointLabels:{font:{size:11}},ticks:{display:false},suggestedMin:0,suggestedMax:100}}}});
+})();
+
+// ── PAGE SWITCHING ──
+function switchPage(id,btn){
+  document.querySelectorAll('.tab-page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.top-tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── TOAST ──
+let tt;
+function showToast(msg,icon='✅'){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').innerHTML=msg;
+  document.getElementById('toast-icon').textContent=icon;
+  t.classList.add('show');clearTimeout(tt);
+  tt=setTimeout(()=>t.classList.remove('show'),3200);
+}
+</script>
+</body>
+</html>

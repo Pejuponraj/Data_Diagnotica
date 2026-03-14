@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Diagnotica HMS — Operation Theatre Management</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --brand:#1A5EAB;--brand-dark:#0F3F78;--brand-light:#E8F1FB;--brand-mid:#2E7DD6;
+  --accent:#00C0A3;--accent-lt:#E0F9F5;--accent-dark:#007A68;
+  --warn:#F59E0B;--warn-lt:#FEF3C7;--warn-dark:#92400E;
+  --danger:#EF4444;--danger-lt:#FEE2E2;--danger-dark:#7F1D1D;
+  --success:#10B981;--success-lt:#D1FAE5;--success-dark:#065F46;
+  --purple:#7C3AED;--purple-lt:#EDE9FE;
+  --teal:#0891B2;--teal-lt:#E0F2FE;
+  --text-1:#0F1C2E;--text-2:#3A4D63;--text-3:#7A8FA6;
+  --border:#DDE6F0;--bg:#F0F5FB;--surface:#FFFFFF;--surface-2:#F7FAFD;
+  --radius:10px;--radius-lg:16px;
+  --shadow:0 1px 4px rgba(26,94,171,.08),0 4px 16px rgba(26,94,171,.06);
+  --shadow-lg:0 8px 32px rgba(26,94,171,.14);
+  /* OT Theatre colours */
+  --ot1:#1A5EAB;--ot2:#7C3AED;--ot3:#0891B2;--ot4:#059669;--ot5:#DC2626;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-1);min-height:100vh;font-size:14px;}
+
+/* ─── TOP BAR ─── */
+.topbar{background:var(--brand-dark);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:52px;position:sticky;top:0;z-index:100;}
+.logo-wrap{display:flex;align-items:center;gap:10px;}
+.logo-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#00C0A3,#2E7DD6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;}
+.logo-text{color:#fff;font-size:15px;font-weight:600;}
+.logo-sub{color:#8BAFD4;font-size:11px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.t-chip{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#D4E8FF;border-radius:6px;padding:5px 12px;font-size:12px;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;}
+.t-chip:hover{background:rgba(255,255,255,.18);}
+.t-chip.live{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.35);color:#6EF0DC;}
+.user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border-radius:20px;padding:4px 12px 4px 4px;}
+.user-av{width:26px;height:26px;border-radius:50%;background:var(--success);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+
+/* ─── SHELL ─── */
+.shell{display:flex;height:calc(100vh - 52px);overflow:hidden;}
+
+/* ─── SIDEBAR ─── */
+.sidebar{width:196px;background:var(--surface);border-right:1px solid var(--border);padding:14px 0;flex-shrink:0;overflow-y:auto;}
+.sb-label{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;padding:8px 14px 4px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:var(--radius);margin:0 8px 2px;cursor:pointer;color:var(--text-2);font-size:13px;transition:all .15s;position:relative;}
+.nav-item:hover{background:var(--brand-light);color:var(--brand);}
+.nav-item.active{background:var(--brand-light);color:var(--brand);font-weight:500;}
+.nav-item.active::before{content:'';position:absolute;left:-4px;top:6px;bottom:6px;width:3px;background:var(--brand);border-radius:0 3px 3px 0;}
+.nb{margin-left:auto;font-size:10px;font-weight:700;border-radius:10px;padding:1px 6px;color:#fff;}
+.nb.b{background:var(--brand);}.nb.g{background:var(--success);}.nb.r{background:var(--danger);}.nb.w{background:var(--warn);color:var(--warn-dark);}
+
+/* ─── MAIN ─── */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+
+/* ─── KPI BANNER ─── */
+.kpi-banner{background:linear-gradient(135deg,var(--brand-dark),#1563B8);padding:14px 24px;display:flex;gap:0;align-items:center;flex-shrink:0;}
+.kpi-item{text-align:center;min-width:100px;}
+.kpi-val{font-size:22px;font-weight:700;color:#fff;line-height:1;}
+.kpi-label{font-size:10px;color:#8BAFD4;margin-top:3px;text-transform:uppercase;letter-spacing:.05em;}
+.kpi-trend{font-size:11px;margin-top:2px;}
+.kpi-sep{width:1px;background:rgba(255,255,255,.1);margin:0 12px;height:32px;}
+
+/* ─── LIVE STATUS BAR ─── */
+.live-bar{background:#0A1628;border-bottom:1px solid rgba(255,255,255,.06);padding:8px 24px;display:flex;gap:16px;align-items:center;flex-shrink:0;}
+.lb-item{display:flex;align-items:center;gap:8px;padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.08);cursor:pointer;transition:background .13s;}
+.lb-item:hover{background:rgba(255,255,255,.04);}
+.lb-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.lb-dot.active{animation:lbPulse 1.4s infinite;}
+@keyframes lbPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.6;transform:scale(1.3);}}
+.lb-ot-name{font-size:12px;font-weight:600;color:#fff;}
+.lb-ot-proc{font-size:10px;color:#8BAFD4;}
+.lb-timer{font-family:'DM Mono',monospace;font-size:11px;font-weight:600;margin-left:auto;color:#6EF0DC;}
+
+/* ─── CONTENT ─── */
+.content{padding:16px 20px;display:grid;grid-template-columns:1fr 340px;gap:16px;flex:1;}
+
+/* ─── CARD ─── */
+.card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px;}
+.card:last-child{margin-bottom:0;}
+.card-header{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);}
+.card-title{font-size:14px;font-weight:600;color:var(--text-1);display:flex;align-items:center;gap:8px;}
+.card-body{padding:16px;}
+
+/* ─── TABS ─── */
+.tabs-row{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface-2);}
+.tab-btn{padding:10px 16px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:500;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap;}
+.tab-btn:hover{color:var(--text-1);}
+.tab-btn.active{color:var(--brand);border-bottom-color:var(--brand);}
+.tab-pane{display:none;padding:16px;}
+.tab-pane.active{display:block;}
+
+/* ─── CALENDAR GRID ─── */
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.cal-nav-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .13s;}
+.cal-nav-btn:hover{background:var(--brand-light);border-color:var(--brand);color:var(--brand);}
+.cal-title{font-size:15px;font-weight:600;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:16px;}
+.cal-dow{text-align:center;font-size:10px;font-weight:700;color:var(--text-3);padding:5px 0;text-transform:uppercase;letter-spacing:.06em;}
+.cal-day{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;border:1.5px solid transparent;position:relative;}
+.cal-day:hover{background:var(--brand-light);}
+.cal-day.today{background:var(--brand);border-color:var(--brand);}
+.cal-day.today .cd-num{color:#fff;font-weight:700;}
+.cal-day.selected{border-color:var(--brand);background:var(--brand-light);}
+.cal-day.other-month .cd-num{color:var(--text-3);}
+.cd-num{font-size:13px;font-weight:500;line-height:1;}
+.cal-day .cd-dots{display:flex;gap:2px;margin-top:2px;height:5px;align-items:center;justify-content:center;}
+.cd-dot{width:4px;height:4px;border-radius:50%;}
+.cal-day.today .cd-dot{background:rgba(255,255,255,.8);}
+
+/* ─── OT SLOT GRID ─── */
+.ot-slot-header{display:grid;grid-template-columns:80px repeat(5,1fr);gap:4px;margin-bottom:4px;}
+.ot-col-head{text-align:center;padding:6px 4px;border-radius:7px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;}
+.ot-time-label{display:flex;align-items:center;justify-content:flex-end;padding-right:10px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-3);height:52px;}
+.ot-slot-row{display:grid;grid-template-columns:80px repeat(5,1fr);gap:4px;margin-bottom:4px;}
+.ot-slot{height:52px;border-radius:8px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;border:1.5px solid transparent;padding:4px 6px;position:relative;}
+.ot-slot:hover{transform:scale(1.02);box-shadow:0 2px 8px rgba(0,0,0,.1);}
+.ot-slot.free{background:var(--success-lt);border-color:#6EE7B7;color:var(--success-dark);}
+.ot-slot.booked{color:#fff;border:none;}
+.ot-slot.prep{background:var(--warn-lt);border-color:#FCD34D;color:var(--warn-dark);}
+.ot-slot.cleaning{background:var(--surface-2);border-color:var(--border);color:var(--text-3);}
+.ot-slot.emergency{background:var(--danger-lt);border-color:#FCA5A5;color:var(--danger);}
+.ot-slot.selected-slot{box-shadow:0 0 0 3px rgba(26,94,171,.25);transform:scale(1.04);}
+.slot-proc{font-size:10px;font-weight:600;line-height:1.2;}
+.slot-surgeon{font-size:9px;opacity:.85;margin-top:2px;}
+.slot-time-badge{position:absolute;bottom:3px;right:5px;font-size:8px;font-family:'DM Mono',monospace;opacity:.8;}
+.in-progress-badge{position:absolute;top:3px;right:4px;background:rgba(255,255,255,.25);border-radius:4px;font-size:8px;font-weight:700;padding:1px 4px;}
+
+/* ─── SURGEON / ANAES ASSIGNMENT ─── */
+.assignment-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.staff-card{border-radius:var(--radius);border:1.5px solid var(--border);padding:12px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:10px;}
+.staff-card:hover{border-color:var(--brand);background:var(--brand-light);}
+.staff-card.assigned{border-color:var(--success);background:var(--success-lt);}
+.staff-card.unavailable{opacity:.55;cursor:not-allowed;}
+.staff-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;color:#fff;}
+.staff-name{font-size:13px;font-weight:600;}
+.staff-spec{font-size:11px;color:var(--text-3);}
+.staff-status{font-size:10px;font-weight:700;margin-top:3px;}
+.ss-available{color:var(--success);}
+.ss-busy{color:var(--danger);}
+.ss-assigned{color:var(--brand);}
+
+/* ─── OT SCHEDULING FORM ─── */
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-group.full{grid-column:1/-1;}
+.fl{font-size:11px;font-weight:600;color:var(--text-2);}
+.req{color:var(--danger);}
+.fi,.fs{padding:8px 11px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;color:var(--text-1);background:var(--surface-2);outline:none;transition:border-color .15s;width:100%;}
+.fi:focus,.fs:focus{border-color:var(--brand);background:#fff;}
+.fi-mono{font-family:'DM Mono',monospace;}
+
+/* ─── ANAESTHESIA PANEL ─── */
+.anaes-vitals{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
+.av-card{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:10px;text-align:center;}
+.av-label{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;}
+.av-val{font-size:20px;font-weight:700;margin-top:3px;line-height:1;}
+.av-unit{font-size:10px;color:var(--text-3);}
+.drug-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:var(--radius);border:1.5px solid var(--border);margin-bottom:7px;transition:all .15s;cursor:pointer;}
+.drug-row:hover{border-color:var(--brand);background:var(--brand-light);}
+.drug-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.drug-name{font-size:13px;font-weight:500;flex:1;}
+.drug-dose{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-2);}
+.drug-time{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-3);}
+.drug-status{font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;}
+.ds-given{background:var(--success-lt);color:var(--success-dark);}
+.ds-running{background:var(--brand-light);color:var(--brand);animation:softPulse 2s infinite;}
+@keyframes softPulse{0%,100%{opacity:1;}50%{opacity:.7;}}
+.ds-planned{background:var(--surface-2);color:var(--text-3);border:1px solid var(--border);}
+
+/* ─── INSTRUMENT TRACKING ─── */
+.instrument-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius);border:1.5px solid var(--border);margin-bottom:6px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;}
+.instrument-row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;}
+.instrument-row.ok::before{background:var(--success);}
+.instrument-row.warn::before{background:var(--warn);}
+.instrument-row.missing::before{background:var(--danger);}
+.instrument-row.sterilizing::before{background:var(--purple);}
+.instrument-row:hover{border-color:var(--brand);}
+.instr-icon{font-size:18px;flex-shrink:0;}
+.instr-name{font-size:13px;font-weight:500;flex:1;}
+.instr-count{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-2);}
+.instr-status{font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;}
+.is-ok{background:var(--success-lt);color:var(--success-dark);}
+.is-warn{background:var(--warn-lt);color:var(--warn-dark);}
+.is-missing{background:var(--danger-lt);color:var(--danger);}
+.is-steril{background:var(--purple-lt);color:var(--purple);}
+.count-badge{font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px;background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);}
+
+/* ─── PROGRESS BAR ─── */
+.prog-bar{height:5px;background:var(--border);border-radius:4px;overflow:hidden;margin-top:4px;}
+.prog-fill{height:100%;border-radius:4px;transition:width .5s;}
+
+/* ─── BTN ─── */
+.btn{padding:8px 16px;border-radius:var(--radius);border:none;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+.btn-primary{background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(26,94,171,.25);}
+.btn-primary:hover{background:var(--brand-dark);}
+.btn-success{background:var(--success);color:#fff;}
+.btn-success:hover{background:#059669;}
+.btn-outline{background:var(--surface);color:var(--brand);border:1px solid var(--brand);}
+.btn-outline:hover{background:var(--brand-light);}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-warn{background:var(--warn);color:var(--warn-dark);}
+.btn-sm{padding:5px 11px;font-size:12px;}
+.btn-purple{background:var(--purple);color:#fff;}
+
+/* ─── BADGE ─── */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600;}
+.bd-blue{background:var(--brand-light);color:var(--brand);}
+.bd-green{background:var(--success-lt);color:var(--success);}
+.bd-warn{background:var(--warn-lt);color:var(--warn-dark);}
+.bd-red{background:var(--danger-lt);color:var(--danger);}
+.bd-purple{background:var(--purple-lt);color:var(--purple);}
+.bd-gray{background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+/* ─── TOAST ─── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--brand-dark);color:#fff;padding:12px 20px;border-radius:var(--radius);font-size:13px;font-weight:500;z-index:999;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* ─── MODAL ─── */
+.modal-backdrop{position:fixed;inset:0;background:rgba(15,28,46,.5);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-backdrop.show{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:600px;max-width:94vw;max-height:90vh;overflow-y:auto;transform:translateY(20px) scale(.97);transition:transform .25s cubic-bezier(.34,1.4,.64,1);}
+.modal-backdrop.show .modal{transform:none;}
+.modal-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);position:sticky;top:0;z-index:2;}
+.modal-title{font-size:15px;font-weight:700;}
+.modal-close{width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.modal-body{padding:20px;}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--surface-2);}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo-wrap">
+    <div class="logo-mark">Dx</div>
+    <div><div class="logo-text">Diagnotica HMS</div><div class="logo-sub">Operation Theatre Management</div></div>
+  </div>
+  <div class="topbar-right">
+    <div class="t-chip live">🟢 5 OTs Online</div>
+    <div class="t-chip" onclick="openModal()">＋ Book OT Slot</div>
+    <div class="t-chip" onclick="showToast('Printing today\'s OT list...','🖨')">🖨 Print OT List</div>
+    <div class="t-chip" onclick="showToast('Emergency OT activated!','🚨')" style="background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3);color:#FCA5A5;">🚨 Emergency OT</div>
+    <div class="user-chip">
+      <div class="user-av">OC</div>
+      <span style="color:#D4E8FF;font-size:12px;">OT Coordinator — Nisha</span>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-label">OT Management</div>
+  <div class="nav-item active">📅 OT Schedule</div>
+  <div class="nav-item">🔪 Surgery Planner</div>
+  <div class="nav-item">👨‍⚕️ Staff Assignment <span class="nb b">3</span></div>
+  <div class="nav-item">💉 Anaesthesia</div>
+  <div class="nav-item">🔧 Instruments <span class="nb w">2</span></div>
+  <div class="nav-item">🧹 OT Turnover</div>
+  <div class="sb-label">Theatres</div>
+  <div class="nav-item">🟢 OT 1 — General <span class="nb g">In Use</span></div>
+  <div class="nav-item">🟢 OT 2 — Ortho <span class="nb g">In Use</span></div>
+  <div class="nav-item">🟡 OT 3 — Cardiac</div>
+  <div class="nav-item">🟢 OT 4 — Laparo <span class="nb g">In Use</span></div>
+  <div class="nav-item">🔴 OT 5 — Neuro <span class="nb r">Cleaning</span></div>
+  <div class="sb-label">Reports</div>
+  <div class="nav-item">📊 OT Utilisation</div>
+  <div class="nav-item">⏱ Surgery Duration</div>
+  <div class="nav-item">📋 Post-Op Notes</div>
+</nav>
+
+<div class="main">
+<!-- KPI BANNER -->
+<div class="kpi-banner">
+  <div class="kpi-item"><div class="kpi-val">14</div><div class="kpi-label">Surgeries Today</div><div class="kpi-trend" style="color:#6EF0DC;">8 done · 6 planned</div></div>
+  <div class="kpi-sep"></div>
+  <div class="kpi-item"><div class="kpi-val" style="color:#FCD34D;">3</div><div class="kpi-label">In Progress</div><div class="kpi-trend" style="color:#FCD34D;">OT 1, 2, 4</div></div>
+  <div class="kpi-sep"></div>
+  <div class="kpi-item"><div class="kpi-val" style="color:#6EF0DC;">5</div><div class="kpi-label">OTs Available</div><div class="kpi-trend" style="color:#FCA5A5;">OT 5 — cleaning</div></div>
+  <div class="kpi-sep"></div>
+  <div class="kpi-item"><div class="kpi-val">78%</div><div class="kpi-label">OT Utilisation</div><div class="kpi-trend" style="color:#6EF0DC;">↑ 6% vs last week</div></div>
+  <div class="kpi-sep"></div>
+  <div class="kpi-item"><div class="kpi-val">2h 18m</div><div class="kpi-label">Avg Surgery Time</div><div class="kpi-trend" style="color:#6EF0DC;">On track</div></div>
+  <div class="kpi-sep"></div>
+  <div class="kpi-item"><div class="kpi-val" style="color:#FCA5A5;">1</div><div class="kpi-label">Emergency Cases</div><div class="kpi-trend" style="color:#FCA5A5;">OT 1 — Active</div></div>
+  <div class="kpi-sep"></div>
+  <div class="kpi-item"><div class="kpi-val">22 min</div><div class="kpi-label">Avg Turnover</div><div class="kpi-trend" style="color:#6EF0DC;">↓ 4 min</div></div>
+</div>
+
+<!-- LIVE STATUS BAR -->
+<div class="live-bar">
+  <div class="lb-item" onclick="showToast('OT 1 — Appendectomy in progress: 1h 24m','🟢')">
+    <div class="lb-dot active" style="background:#10B981;"></div>
+    <div><div class="lb-ot-name">OT 1 — General</div><div class="lb-ot-proc">Appendectomy · Dr. Anand</div></div>
+    <div class="lb-timer" id="timer1">01:24:38</div>
+  </div>
+  <div class="lb-item" onclick="showToast('OT 2 — Knee replacement in progress: 2h 05m','🟢')">
+    <div class="lb-dot active" style="background:#7C3AED;"></div>
+    <div><div class="lb-ot-name">OT 2 — Ortho</div><div class="lb-ot-proc">L-TKR · Dr. Ramesh</div></div>
+    <div class="lb-timer" id="timer2">02:05:12</div>
+  </div>
+  <div class="lb-item" style="opacity:.45;" onclick="showToast('OT 3 — Available','⚪')">
+    <div class="lb-dot" style="background:var(--text-3);"></div>
+    <div><div class="lb-ot-name">OT 3 — Cardiac</div><div class="lb-ot-proc">Available — Next: 14:00</div></div>
+    <span style="font-size:11px;color:#8BAFD4;margin-left:auto;">Free</span>
+  </div>
+  <div class="lb-item" onclick="showToast('OT 4 — Lap chole in progress: 0h 48m','🟢')">
+    <div class="lb-dot active" style="background:#0891B2;"></div>
+    <div><div class="lb-ot-name">OT 4 — Laparo</div><div class="lb-ot-proc">Lap Chole · Dr. Meera</div></div>
+    <div class="lb-timer" id="timer4">00:48:22</div>
+  </div>
+  <div class="lb-item" style="opacity:.45;" onclick="showToast('OT 5 — Cleaning in progress','🔴')">
+    <div class="lb-dot" style="background:var(--danger);"></div>
+    <div><div class="lb-ot-name">OT 5 — Neuro</div><div class="lb-ot-proc">🧹 Terminal Cleaning</div></div>
+    <span style="font-size:11px;color:#FCA5A5;margin-left:auto;">~18 min</span>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="content">
+
+  <!-- LEFT COLUMN -->
+  <div style="display:flex;flex-direction:column;gap:0;">
+
+    <div class="card">
+      <div class="tabs-row">
+        <button class="tab-btn active" onclick="switchTab('schedule',this)">📅 OT Calendar</button>
+        <button class="tab-btn" onclick="switchTab('staff',this)">👨‍⚕️ Staff Assignment</button>
+        <button class="tab-btn" onclick="switchTab('anaesthesia',this)">💉 Anaesthesia</button>
+        <button class="tab-btn" onclick="switchTab('instruments',this)">🔧 Instruments</button>
+        <button class="tab-btn" onclick="switchTab('postop',this)">📋 Post-Op</button>
+      </div>
+
+      <!-- ─── SCHEDULE TAB ─── -->
+      <div class="tab-pane active" id="pane-schedule">
+        <div class="cal-header">
+          <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
+          <div class="cal-title" id="cal-title"></div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <select style="padding:5px 10px;border:1px solid var(--border);border-radius:7px;font-family:inherit;font-size:12px;background:var(--surface-2);outline:none;">
+              <option>All OTs</option><option>OT 1 — General</option><option>OT 2 — Ortho</option><option>OT 3 — Cardiac</option><option>OT 4 — Laparo</option>
+            </select>
+            <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
+          </div>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+
+        <!-- OT SLOT GRID FOR SELECTED DAY -->
+        <div style="border-top:1px solid var(--border);padding-top:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="font-size:13px;font-weight:600;" id="slot-day-label">Today — 14 March 2024</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <span style="display:flex;align-items:center;gap:4px;font-size:11px;"><span style="width:10px;height:10px;background:var(--success-lt);border:1px solid #6EE7B7;border-radius:3px;display:inline-block;"></span>Free</span>
+              <span style="display:flex;align-items:center;gap:4px;font-size:11px;"><span style="width:10px;height:10px;background:var(--brand);border-radius:3px;display:inline-block;"></span>Booked</span>
+              <span style="display:flex;align-items:center;gap:4px;font-size:11px;"><span style="width:10px;height:10px;background:var(--warn-lt);border:1px solid #FCD34D;border-radius:3px;display:inline-block;"></span>Prep</span>
+              <span style="display:flex;align-items:center;gap:4px;font-size:11px;"><span style="width:10px;height:10px;background:var(--danger);border-radius:3px;display:inline-block;"></span>Emergency</span>
+              <button class="btn btn-primary btn-sm" onclick="openModal()">＋ Book Slot</button>
+            </div>
+          </div>
+
+          <!-- OT COLUMN HEADERS -->
+          <div class="ot-slot-header" id="ot-col-headers"></div>
+
+          <!-- OT SLOT ROWS -->
+          <div id="ot-slot-grid"></div>
+        </div>
+      </div>
+
+      <!-- ─── STAFF ASSIGNMENT TAB ─── -->
+      <div class="tab-pane" id="pane-staff">
+        <div style="font-size:13px;font-weight:600;margin-bottom:14px;">Staff Assignment — OT 1 · Appendectomy · 09:00–11:00</div>
+
+        <!-- SURGEONS -->
+        <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Surgeons</div>
+        <div class="assignment-grid" id="surgeon-grid"></div>
+
+        <div style="border-top:1px solid var(--border);margin:14px 0;"></div>
+
+        <!-- ANAESTHESIOLOGISTS -->
+        <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Anaesthesiologists</div>
+        <div class="assignment-grid" id="anaes-grid"></div>
+
+        <div style="border-top:1px solid var(--border);margin:14px 0;"></div>
+
+        <!-- SCRUB NURSES -->
+        <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Scrub / Circulating Nurses</div>
+        <div class="assignment-grid" id="nurse-grid"></div>
+
+        <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;">
+          <button class="btn btn-outline" onclick="showToast('Notifying assigned staff via SMS','📱')">📱 Notify Staff</button>
+          <button class="btn btn-primary" onclick="showToast('Staff assignment confirmed ✓','✅')">✅ Confirm Assignment</button>
+        </div>
+      </div>
+
+      <!-- ─── ANAESTHESIA TAB ─── -->
+      <div class="tab-pane" id="pane-anaesthesia">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div>
+            <div style="font-size:13px;font-weight:600;">Anaesthesia Record — Mohan Kumar</div>
+            <div style="font-size:12px;color:var(--text-3);">OT 1 · Appendectomy · ASA Class II · Dr. Sharma (Anaes.)</div>
+          </div>
+          <span class="badge bd-warn">⚙ In Progress</span>
+        </div>
+
+        <!-- VITALS -->
+        <div class="anaes-vitals">
+          <div class="av-card">
+            <div class="av-label">SpO₂</div>
+            <div class="av-val" style="color:var(--success);" id="av-spo2">99</div>
+            <div class="av-unit">%</div>
+          </div>
+          <div class="av-card">
+            <div class="av-label">HR</div>
+            <div class="av-val" style="color:var(--success);" id="av-hr">76</div>
+            <div class="av-unit">bpm</div>
+          </div>
+          <div class="av-card">
+            <div class="av-label">BP</div>
+            <div class="av-val" style="color:var(--brand);font-size:16px;" id="av-bp">118/74</div>
+            <div class="av-unit">mmHg</div>
+          </div>
+          <div class="av-card">
+            <div class="av-label">EtCO₂</div>
+            <div class="av-val" style="color:var(--success);" id="av-etco2">36</div>
+            <div class="av-unit">mmHg</div>
+          </div>
+          <div class="av-card">
+            <div class="av-label">Temp</div>
+            <div class="av-val" style="color:var(--success);" id="av-temp">36.8</div>
+            <div class="av-unit">°C</div>
+          </div>
+          <div class="av-card">
+            <div class="av-label">MAC</div>
+            <div class="av-val" style="color:var(--brand);" id="av-mac">1.2</div>
+            <div class="av-unit">Sevo</div>
+          </div>
+          <div class="av-card">
+            <div class="av-label">BIS</div>
+            <div class="av-val" style="color:var(--success);" id="av-bis">44</div>
+            <div class="av-unit">Index</div>
+          </div>
+          <div class="av-card">
+            <div class="av-label">Fluid In</div>
+            <div class="av-val" style="color:var(--brand);" id="av-fluid">640</div>
+            <div class="av-unit">mL</div>
+          </div>
+        </div>
+
+        <!-- DRUG RECORD -->
+        <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px;">Drug Administration Record</div>
+        <div id="drug-record"></div>
+
+        <div style="margin-top:10px;display:flex;gap:8px;">
+          <button class="btn btn-outline btn-sm" onclick="showToast('Drug entry panel opened','💊')">＋ Add Drug</button>
+          <button class="btn btn-primary btn-sm" onclick="showToast('Anaesthesia record updated','💉')">💾 Save Record</button>
+          <button class="btn btn-success btn-sm" style="margin-left:auto;" onclick="showToast('Emergence phase initiated — monitoring intensified','✅')">Emergence Phase</button>
+        </div>
+      </div>
+
+      <!-- ─── INSTRUMENTS TAB ─── -->
+      <div class="tab-pane" id="pane-instruments">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div>
+            <div style="font-size:13px;font-weight:600;">Instrument Count &amp; Tracking — OT 1</div>
+            <div style="font-size:12px;color:var(--text-3);margin-top:2px;">Appendectomy set · Scrub nurse: Rani P. · Last verified: 09:02</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <span class="badge bd-green">22 Verified</span>
+            <span class="badge bd-warn">2 Alert</span>
+            <button class="btn btn-primary btn-sm" onclick="showToast('Instrument count verified ✓','🔧')">✓ Final Count</button>
+          </div>
+        </div>
+
+        <!-- FILTER TABS -->
+        <div style="display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap;">
+          <div style="padding:4px 12px;border-radius:20px;background:var(--brand);color:#fff;font-size:11px;font-weight:600;cursor:pointer;">All (24)</div>
+          <div style="padding:4px 12px;border-radius:20px;border:1px solid var(--border);font-size:11px;font-weight:600;cursor:pointer;color:var(--text-2);">Sharp (8)</div>
+          <div style="padding:4px 12px;border-radius:20px;border:1px solid var(--border);font-size:11px;font-weight:600;cursor:pointer;color:var(--text-2);">Retractors (5)</div>
+          <div style="padding:4px 12px;border-radius:20px;border:1px solid var(--border);font-size:11px;font-weight:600;cursor:pointer;color:var(--text-2);">Sutures (6)</div>
+          <div style="padding:4px 12px;border-radius:20px;border:1px solid var(--border);font-size:11px;font-weight:600;cursor:pointer;color:var(--text-2);">Laparoscopic (5)</div>
+        </div>
+
+        <div id="instrument-list"></div>
+
+        <!-- SPONGE / NEEDLE COUNT -->
+        <div style="background:var(--warn-lt);border:1px solid #FCD34D;border-radius:var(--radius);padding:12px 14px;margin-top:8px;">
+          <div style="font-size:12px;font-weight:700;color:var(--warn-dark);margin-bottom:6px;">⚠ Sponge &amp; Needle Count (Mandatory Before Closure)</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;font-size:12px;">
+            <div style="text-align:center;background:#fff;border-radius:7px;padding:8px;">
+              <div style="font-size:18px;font-weight:700;color:var(--success);">12</div>
+              <div style="color:var(--text-3);">Gauze Sponges</div>
+              <div style="font-size:10px;color:var(--success);font-weight:600;">✓ Matched</div>
+            </div>
+            <div style="text-align:center;background:#fff;border-radius:7px;padding:8px;">
+              <div style="font-size:18px;font-weight:700;color:var(--success);">6</div>
+              <div style="color:var(--text-3);">Lap Pads</div>
+              <div style="font-size:10px;color:var(--success);font-weight:600;">✓ Matched</div>
+            </div>
+            <div style="text-align:center;background:#fff;border-radius:7px;padding:8px;">
+              <div style="font-size:18px;font-weight:700;color:var(--danger);">9/10</div>
+              <div style="color:var(--text-3);">Suture Needles</div>
+              <div style="font-size:10px;color:var(--danger);font-weight:600;">⚠ 1 Missing</div>
+            </div>
+            <div style="text-align:center;background:#fff;border-radius:7px;padding:8px;">
+              <div style="font-size:18px;font-weight:700;color:var(--success);">3</div>
+              <div style="color:var(--text-3);">Blades</div>
+              <div style="font-size:10px;color:var(--success);font-weight:600;">✓ Matched</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── POST-OP TAB ─── -->
+      <div class="tab-pane" id="pane-postop">
+        <div style="font-size:13px;font-weight:600;margin-bottom:14px;">Post-Operative Note — Rajan Pillai · OT 2</div>
+        <div class="form-grid-2" style="margin-bottom:12px;">
+          <div class="form-group"><label class="fl">Surgery Performed</label><input class="fi" value="Left Total Knee Replacement (L-TKR)"/></div>
+          <div class="form-group"><label class="fl">Duration</label><input class="fi" value="2h 28m"/></div>
+          <div class="form-group"><label class="fl">Anaesthesia Type</label><select class="fs"><option selected>Spinal Anaesthesia</option><option>General Anaesthesia</option><option>Epidural</option></select></div>
+          <div class="form-group"><label class="fl">EBL (Estimated Blood Loss)</label><input class="fi fi-mono" value="250 mL"/></div>
+          <div class="form-group"><label class="fl">Fluid In</label><input class="fi fi-mono" value="1800 mL (RL + NS)"/></div>
+          <div class="form-group"><label class="fl">Urine Output</label><input class="fi fi-mono" value="380 mL"/></div>
+          <div class="form-group full"><label class="fl">Intraoperative Findings</label><textarea class="fi" rows="3">Left knee — severe tricompartmental osteoarthritis. Bone quality adequate for cementless implant. Medial release done. Tourniquet time: 62 minutes. No neurovascular injury.</textarea></div>
+          <div class="form-group full"><label class="fl">Post-Op Orders</label><textarea class="fi" rows="3">1. IV Cefazolin 1g 8-hourly × 48h
+2. Tab Paracetamol 1g TDS
+3. Inj Tramadol 50mg PRN
+4. Physio — active ankle pumps from Day 1
+5. Transfer to recovery room — vitals q15min</textarea></div>
+          <div class="form-group"><label class="fl">Complications</label><select class="fs"><option>None</option><option>Minor — managed</option><option>Major — documented</option></select></div>
+          <div class="form-group"><label class="fl">Surgeon Sign-off</label><select class="fs"><option>Dr. Ramesh Iyer</option><option>Dr. Anand K.</option></select></div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+          <button class="btn btn-outline" onclick="showToast('Post-op note printed','🖨')">🖨 Print</button>
+          <button class="btn btn-success" onclick="showToast('Post-op note signed and saved ✓','✅')">✅ Sign &amp; Save</button>
+        </div>
+      </div>
+
+    </div><!-- /card -->
+  </div><!-- /left -->
+
+  <!-- RIGHT COLUMN -->
+  <div style="display:flex;flex-direction:column;gap:14px;">
+
+    <!-- TODAY'S OT LIST -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🗂 Today's Surgery List</div>
+        <span class="badge bd-blue">14 cases</span>
+      </div>
+      <div style="padding:12px;" id="surgery-list"></div>
+    </div>
+
+    <!-- OT UTILISATION -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">📊 OT Utilisation</div></div>
+      <div style="padding:12px 16px;" id="ot-utilisation"></div>
+    </div>
+
+    <!-- QUICK BOOKING -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">⚡ Quick Actions</div></div>
+      <div style="padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:7px;">
+        <button class="btn btn-outline btn-sm" style="justify-content:center;" onclick="openModal()">📅 Book OT</button>
+        <button class="btn btn-outline btn-sm" style="justify-content:center;" onclick="showToast('OT turnover checklist opened','🧹')">🧹 OT Turnover</button>
+        <button class="btn btn-outline btn-sm" style="justify-content:center;" onclick="showToast('Instrument sterilisation status opened','🔧')">🔧 Sterilisation</button>
+        <button class="btn btn-outline btn-sm" style="justify-content:center;" onclick="showToast('Blood bank cross-match request sent','🩸')">🩸 Blood Bank</button>
+        <button class="btn btn-outline btn-sm" style="justify-content:center;grid-column:1/-1;" onclick="showToast('Emergency OT 1 being prepared — alert sent to surgical team','🚨')" style="background:var(--danger-lt);border-color:var(--danger);color:var(--danger);">🚨 Emergency Activation</button>
+      </div>
+    </div>
+
+  </div><!-- /right -->
+</div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- BOOK OT MODAL -->
+<div class="modal-backdrop" id="ot-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📅 Book OT Slot</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid-2" style="margin-bottom:12px;">
+        <div class="form-group full"><label class="fl">Patient UHID / Name <span class="req">*</span></label><input class="fi" placeholder="Search patient..."/></div>
+        <div class="form-group"><label class="fl">Surgery / Procedure <span class="req">*</span></label><input class="fi" placeholder="e.g. Appendectomy, Lap Chole..."/></div>
+        <div class="form-group"><label class="fl">OT Theatre <span class="req">*</span></label>
+          <select class="fs"><option>OT 1 — General Surgery</option><option>OT 2 — Orthopaedics</option><option>OT 3 — Cardiac/Thoracic</option><option>OT 4 — Laparoscopic</option><option>OT 5 — Neurosurgery</option></select>
+        </div>
+        <div class="form-group"><label class="fl">Date <span class="req">*</span></label><input class="fi" type="date" value="2024-03-14"/></div>
+        <div class="form-group"><label class="fl">Start Time <span class="req">*</span></label>
+          <select class="fs"><option>08:00</option><option>09:00</option><option>10:00</option><option>11:00</option><option>12:00</option><option>13:00</option><option>14:00</option><option>15:00</option></select>
+        </div>
+        <div class="form-group"><label class="fl">Estimated Duration <span class="req">*</span></label>
+          <select class="fs"><option>1 hour</option><option>1.5 hours</option><option selected>2 hours</option><option>2.5 hours</option><option>3 hours</option><option>4+ hours</option></select>
+        </div>
+        <div class="form-group"><label class="fl">Lead Surgeon <span class="req">*</span></label>
+          <select class="fs"><option>Dr. Anand Krishnan</option><option>Dr. Ramesh Iyer</option><option>Dr. Meera Suresh</option><option>Dr. Priya Nair</option></select>
+        </div>
+        <div class="form-group"><label class="fl">Anaesthesiologist</label>
+          <select class="fs"><option>Dr. Sharma V. (Anaes.)</option><option>Dr. Lakshmi P. (Anaes.)</option><option>Dr. Rajiv M. (Anaes.)</option></select>
+        </div>
+        <div class="form-group"><label class="fl">Surgery Type</label>
+          <select class="fs"><option>Elective</option><option>Emergency</option><option>Semi-elective</option></select>
+        </div>
+        <div class="form-group"><label class="fl">Anaesthesia Type</label>
+          <select class="fs"><option>General</option><option>Spinal</option><option>Epidural</option><option>Local + Sedation</option></select>
+        </div>
+        <div class="form-group"><label class="fl">Blood Required</label>
+          <select class="fs"><option>No</option><option>Yes — 1 unit</option><option>Yes — 2 units</option><option>Yes — 4+ units (GBH)</option></select>
+        </div>
+        <div class="form-group"><label class="fl">Special Equipment</label>
+          <input class="fi" placeholder="e.g. C-arm, Laparoscopic tower..."/>
+        </div>
+        <div class="form-group full"><label class="fl">Pre-op Notes</label>
+          <textarea class="fi" rows="2" placeholder="Any special instructions for OT team..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div style="font-size:12px;color:var(--text-3);">SMS will be sent to surgical team on booking</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="closeModal();showToast('OT booked successfully — team notified ✓','📅')">✅ Confirm Booking</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span id="toast-icon">✅</span><span id="toast-msg">Done</span></div>
+
+<script>
+// ─── CALENDAR ───
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS_SHORT=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+let curYear=2024,curMonth=2,selDay=14;
+const surgDays={2:[1,4,5,7,8,10,12,13,14,15,17,19,20,21,22,25,26,27,28],3:[1,2,5,6,8,11]};
+const dotColors=['#1A5EAB','#7C3AED','#0891B2','#059669'];
+
+function renderCal(){
+  const t=document.getElementById('cal-title');
+  t.textContent=MONTHS[curMonth]+' '+curYear;
+  const g=document.getElementById('cal-grid');
+  g.innerHTML=DAYS_SHORT.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  const first=new Date(curYear,curMonth,1).getDay();
+  const days=new Date(curYear,curMonth+1,0).getDate();
+  const prev=new Date(curYear,curMonth,0).getDate();
+  for(let i=0;i<first;i++){
+    g.innerHTML+=`<div class="cal-day other-month"><span class="cd-num">${prev-first+1+i}</span></div>`;
+  }
+  for(let d=1;d<=days;d++){
+    const isToday=(d===14&&curMonth===2&&curYear===2024);
+    const isSel=(d===selDay&&curMonth===2&&curYear===2024);
+    const hasS=(surgDays[curMonth]||[]).includes(d);
+    const cnt=hasS?Math.floor(Math.random()*4)+1:0;
+    const cls=['cal-day',isToday?'today':'',isSel&&!isToday?'selected':'',d<8&&curMonth===2?'other-month':''].filter(Boolean).join(' ');
+    const dots=hasS?dotColors.slice(0,cnt).map(c=>`<span class="cd-dot" style="background:${c};"></span>`).join(''):'';
+    g.innerHTML+=`<div class="${cls}" onclick="selectDay(${d})"><span class="cd-num">${d}</span><div class="cd-dots">${dots}</div></div>`;
+  }
+}
+function changeMonth(dir){curMonth+=dir;if(curMonth>11){curMonth=0;curYear++;}if(curMonth<0){curMonth=11;curYear--;}renderCal();}
+function selectDay(d){selDay=d;renderCal();document.getElementById('slot-day-label').textContent=`${d} March 2024`;showToast(`Showing OT slots for ${d} March`,'📅');}
+renderCal();
+
+// ─── OT SLOT GRID ───
+const OT_THEATRES=[
+  {name:'OT 1',spec:'General',color:'var(--ot1)'},
+  {name:'OT 2',spec:'Ortho',color:'var(--ot2)'},
+  {name:'OT 3',spec:'Cardiac',color:'var(--ot3)'},
+  {name:'OT 4',spec:'Laparo',color:'var(--ot4)'},
+  {name:'OT 5',spec:'Neuro',color:'var(--ot5)'},
+];
+const TIME_SLOTS=['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00'];
+
+// 5 OTs × 9 time slots — slot data
+const slotData=[
+  // OT1
+  [{st:'booked',proc:'Appendectomy',surg:'Dr. Anand',live:true},{st:'booked',proc:'Hernia Repair',surg:'Dr. Anand'},{st:'prep'},{st:'booked',proc:'Cholecystectomy',surg:'Dr. Priya'},{st:'free'},{st:'free'},{st:'free'},{st:'free'},{st:'free'}],
+  // OT2
+  [{st:'prep'},{st:'booked',proc:'L-TKR',surg:'Dr. Ramesh',live:true},{st:'booked',proc:'L-TKR',surg:'Dr. Ramesh'},{st:'booked',proc:'L-TKR',surg:'Dr. Ramesh'},{st:'cleaning'},{st:'booked',proc:'Hip Arthroplasty',surg:'Dr. Ramesh'},{st:'free'},{st:'free'},{st:'free'}],
+  // OT3
+  [{st:'free'},{st:'free'},{st:'booked',proc:'CABG',surg:'Dr. Suresh',},{st:'booked',proc:'CABG',surg:'Dr. Suresh'},{st:'booked',proc:'CABG',surg:'Dr. Suresh'},{st:'booked',proc:'CABG',surg:'Dr. Suresh'},{st:'free'},{st:'free'},{st:'free'}],
+  // OT4
+  [{st:'booked',proc:'Lap Chole',surg:'Dr. Meera'},{st:'booked',proc:'Lap Chole',surg:'Dr. Meera',live:true},{st:'cleaning'},{st:'booked',proc:'Lap App.',surg:'Dr. Meera'},{st:'free'},{st:'free'},{st:'free'},{st:'free'},{st:'free'}],
+  // OT5
+  [{st:'booked',proc:'Craniotomy',surg:'Dr. Vikram'},{st:'booked',proc:'Craniotomy',surg:'Dr. Vikram'},{st:'booked',proc:'Craniotomy',surg:'Dr. Vikram'},{st:'booked',proc:'Craniotomy',surg:'Dr. Vikram'},{st:'cleaning'},{st:'cleaning'},{st:'free'},{st:'free'},{st:'free'}],
+];
+
+function renderOTSlots(){
+  const hdr=document.getElementById('ot-col-headers');
+  hdr.innerHTML=`<div></div>`+OT_THEATRES.map(ot=>
+    `<div class="ot-col-head" style="background:${ot.color}18;color:${ot.color};border:1.5px solid ${ot.color}30;">${ot.name}<br><span style="font-size:9px;font-weight:400;opacity:.8;">${ot.spec}</span></div>`
+  ).join('');
+
+  const grid=document.getElementById('ot-slot-grid');
+  grid.innerHTML='';
+  TIME_SLOTS.forEach((t,ti)=>{
+    let row=`<div class="ot-slot-row"><div class="ot-time-label">${t}</div>`;
+    OT_THEATRES.forEach((ot,oi)=>{
+      const s=slotData[oi][ti];
+      if(s.st==='free'){
+        row+=`<div class="ot-slot free" onclick="showToast('Booking ${ot.name} at ${t}...','📅')"><span style="font-size:16px;">+</span><div style="font-size:9px;margin-top:2px;">Free</div></div>`;
+      } else if(s.st==='booked'){
+        row+=`<div class="ot-slot booked" style="background:${ot.color};flex-direction:column;" onclick="showToast('${s.proc} — ${s.surg}','🔪')">
+          ${s.live?`<span class="in-progress-badge">●LIVE</span>`:''}
+          <div class="slot-proc">${s.proc}</div>
+          <div class="slot-surgeon">${s.surg}</div>
+        </div>`;
+      } else if(s.st==='prep'){
+        row+=`<div class="ot-slot prep" onclick="showToast('${ot.name} — Preparation in progress','⚙')"><div>⚙ Prep</div></div>`;
+      } else if(s.st==='cleaning'){
+        row+=`<div class="ot-slot cleaning" onclick="showToast('${ot.name} — Terminal cleaning','🧹')"><div>🧹 Clean</div></div>`;
+      } else if(s.st==='emergency'){
+        row+=`<div class="ot-slot emergency" onclick="showToast('EMERGENCY case in progress','🚨')"><div>🚨 EMRG</div></div>`;
+      }
+    });
+    row+='</div>';
+    grid.innerHTML+=row;
+  });
+}
+renderOTSlots();
+
+// ─── STAFF GRIDS ───
+const surgeons=[
+  {init:'AK',name:'Dr. Anand Krishnan',spec:'General Surgery',status:'In OT 1',sCls:'ss-busy',col:'#1A5EAB',assigned:true},
+  {init:'RI',name:'Dr. Ramesh Iyer',spec:'Orthopaedics',status:'In OT 2',sCls:'ss-busy',col:'#7C3AED',assigned:false},
+  {init:'MS',name:'Dr. Meera Suresh',spec:'Laparoscopic',status:'In OT 4',sCls:'ss-busy',col:'#0891B2',assigned:false},
+  {init:'PN',name:'Dr. Priya Nair',spec:'General Surgery',status:'Available',sCls:'ss-available',col:'#059669',assigned:false},
+];
+const anaesStaff=[
+  {init:'SV',name:'Dr. Sharma V.',spec:'Senior Anaesthesiologist',status:'Assigned — OT 1',sCls:'ss-assigned',col:'#1A5EAB',assigned:true},
+  {init:'LP',name:'Dr. Lakshmi P.',spec:'Anaesthesiologist',status:'In OT 2',sCls:'ss-busy',col:'#7C3AED',assigned:false},
+  {init:'RM',name:'Dr. Rajiv M.',spec:'Anaesthesiologist',status:'Available',sCls:'ss-available',col:'#059669',assigned:false},
+  {init:'KS',name:'Dr. Kumar S.',spec:'Jr. Anaesthesiologist',status:'Available',sCls:'ss-available',col:'#0891B2',assigned:false},
+];
+const nurses=[
+  {init:'RP',name:'Rani P.',spec:'Scrub Nurse — OT 1',status:'Assigned',sCls:'ss-assigned',col:'#1A5EAB',assigned:true},
+  {init:'SW',name:'Suma W.',spec:'Circulating Nurse',status:'Available',sCls:'ss-available',col:'#059669',assigned:false},
+  {init:'PK',name:'Priya K.',spec:'Scrub Nurse',status:'In OT 2',sCls:'ss-busy',col:'#7C3AED',assigned:false},
+  {init:'JM',name:'Jaya M.',spec:'Recovery Nurse',status:'Available',sCls:'ss-available',col:'#0891B2',assigned:false},
+];
+function renderStaffGrid(data,id){
+  const g=document.getElementById(id);
+  if(!g) return;
+  g.innerHTML=data.map(s=>`<div class="staff-card${s.assigned?' assigned':s.sCls==='ss-busy'?' unavailable':''}" onclick="toggleStaff(this,'${s.name}')">
+    <div class="staff-av" style="background:${s.col};">${s.init}</div>
+    <div style="flex:1;">
+      <div class="staff-name">${s.name}</div>
+      <div class="staff-spec">${s.spec}</div>
+      <div class="staff-status ${s.sCls}">${s.assigned?'✓ Assigned':s.status}</div>
+    </div>
+    ${s.assigned?'<span style="font-size:18px;">✅</span>':''}
+  </div>`).join('');
+}
+renderStaffGrid(surgeons,'surgeon-grid');
+renderStaffGrid(anaesStaff,'anaes-grid');
+renderStaffGrid(nurses,'nurse-grid');
+function toggleStaff(el,name){
+  if(el.classList.contains('unavailable')){showToast(`${name} is currently in surgery`,'⚠');return;}
+  el.classList.toggle('assigned');
+  showToast(el.classList.contains('assigned')?`${name} assigned ✓`:`${name} removed`,'👤');
+}
+
+// ─── DRUG RECORD ───
+const drugs=[
+  {icon:'💉',name:'Propofol 2%',dose:'120mg IV',time:'09:00',status:'ds-given',stLabel:'Given'},
+  {icon:'💊',name:'Fentanyl',dose:'150mcg IV',time:'09:01',status:'ds-given',stLabel:'Given'},
+  {icon:'🧪',name:'Suxamethonium',dose:'100mg IV',time:'09:02',status:'ds-given',stLabel:'Given'},
+  {icon:'💉',name:'Sevoflurane',dose:'1.2 MAC',time:'09:05',status:'ds-running',stLabel:'Running'},
+  {icon:'💊',name:'Vecuronium',dose:'8mg IV',time:'09:05',status:'ds-given',stLabel:'Given'},
+  {icon:'🧪',name:'Ondansetron',dose:'4mg IV',time:'10:00',status:'ds-given',stLabel:'Given'},
+  {icon:'💉',name:'Morphine',dose:'5mg IV',time:'10:30',status:'ds-planned',stLabel:'Planned'},
+  {icon:'💊',name:'Neostigmine',dose:'2.5mg IV',time:'Reversal',status:'ds-planned',stLabel:'Planned'},
+];
+const dr=document.getElementById('drug-record');
+drugs.forEach(d=>{
+  dr.innerHTML+=`<div class="drug-row" onclick="showToast('${d.name} — ${d.dose}','💊')">
+    <div class="drug-icon" style="background:var(--surface-2);">${d.icon}</div>
+    <div class="drug-name">${d.name}</div>
+    <div class="drug-dose">${d.dose}</div>
+    <div class="drug-time">${d.time}</div>
+    <span class="drug-status ${d.status}">${d.stLabel}</span>
+  </div>`;
+});
+
+// ─── INSTRUMENTS ───
+const instruments=[
+  {icon:'🔪',name:'Scalpel Handles (No. 3)',count:'2/2',status:'ok',sCls:'is-ok',stLabel:'✓ Count OK'},
+  {icon:'✂',name:'Metzenbaum Scissors',count:'2/2',status:'ok',sCls:'is-ok',stLabel:'✓ Count OK'},
+  {icon:'🔧',name:'Kocher Forceps',count:'6/6',status:'ok',sCls:'is-ok',stLabel:'✓ Count OK'},
+  {icon:'⚕',name:'Babcock Tissue Forceps',count:'4/4',status:'ok',sCls:'is-ok',stLabel:'✓ Count OK'},
+  {icon:'🔩',name:'Retractors (Deaver)',count:'3/3',status:'ok',sCls:'is-ok',stLabel:'✓ Count OK'},
+  {icon:'💡',name:'Laparoscope 10mm',count:'1/1',status:'ok',sCls:'is-ok',stLabel:'✓ Count OK'},
+  {icon:'🔗',name:'Trocar Ports 5mm',count:'2/3',status:'warn',sCls:'is-warn',stLabel:'⚠ 1 Unaccounted'},
+  {icon:'🧵',name:'Ligaclip Applicator',count:'1/1',status:'ok',sCls:'is-ok',stLabel:'✓ Count OK'},
+  {icon:'⚡',name:'Electrosurgical Probe',count:'1/1',status:'ok',sCls:'is-ok',stLabel:'✓ Count OK'},
+  {icon:'🩹',name:'Needle Holder (Hegar)',count:'2/2',status:'ok',sCls:'is-ok',stLabel:'✓ Count OK'},
+  {icon:'🔬',name:'Suction Cannula',count:'1/1',status:'ok',sCls:'is-ok',stLabel:'✓ Count OK'},
+  {icon:'🧤',name:'Clip Applicator (Hem-o-lok)',count:'0/1',status:'missing',sCls:'is-missing',stLabel:'⚠ Missing'},
+];
+const il=document.getElementById('instrument-list');
+instruments.forEach(i=>{
+  il.innerHTML+=`<div class="instrument-row ${i.status}" onclick="showToast('${i.name} — ${i.count}','🔧')">
+    <div class="instr-icon">${i.icon}</div>
+    <div class="instr-name">${i.name}</div>
+    <span class="count-badge">${i.count}</span>
+    <span class="instr-status ${i.sCls}">${i.stLabel}</span>
+  </div>`;
+});
+
+// ─── TODAY'S SURGERY LIST ───
+const surgeryList=[
+  {proc:'Appendectomy',pt:'Mohan Kumar',ot:'OT 1',time:'09:00',status:'In Progress',sCls:'bd-warn',live:true},
+  {proc:'L-TKR',pt:'Rajan Pillai',ot:'OT 2',time:'09:00',status:'In Progress',sCls:'bd-warn',live:true},
+  {proc:'Lap Chole',pt:'Anjali Menon',ot:'OT 4',time:'09:00',status:'In Progress',sCls:'bd-warn',live:true},
+  {proc:'CABG',pt:'Suresh Kumar',ot:'OT 3',time:'11:00',status:'Scheduled',sCls:'bd-blue'},
+  {proc:'Craniotomy',pt:'Unknown M.',ot:'OT 5',time:'Emrg',status:'Done',sCls:'bd-green'},
+  {proc:'Hernia Repair',pt:'Karthik Rajan',ot:'OT 1',time:'11:30',status:'Scheduled',sCls:'bd-blue'},
+  {proc:'Hip Arthroplasty',pt:'Priya Devi',ot:'OT 2',time:'14:00',status:'Scheduled',sCls:'bd-blue'},
+  {proc:'Lap App.',pt:'Arjun Raj',ot:'OT 4',time:'13:00',status:'Scheduled',sCls:'bd-blue'},
+];
+const sl=document.getElementById('surgery-list');
+surgeryList.forEach(s=>{
+  sl.innerHTML+=`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="showToast('${s.proc} — ${s.pt}','🔪')">
+    ${s.live?'<span style="width:8px;height:8px;background:var(--success);border-radius:50%;flex-shrink:0;animation:lbPulse 1.4s infinite;"></span>':'<span style="width:8px;height:8px;background:var(--border);border-radius:50%;flex-shrink:0;"></span>'}
+    <div style="flex:1;">
+      <div style="font-size:12px;font-weight:500;">${s.proc}</div>
+      <div style="font-size:11px;color:var(--text-3);">${s.pt} · ${s.ot}</div>
+    </div>
+    <div style="text-align:right;">
+      <span class="badge ${s.sCls}" style="font-size:10px;">${s.status}</span>
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text-3);margin-top:2px;">${s.time}</div>
+    </div>
+  </div>`;
+});
+
+// ─── OT UTILISATION ───
+const otUtils=[
+  {name:'OT 1',col:'var(--ot1)',pct:82,hours:'6.5h / 8h'},
+  {name:'OT 2',col:'var(--ot2)',pct:90,hours:'7.2h / 8h'},
+  {name:'OT 3',col:'var(--ot3)',pct:62,hours:'5.0h / 8h'},
+  {name:'OT 4',col:'var(--ot4)',pct:55,hours:'4.4h / 8h'},
+  {name:'OT 5',col:'var(--ot5)',pct:45,hours:'3.6h / 8h'},
+];
+const ou=document.getElementById('ot-utilisation');
+otUtils.forEach(o=>{
+  ou.innerHTML+=`<div style="margin-bottom:10px;cursor:pointer;" onclick="showToast('${o.name} — ${o.pct}% utilisation','📊')">
+    <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+      <span style="font-weight:600;">${o.name}</span>
+      <span style="font-family:'DM Mono',monospace;color:${o.col};font-weight:700;">${o.pct}% · ${o.hours}</span>
+    </div>
+    <div class="prog-bar"><div class="prog-fill" style="width:${o.pct}%;background:${o.col};"></div></div>
+  </div>`;
+});
+
+// ─── LIVE TIMERS ───
+const timerStarts={timer1:Date.now()-84*60000-38000, timer2:Date.now()-125*60000-12000, timer4:Date.now()-48*60000-22000};
+function updateTimers(){
+  Object.entries(timerStarts).forEach(([id,start])=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    const elapsed=Math.floor((Date.now()-start)/1000);
+    const h=String(Math.floor(elapsed/3600)).padStart(2,'0');
+    const m=String(Math.floor((elapsed%3600)/60)).padStart(2,'0');
+    const s=String(elapsed%60).padStart(2,'0');
+    el.textContent=`${h}:${m}:${s}`;
+  });
+}
+setInterval(updateTimers,1000);
+updateTimers();
+
+// ─── VITALS SIMULATION ───
+function jitter(base,range){return (base+Math.random()*range*2-range).toFixed(base%1===0?0:1);}
+setInterval(()=>{
+  document.getElementById('av-spo2').textContent=jitter(98,1);
+  document.getElementById('av-hr').textContent=jitter(76,4);
+  const sb=Math.round(jitter(118,5));
+  const db=Math.round(jitter(74,4));
+  document.getElementById('av-bp').textContent=`${sb}/${db}`;
+  document.getElementById('av-etco2').textContent=jitter(36,2);
+  document.getElementById('av-bis').textContent=jitter(44,4);
+  const fl=parseInt(document.getElementById('av-fluid').textContent)||640;
+  document.getElementById('av-fluid').textContent=Math.min(fl+Math.round(Math.random()*3),2000);
+},3000);
+
+// ─── TABS ───
+function switchTab(id,btn){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pane-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ─── MODAL ───
+function openModal(){document.getElementById('ot-modal').classList.add('show');}
+function closeModal(){document.getElementById('ot-modal').classList.remove('show');}
+
+// ─── TOAST ───
+let tt;
+function showToast(msg,icon='✅'){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').innerHTML=msg;
+  document.getElementById('toast-icon').textContent=icon;
+  t.classList.add('show');clearTimeout(tt);
+  tt=setTimeout(()=>t.classList.remove('show'),3200);
+}
+</script>
+</body>
+</html>

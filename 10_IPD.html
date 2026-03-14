@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Diagnotica HMS — IPD Management</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --brand:#1A5EAB;--brand-dark:#0F3F78;--brand-light:#E8F1FB;--brand-mid:#2E7DD6;
+  --accent:#00C0A3;--accent-lt:#E0F9F5;--accent-dark:#007A68;
+  --warn:#F59E0B;--warn-lt:#FEF3C7;--warn-dark:#92400E;
+  --danger:#EF4444;--danger-lt:#FEE2E2;--danger-dark:#7F1D1D;
+  --success:#10B981;--success-lt:#D1FAE5;--success-dark:#065F46;
+  --purple:#7C3AED;--purple-lt:#EDE9FE;
+  --text-1:#0F1C2E;--text-2:#3A4D63;--text-3:#7A8FA6;
+  --border:#DDE6F0;--bg:#F0F5FB;--surface:#FFFFFF;--surface-2:#F7FAFD;
+  --radius:10px;--radius-lg:16px;
+  --shadow:0 1px 4px rgba(26,94,171,.08),0 4px 16px rgba(26,94,171,.06);
+  --shadow-lg:0 8px 32px rgba(26,94,171,.14);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-1);min-height:100vh;font-size:14px;}
+
+/* TOPBAR */
+.topbar{background:var(--brand-dark);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:52px;position:sticky;top:0;z-index:100;}
+.logo-wrap{display:flex;align-items:center;gap:10px;}
+.logo-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#00C0A3,#2E7DD6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;}
+.logo-text{color:#fff;font-size:15px;font-weight:600;}
+.logo-sub{color:#8BAFD4;font-size:11px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.t-chip{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#D4E8FF;border-radius:6px;padding:5px 12px;font-size:12px;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;}
+.t-chip:hover{background:rgba(255,255,255,.18);}
+.user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border-radius:20px;padding:4px 12px 4px 4px;}
+.user-av{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+
+/* SHELL */
+.shell{display:flex;height:calc(100vh - 52px);overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:196px;background:var(--surface);border-right:1px solid var(--border);padding:14px 0;flex-shrink:0;overflow-y:auto;}
+.sb-label{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;padding:8px 14px 4px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:var(--radius);margin:0 8px 2px;cursor:pointer;color:var(--text-2);font-size:13px;transition:all .15s;position:relative;}
+.nav-item:hover{background:var(--brand-light);color:var(--brand);}
+.nav-item.active{background:var(--brand-light);color:var(--brand);font-weight:500;}
+.nav-item.active::before{content:'';position:absolute;left:-4px;top:6px;bottom:6px;width:3px;background:var(--brand);border-radius:0 3px 3px 0;}
+.nb{margin-left:auto;font-size:10px;font-weight:700;border-radius:10px;padding:1px 6px;color:#fff;}
+.nb.b{background:var(--brand);}.nb.g{background:var(--success);}.nb.r{background:var(--danger);}.nb.w{background:var(--warn);color:var(--warn-dark);}
+
+/* MAIN */
+.main{flex:1;overflow:hidden;display:grid;grid-template-rows:auto 1fr;}
+
+/* KPI BANNER */
+.kpi-banner{background:linear-gradient(135deg,var(--brand-dark),#1563B8);padding:14px 24px;display:flex;gap:0;align-items:center;}
+.kpi-item{text-align:center;min-width:95px;}
+.kpi-val{font-size:22px;font-weight:700;color:#fff;line-height:1;}
+.kpi-label{font-size:10px;color:#8BAFD4;margin-top:3px;text-transform:uppercase;letter-spacing:.05em;}
+.kpi-trend{font-size:11px;margin-top:2px;}
+.kpi-sep{width:1px;background:rgba(255,255,255,.1);margin:0 12px;height:30px;}
+
+/* THREE-COLUMN LAYOUT */
+.three-col{display:grid;grid-template-columns:280px 1fr 300px;height:100%;overflow:hidden;}
+
+/* PATIENT LIST PANE */
+.pane-left{border-right:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface);overflow:hidden;}
+.pane-center{display:flex;flex-direction:column;overflow:hidden;}
+.pane-right{border-left:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface);overflow:hidden;}
+.pane-header{padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface-2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.pane-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;}
+.pane-body{flex:1;overflow-y:auto;padding:10px;}
+
+/* PATIENT LIST ITEM */
+.pt-item{border-radius:var(--radius);border:1.5px solid var(--border);margin-bottom:7px;cursor:pointer;transition:all .15s;overflow:hidden;}
+.pt-item:hover{border-color:var(--brand);box-shadow:var(--shadow);}
+.pt-item.active-pt{border-color:var(--brand);background:var(--brand-light);}
+.pti-stripe{height:3px;}
+.ps-critical{background:var(--danger);}
+.ps-high{background:var(--warn);}
+.ps-stable{background:var(--success);}
+.ps-discharge{background:var(--accent);}
+.pti-body{padding:9px 12px;}
+.pti-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.pti-name{font-size:13px;font-weight:600;}
+.pti-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;}
+.pb-critical{background:var(--danger-lt);color:var(--danger);}
+.pb-high{background:var(--warn-lt);color:var(--warn-dark);}
+.pb-stable{background:var(--success-lt);color:var(--success-dark);}
+.pb-discharge{background:var(--accent-lt);color:var(--accent-dark);}
+.pti-ward{font-size:11px;color:var(--text-2);margin-bottom:2px;}
+.pti-meta{font-size:11px;color:var(--text-3);font-family:'DM Mono',monospace;}
+.pti-footer{display:flex;align-items:center;justify-content:space-between;margin-top:5px;}
+.pti-days{font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;background:var(--brand-light);color:var(--brand);}
+
+/* WARD FILTER */
+.ward-filter{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap;}
+.wf-btn{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;border:1.5px solid var(--border);cursor:pointer;transition:all .13s;color:var(--text-2);}
+.wf-btn:hover{border-color:var(--brand);color:var(--brand);}
+.wf-btn.active{background:var(--brand);color:#fff;border-color:var(--brand);}
+
+/* CENTER — PATIENT DETAIL */
+.patient-banner{background:linear-gradient(135deg,var(--brand-dark),#1A6BC4);padding:14px 20px;display:flex;align-items:center;gap:16px;flex-shrink:0;}
+.pb-av{width:46px;height:46px;border-radius:12px;background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0;}
+.pb-info{flex:1;}
+.pb-name{font-size:17px;font-weight:700;color:#fff;margin-bottom:3px;}
+.pb-meta-row{display:flex;gap:14px;flex-wrap:wrap;}
+.pb-tag{font-size:11px;color:#A8C9EE;display:flex;align-items:center;gap:4px;}
+.pb-tag b{color:#fff;font-weight:500;}
+.pb-actions{display:flex;gap:6px;flex-shrink:0;}
+.pb-btn{padding:6px 12px;border-radius:var(--radius);border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;font-family:inherit;font-size:11px;font-weight:500;cursor:pointer;transition:background .15s;}
+.pb-btn:hover{background:rgba(255,255,255,.2);}
+.pb-btn.accent{background:var(--accent);border-color:var(--accent);}
+
+/* CENTER TABS */
+.center-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface-2);flex-shrink:0;}
+.ct-btn{padding:10px 14px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:500;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap;}
+.ct-btn:hover{color:var(--text-1);}
+.ct-btn.active{color:var(--brand);border-bottom-color:var(--brand);}
+.tab-pane{display:none;overflow-y:auto;flex:1;}
+.tab-pane.active{display:flex;flex-direction:column;}
+
+/* ADMISSION PANEL */
+.admit-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-group.full{grid-column:1/-1;}
+.fl{font-size:11px;font-weight:600;color:var(--text-2);}
+.req{color:var(--danger);}
+.fi,.fs{padding:8px 11px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;color:var(--text-1);background:var(--surface-2);outline:none;transition:border-color .15s;width:100%;}
+.fi:focus,.fs:focus{border-color:var(--brand);background:#fff;}
+
+/* BED MAP */
+.bed-map-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;padding:16px;}
+.bed-cell{aspect-ratio:1;border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;border:1.5px solid var(--border);cursor:pointer;transition:all .15s;font-size:10px;font-weight:600;position:relative;}
+.bed-cell:hover{transform:scale(1.06);}
+.bed-cell.occupied{background:var(--brand-light);border-color:#BFDBFE;color:var(--brand);}
+.bed-cell.free{background:var(--success-lt);border-color:#6EE7B7;color:var(--success-dark);}
+.bed-cell.reserved{background:var(--warn-lt);border-color:#FCD34D;color:var(--warn-dark);}
+.bed-cell.cleaning{background:var(--surface-2);border-color:var(--border);color:var(--text-3);}
+.bed-cell.critical{background:var(--danger-lt);border-color:#FCA5A5;color:var(--danger);}
+.bed-cell.selected-bed{box-shadow:0 0 0 3px rgba(26,94,171,.3);transform:scale(1.08);}
+.bc-num{font-family:'DM Mono',monospace;font-size:14px;font-weight:700;display:block;}
+.bc-pt{font-size:9px;display:block;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:52px;text-align:center;}
+
+/* NURSING CHART */
+.vitals-chart{padding:16px;}
+.vital-row{display:grid;grid-template-columns:110px repeat(6,1fr);gap:6px;margin-bottom:5px;align-items:center;}
+.vr-label{font-size:12px;font-weight:600;color:var(--text-2);}
+.vr-cell{border-radius:7px;padding:6px 8px;text-align:center;border:1.5px solid var(--border);font-size:12px;font-family:'DM Mono',monospace;font-weight:600;cursor:pointer;transition:all .13s;}
+.vr-cell:hover{border-color:var(--brand);}
+.vr-cell.hi{color:var(--danger);background:var(--danger-lt);border-color:#FCA5A5;}
+.vr-cell.lo{color:var(--warn-dark);background:var(--warn-lt);border-color:#FCD34D;}
+.vr-cell.ok{color:var(--success-dark);background:var(--success-lt);}
+.vr-cell.norm{color:var(--brand);background:var(--brand-light);}
+.vr-time{font-size:10px;font-weight:600;color:var(--text-3);text-align:center;}
+.nursing-note{border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;margin:0 16px 16px;}
+.nn-header{padding:8px 12px;background:var(--surface-2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.nn-textarea{width:100%;padding:10px 12px;border:none;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text-1);resize:vertical;outline:none;min-height:100px;line-height:1.7;background:var(--surface);}
+
+/* MAR TABLE */
+.mar-table{width:100%;border-collapse:collapse;font-size:12px;}
+.mar-table th{padding:8px 12px;background:var(--surface-2);text-align:left;font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:1;}
+.mar-table td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.mar-table tr:hover td{background:var(--brand-light);}
+.mar-cell{width:36px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;border:1px solid var(--border);}
+.mc-given{background:var(--success-lt);color:var(--success-dark);border-color:#6EE7B7;}
+.mc-due{background:var(--warn-lt);color:var(--warn-dark);border-color:#FCD34D;animation:marPulse 2s infinite;}
+@keyframes marPulse{0%,100%{border-color:#FCD34D;}50%{border-color:var(--warn);}}
+.mc-held{background:var(--danger-lt);color:var(--danger);border-color:#FCA5A5;}
+.mc-na{background:var(--surface-2);color:var(--text-3);}
+.drug-flag{font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;margin-left:4px;}
+.flag-allergy{background:var(--danger-lt);color:var(--danger);}
+.flag-prn{background:var(--purple-lt);color:var(--purple);}
+
+/* DISCHARGE */
+.discharge-section{padding:16px;border-bottom:1px solid var(--border);}
+.ds-title{font-size:12px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;}
+.ds-textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text-1);resize:vertical;outline:none;min-height:90px;line-height:1.7;background:var(--surface-2);transition:border-color .15s;}
+.ds-textarea:focus{border-color:var(--brand);background:#fff;}
+.ds-footer{padding:14px 16px;background:var(--surface-2);display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border);}
+
+/* TIMELINE */
+.timeline-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+.timeline-item:last-child{border-bottom:none;}
+.tl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.tl-time{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-3);min-width:44px;}
+.tl-text{font-size:12px;color:var(--text-1);line-height:1.5;}
+.tl-by{font-size:10px;color:var(--text-3);}
+
+/* CARE TEAM */
+.ct-member{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);}
+.ct-member:last-child{border-bottom:none;}
+.ct-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;}
+.ct-name{font-size:12px;font-weight:500;}
+.ct-role{font-size:11px;color:var(--text-3);}
+
+/* VITALS MINI */
+.vitals-mini{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:12px;}
+.vm-card{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:9px 11px;}
+.vm-label{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;}
+.vm-val{font-size:18px;font-weight:700;margin-top:2px;line-height:1;}
+.vm-unit{font-size:10px;color:var(--text-3);}
+.vm-trend{font-size:10px;margin-top:2px;}
+
+/* BTN */
+.btn{padding:7px 14px;border-radius:var(--radius);border:none;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+.btn-primary{background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(26,94,171,.25);}
+.btn-primary:hover{background:var(--brand-dark);}
+.btn-success{background:var(--success);color:#fff;}
+.btn-success:hover{background:#059669;}
+.btn-outline{background:var(--surface);color:var(--brand);border:1px solid var(--brand);}
+.btn-outline:hover{background:var(--brand-light);}
+.btn-warn{background:var(--warn);color:var(--warn-dark);}
+.btn-sm{padding:4px 10px;font-size:12px;}
+.btn-danger{background:var(--danger);color:#fff;}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600;}
+.bd-blue{background:var(--brand-light);color:var(--brand);}
+.bd-green{background:var(--success-lt);color:var(--success);}
+.bd-warn{background:var(--warn-lt);color:var(--warn-dark);}
+.bd-red{background:var(--danger-lt);color:var(--danger);}
+.bd-purple{background:var(--purple-lt);color:var(--purple);}
+.bd-gray{background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--brand-dark);color:#fff;padding:12px 20px;border-radius:var(--radius);font-size:13px;font-weight:500;z-index:999;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* MODAL */
+.modal-backdrop{position:fixed;inset:0;background:rgba(15,28,46,.5);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-backdrop.show{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);width:580px;max-width:94vw;max-height:90vh;overflow-y:auto;transform:translateY(20px) scale(.97);transition:transform .25s cubic-bezier(.34,1.4,.64,1);}
+.modal-backdrop.show .modal{transform:none;}
+.modal-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);position:sticky;top:0;z-index:2;}
+.modal-title{font-size:15px;font-weight:700;}
+.modal-close{width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.modal-body{padding:20px;}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:var(--surface-2);}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo-wrap">
+    <div class="logo-mark">Dx</div>
+    <div><div class="logo-text">Diagnotica HMS</div><div class="logo-sub">IPD Management — Inpatient Department</div></div>
+  </div>
+  <div class="topbar-right">
+    <div class="t-chip" onclick="openModal('admit')">＋ New Admission</div>
+    <div class="t-chip" onclick="showToast('Bed availability map opened','🛏')">🛏 Bed Map</div>
+    <div class="t-chip" onclick="showToast('Ward round checklist printed','📋')">📋 Ward Round</div>
+    <div class="t-chip" onclick="showToast('Handover report generated','🔄')">🔄 Shift Handover</div>
+    <div class="user-chip">
+      <div class="user-av">NW</div>
+      <span style="color:#D4E8FF;font-size:12px;">Ward Nurse — Suma W.</span>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-label">IPD</div>
+  <div class="nav-item active">🛏 Patient List <span class="nb b">42</span></div>
+  <div class="nav-item">📋 Admissions</div>
+  <div class="nav-item">🗺 Bed Map</div>
+  <div class="nav-item">💊 MAR — Medications <span class="nb w">5</span></div>
+  <div class="nav-item">📊 Nursing Charts</div>
+  <div class="nav-item">🚪 Discharges <span class="nb g">3</span></div>
+  <div class="sb-label">Wards</div>
+  <div class="nav-item">🏥 Ward A <span class="nb b">18</span></div>
+  <div class="nav-item">🏥 Ward B <span class="nb b">14</span></div>
+  <div class="nav-item">🔬 ICU <span class="nb r">6</span></div>
+  <div class="nav-item">🤰 Maternity <span class="nb g">8</span></div>
+  <div class="nav-item">👶 Paediatrics <span class="nb b">6</span></div>
+  <div class="sb-label">Reports</div>
+  <div class="nav-item">📊 Census Report</div>
+  <div class="nav-item">📈 LOS Analytics</div>
+  <div class="nav-item">🩺 Clinical Audits</div>
+</nav>
+
+<div class="main">
+<!-- KPI BANNER -->
+<div class="kpi-banner">
+  <div class="kpi-item"><div class="kpi-val">42</div><div class="kpi-label">Admitted Patients</div><div class="kpi-trend" style="color:#6EF0DC;">↑ 3 today</div></div>
+  <div class="kpi-sep"></div>
+  <div class="kpi-item"><div class="kpi-val" style="color:#FCA5A5;">6</div><div class="kpi-label">ICU / Critical</div><div class="kpi-trend" style="color:#FCA5A5;">2 on ventilator</div></div>
+  <div class="kpi-sep"></div>
+  <div class="kpi-item"><div class="kpi-val" style="color:#6EF0DC;">78</div><div class="kpi-label">Beds Occupied</div><div class="kpi-trend" style="color:#FCD34D;">of 120 total</div></div>
+  <div class="kpi-sep"></div>
+  <div class="kpi-item"><div class="kpi-val" style="color:#6EF0DC;">42</div><div class="kpi-label">Beds Available</div><div class="kpi-trend" style="color:#6EF0DC;">35% vacancy</div></div>
+  <div class="kpi-sep"></div>
+  <div class="kpi-item"><div class="kpi-val">3.8</div><div class="kpi-label">Avg LOS (days)</div><div class="kpi-trend" style="color:#6EF0DC;">↓ 0.4 vs target</div></div>
+  <div class="kpi-sep"></div>
+  <div class="kpi-item"><div class="kpi-val" style="color:#6EF0DC;">3</div><div class="kpi-label">Planned Discharges</div><div class="kpi-trend" style="color:#6EF0DC;">Today</div></div>
+  <div class="kpi-sep"></div>
+  <div class="kpi-item"><div class="kpi-val" style="color:#FCD34D;">5</div><div class="kpi-label">Med Due (MAR)</div><div class="kpi-trend" style="color:#FCD34D;">Action required</div></div>
+</div>
+
+<!-- THREE-COLUMN LAYOUT -->
+<div class="three-col">
+
+  <!-- LEFT: PATIENT LIST -->
+  <div class="pane-left">
+    <div class="pane-header">
+      <div class="pane-title">🛏 Admitted Patients</div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('admit')">＋ Admit</button>
+    </div>
+    <div class="pane-body">
+      <div style="margin-bottom:8px;">
+        <input style="width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:12px;outline:none;background:var(--surface-2);" placeholder="🔍 Search patient, UHID, bed..." oninput="searchPatients(this.value)"/>
+      </div>
+      <div class="ward-filter">
+        <div class="wf-btn active" onclick="filterWard(this,'all')">All</div>
+        <div class="wf-btn" onclick="filterWard(this,'A')">Ward A</div>
+        <div class="wf-btn" onclick="filterWard(this,'B')">Ward B</div>
+        <div class="wf-btn" onclick="filterWard(this,'ICU')">ICU</div>
+        <div class="wf-btn" onclick="filterWard(this,'Mat')">Mat.</div>
+      </div>
+      <div id="patient-list"></div>
+    </div>
+  </div>
+
+  <!-- CENTER: PATIENT DETAIL -->
+  <div class="pane-center">
+
+    <!-- PATIENT BANNER -->
+    <div class="patient-banner">
+      <div class="pb-av">DK</div>
+      <div class="pb-info">
+        <div class="pb-name">Deepak Kumar <span style="font-size:13px;font-weight:400;color:#A8C9EE;">48M · O+</span></div>
+        <div class="pb-meta-row">
+          <div class="pb-tag">🪪 UHID <b>DX-2024-004829</b></div>
+          <div class="pb-tag">🛏 Bed <b>B-04 · Surgical Ward</b></div>
+          <div class="pb-tag">📅 Admitted <b>7 Mar 2024</b> (7 days)</div>
+          <div class="pb-tag">🩺 Dr. <b>Ramesh Iyer</b></div>
+          <div class="pb-tag">🔴 <b>Post-op — L-TKR</b></div>
+        </div>
+      </div>
+      <div class="pb-actions">
+        <button class="pb-btn" onclick="showToast('Loading full EMR...','📋')">📋 EMR</button>
+        <button class="pb-btn" onclick="showToast('Ordering lab tests...','🧪')">🧪 Lab</button>
+        <button class="pb-btn" onclick="openModal('discharge')">🚪 Discharge</button>
+        <button class="pb-btn accent" onclick="showToast('Ward round note saved','✅')">✅ Round Done</button>
+      </div>
+    </div>
+
+    <!-- CENTER TABS -->
+    <div class="center-tabs">
+      <button class="ct-btn active" onclick="switchCTab('nursing',this)">📊 Nursing Chart</button>
+      <button class="ct-btn" onclick="switchCTab('mar',this)">💊 MAR</button>
+      <button class="ct-btn" onclick="switchCTab('notes',this)">📝 Clinical Notes</button>
+      <button class="ct-btn" onclick="switchCTab('admission',this)">📋 Admission</button>
+      <button class="ct-btn" onclick="switchCTab('bedmap',this)">🗺 Bed Map</button>
+      <button class="ct-btn" onclick="switchCTab('discharge',this)">🚪 Discharge</button>
+    </div>
+
+    <!-- NURSING CHART TAB -->
+    <div class="tab-pane active" id="pane-nursing">
+      <div class="vitals-chart">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:13px;font-weight:600;">Vitals Chart — 14 Mar 2024</div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-outline btn-sm" onclick="showToast('Vitals entry form opened','📊')">＋ Add Vitals</button>
+            <button class="btn btn-outline btn-sm" onclick="showToast('Vitals trend graph opened','📈')">📈 Trend</button>
+          </div>
+        </div>
+        <!-- TIME HEADERS -->
+        <div class="vital-row">
+          <div class="vr-label"></div>
+          <div class="vr-time">06:00</div>
+          <div class="vr-time">08:00</div>
+          <div class="vr-time">10:00</div>
+          <div class="vr-time">12:00</div>
+          <div class="vr-time">14:00</div>
+          <div class="vr-time">Now</div>
+        </div>
+        <!-- VITALS ROWS -->
+        <div id="vitals-chart-rows"></div>
+      </div>
+
+      <!-- NURSING NOTES -->
+      <div class="nursing-note">
+        <div class="nn-header">
+          <span style="font-size:12px;font-weight:600;">Nursing Notes — 14 Mar 2024 14:32</span>
+          <div style="display:flex;gap:5px;">
+            <select style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:11px;background:var(--surface-2);outline:none;">
+              <option>Suma W. — Shift B</option>
+              <option>Rani P. — Shift A</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="showToast('Nursing note saved ✓','✅')">Save Note</button>
+          </div>
+        </div>
+        <textarea class="nn-textarea" placeholder="Enter nursing notes, observations, interventions...">Patient alert and oriented. Wound site clean and dry — no signs of infection. Drain output 30mL serous fluid. Mobilised to chair × 2 today with physio assistance. Tolerating oral feeds. IV line patent, flushed.
+
+Pain score 4/10 — Tramadol 50mg given at 13:00 — good response. Compression stockings in place. BGL 142 mg/dL — Metformin held as per post-op orders. Patient anxious about surgery outcome — counselled, reassured.</textarea>
+      </div>
+      <div style="display:flex;gap:8px;padding:0 16px 16px;justify-content:flex-end;">
+        <button class="btn btn-outline btn-sm" onclick="showToast('Template loaded','📋')">📋 Template</button>
+        <button class="btn btn-success btn-sm" onclick="showToast('Nursing note countersigned ✓','✅')">✅ Countersign</button>
+      </div>
+    </div>
+
+    <!-- MAR TAB -->
+    <div class="tab-pane" id="pane-mar">
+      <div style="padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-shrink:0;">
+        <div style="font-size:13px;font-weight:600;">Medication Administration Record (MAR)</div>
+        <div style="display:flex;gap:6px;">
+          <span class="badge bd-warn">5 Due</span>
+          <button class="btn btn-outline btn-sm" onclick="showToast('Adding PRN medication...','💊')">＋ PRN</button>
+          <button class="btn btn-primary btn-sm" onclick="showToast('MAR printed','🖨')">🖨 Print MAR</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;flex:1;">
+        <table class="mar-table" id="mar-table">
+          <thead>
+            <tr>
+              <th style="min-width:180px;">Drug / Dose / Route</th>
+              <th style="min-width:80px;">Frequency</th>
+              <th>06:00</th><th>08:00</th><th>10:00</th><th>12:00</th><th>14:00</th><th>18:00</th><th>22:00</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="mar-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CLINICAL NOTES TAB -->
+    <div class="tab-pane" id="pane-notes">
+      <div style="padding:16px;flex:1;display:flex;flex-direction:column;gap:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:13px;font-weight:600;">Clinical Progress Notes</div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-outline btn-sm" onclick="showToast('Loading SOAP template','📋')">📋 SOAP Template</button>
+            <button class="btn btn-outline btn-sm" onclick="showToast('Voice dictation started','🎙')">🎙 Dictate</button>
+          </div>
+        </div>
+
+        <!-- NOTE EDITOR -->
+        <div style="border:1.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;">
+          <div style="padding:10px 14px;background:var(--surface-2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span style="font-size:12px;font-weight:600;">Dr. Ramesh Iyer · Ward Round Note · 14 Mar 2024 10:15</span>
+            <span class="badge bd-blue">Post-op Day 7</span>
+            <div style="margin-left:auto;display:flex;gap:4px;">
+              <button style="padding:4px 9px;border:1px solid var(--border);border-radius:6px;font-size:11px;cursor:pointer;background:var(--surface-2);" onclick="showToast('AI assist activated','🤖')">🤖 AI Assist</button>
+              <button style="padding:4px 9px;border:1px solid var(--brand);border-radius:6px;font-size:11px;cursor:pointer;color:var(--brand);background:var(--surface);" onclick="showToast('Note saved','💾')">💾 Save</button>
+            </div>
+          </div>
+          <textarea style="width:100%;padding:14px;border:none;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text-1);resize:vertical;outline:none;min-height:200px;line-height:1.75;background:var(--surface);">SUBJECTIVE: Patient reports improvement in pain. Pain score 3/10 at rest, 5/10 on movement. Able to walk 10 metres with walker. Appetite good. No fever, no nausea.
+
+OBJECTIVE: Afebrile. BP 126/80, HR 82 regular. Wound — healing well, sutures intact, no redness. Drain removed yesterday. ROM improving — 0° to 80° flexion today.
+
+ASSESSMENT:
+1. Post-op Day 7 — Left Total Knee Replacement — satisfactory recovery
+2. Pain — adequately controlled
+3. Surgical wound — healing per protocol
+
+PLAN:
+1. Continue IV antibiotics (Cefazolin) for 24h more, then switch to oral
+2. Step down Tramadol to PRN only
+3. Physiotherapy — increase ROM exercises to TID
+4. Target discharge Day 9–10 if ambulating independently
+5. Arrange outpatient follow-up 2 weeks post-discharge</textarea>
+        </div>
+
+        <!-- PREVIOUS NOTES TIMELINE -->
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px;">Previous Progress Notes</div>
+          <div id="notes-timeline"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMISSION TAB -->
+    <div class="tab-pane" id="pane-admission">
+      <div class="admit-grid">
+        <div class="form-group"><label class="fl">Patient Name</label><input class="fi" value="Deepak Kumar" readonly/></div>
+        <div class="form-group"><label class="fl">UHID</label><input class="fi" value="DX-2024-004829" readonly style="font-family:'DM Mono',monospace;"/></div>
+        <div class="form-group"><label class="fl">Admission Date</label><input class="fi" type="date" value="2024-03-07"/></div>
+        <div class="form-group"><label class="fl">Admission Type</label><select class="fs"><option selected>Elective</option><option>Emergency</option><option>Transfer</option></select></div>
+        <div class="form-group"><label class="fl">Ward / Bed</label><input class="fi" value="Surgical Ward · Bed B-04"/></div>
+        <div class="form-group"><label class="fl">Admitting Doctor</label><select class="fs"><option selected>Dr. Ramesh Iyer</option></select></div>
+        <div class="form-group"><label class="fl">Primary Diagnosis</label><input class="fi" value="Left knee OA — for L-TKR"/></div>
+        <div class="form-group"><label class="fl">ICD-10 Code</label><input class="fi" value="M17.12 — Primary OA Left Knee" style="font-family:'DM Mono',monospace;"/></div>
+        <div class="form-group"><label class="fl">Insurance / TPA</label><select class="fs"><option>Star Health Insurance</option></select></div>
+        <div class="form-group"><label class="fl">Pre-Auth Number</label><input class="fi" value="PA-2024-004891" style="font-family:'DM Mono',monospace;"/></div>
+        <div class="form-group"><label class="fl">Consent Signed</label><select class="fs"><option selected>Yes — General + Surgical</option></select></div>
+        <div class="form-group"><label class="fl">Diet Order</label><select class="fs"><option selected>Normal diet — soft</option><option>Diabetic diet</option><option>NPO</option></select></div>
+        <div class="form-group full"><label class="fl">Allergies</label><input class="fi" value="NKDA — No known drug allergies"/></div>
+        <div class="form-group full"><label class="fl">Admission Notes</label><textarea class="fi" rows="3">Patient admitted for elective Left Total Knee Replacement. Pre-operative assessment done. Cardiologist clearance obtained. Blood cross-matched × 2 units.</textarea></div>
+      </div>
+      <div style="padding:0 16px 16px;display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-outline btn-sm" onclick="showToast('Admission form printed','🖨')">🖨 Print Admission</button>
+        <button class="btn btn-primary btn-sm" onclick="showToast('Admission details updated ✓','✅')">✅ Save Changes</button>
+      </div>
+    </div>
+
+    <!-- BED MAP TAB -->
+    <div class="tab-pane" id="pane-bedmap">
+      <div style="padding:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:13px;font-weight:600;">Ward B — Surgical Ward (20 Beds)</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <span style="display:flex;align-items:center;gap:4px;font-size:11px;"><span style="width:10px;height:10px;background:var(--brand-light);border:1px solid #BFDBFE;border-radius:2px;display:inline-block;"></span>Occupied</span>
+            <span style="display:flex;align-items:center;gap:4px;font-size:11px;"><span style="width:10px;height:10px;background:var(--success-lt);border:1px solid #6EE7B7;border-radius:2px;display:inline-block;"></span>Free</span>
+            <span style="display:flex;align-items:center;gap:4px;font-size:11px;"><span style="width:10px;height:10px;background:var(--danger-lt);border:1px solid #FCA5A5;border-radius:2px;display:inline-block;"></span>Critical</span>
+            <span style="display:flex;align-items:center;gap:4px;font-size:11px;"><span style="width:10px;height:10px;background:var(--warn-lt);border:1px solid #FCD34D;border-radius:2px;display:inline-block;"></span>Reserved</span>
+            <button class="btn btn-outline btn-sm" onclick="showToast('Bed transfer initiated','🔄')">🔄 Transfer</button>
+          </div>
+        </div>
+        <div class="bed-map-grid" id="bed-map"></div>
+        <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;display:flex;gap:8px;align-items:center;">
+          <span style="font-size:12px;font-weight:500;color:var(--text-2);">Selected: <b>B-04 — Deepak Kumar</b></span>
+          <span class="badge bd-blue">Post-op Day 7</span>
+          <span class="badge bd-warn" style="margin-left:auto;">Target Discharge: 16 Mar</span>
+          <button class="btn btn-outline btn-sm" onclick="showToast('Bed transfer form opened','🛏')">Transfer Bed</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DISCHARGE TAB -->
+    <div class="tab-pane" id="pane-discharge">
+      <div class="discharge-section">
+        <div class="ds-title">Discharge Summary — Deepak Kumar</div>
+        <div style="background:var(--success-lt);border:1px solid #6EE7B7;border-radius:var(--radius);padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:18px;">🎉</span>
+          <div><div style="font-size:13px;font-weight:600;color:var(--success-dark);">Ready for Discharge — Day 9</div>
+          <div style="font-size:12px;color:var(--text-2);">All criteria met · Dr. Ramesh has cleared · Insurance TPA notified</div></div>
+          <span class="badge bd-green" style="margin-left:auto;">Approved</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+          <div class="form-group"><label class="fl">Discharge Date</label><input class="fi" type="date" value="2024-03-16"/></div>
+          <div class="form-group"><label class="fl">Discharge Time</label><input class="fi" type="time" value="11:00"/></div>
+          <div class="form-group"><label class="fl">Discharge Type</label><select class="fs"><option selected>Recovered — Routine</option><option>LAMA</option><option>Referred</option><option>Expired</option></select></div>
+          <div class="form-group"><label class="fl">Condition at Discharge</label><select class="fs"><option selected>Stable — Improved</option><option>Satisfactory</option><option>Poor</option></select></div>
+        </div>
+      </div>
+      <div class="discharge-section">
+        <div class="ds-title">Hospital Course Summary</div>
+        <textarea class="ds-textarea">Patient admitted on 07/03/2024 for elective Left Total Knee Replacement. Surgery performed on 08/03/2024 under spinal anaesthesia — uneventful. Post-operative recovery satisfactory. Drain removed on Day 2. Physiotherapy started Day 1. Target ROM achieved (0°–90°). Pain well controlled. No surgical site infection. Oral feeding tolerated from Day 1.</textarea>
+      </div>
+      <div class="discharge-section">
+        <div class="ds-title">Diagnosis at Discharge</div>
+        <textarea class="ds-textarea" style="min-height:60px;">1. Left knee osteoarthritis — M17.12 (ICD-10)
+2. Post-operative L-TKR — Status post (Z96.651)</textarea>
+      </div>
+      <div class="discharge-section">
+        <div class="ds-title">Discharge Medications</div>
+        <textarea class="ds-textarea" style="min-height:90px;">1. Tab Cefuroxime 500mg BD × 7 days
+2. Tab Paracetamol 1g TDS × 14 days (with food)
+3. Tab Pantoprazole 40mg OD (empty stomach)
+4. Tab Enoxaparin 40mg SC OD × 10 days
+5. Tab Metformin 500mg BD (resume diabetes meds)
+6. Cap Vitamin D3 60,000 IU weekly × 4 weeks</textarea>
+      </div>
+      <div class="discharge-section">
+        <div class="ds-title">Follow-up Instructions</div>
+        <textarea class="ds-textarea" style="min-height:80px;">1. OPD review with Dr. Ramesh Iyer — 28 March 2024 (10 days post-discharge)
+2. Wound check by nurse at nearest clinic — 3 days post-discharge
+3. Physiotherapy — continue home exercises TID as taught
+4. Ice pack to knee 3× daily for 15 minutes
+5. No climbing stairs for 6 weeks
+6. Emergency contact: 044-2435-6789 (Diagnotica 24h helpline)</textarea>
+      </div>
+      <div class="ds-footer">
+        <button class="btn btn-outline" onclick="showToast('Summary printed','🖨')">🖨 Print Summary</button>
+        <button class="btn btn-outline" onclick="showToast('Summary sent via WhatsApp','📱')">📱 WhatsApp</button>
+        <button class="btn btn-outline" onclick="showToast('Pharmacy informed for discharge meds','💊')">💊 Discharge Rx</button>
+        <button class="btn btn-success" onclick="showToast('Discharge completed — bed released for cleaning','🚪')">🚪 Confirm Discharge</button>
+      </div>
+    </div>
+
+  </div><!-- /pane-center -->
+
+  <!-- RIGHT: CARE PANEL -->
+  <div class="pane-right">
+    <div class="pane-header">
+      <div class="pane-title">📋 Patient Overview</div>
+      <span class="badge bd-warn">Day 7</span>
+    </div>
+    <div class="pane-body">
+
+      <!-- VITALS MINI -->
+      <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Latest Vitals — 14:30</div>
+      <div class="vitals-mini">
+        <div class="vm-card"><div class="vm-label">BP</div><div class="vm-val" style="color:var(--success);">124/78</div><div class="vm-unit">mmHg</div><div class="vm-trend" style="color:var(--success);">↓ improving</div></div>
+        <div class="vm-card"><div class="vm-label">HR</div><div class="vm-val" style="color:var(--success);">80</div><div class="vm-unit">bpm</div><div class="vm-trend" style="color:var(--text-3);">stable</div></div>
+        <div class="vm-card"><div class="vm-label">Temp</div><div class="vm-val" style="color:var(--success);">37.1</div><div class="vm-unit">°C</div><div class="vm-trend" style="color:var(--success);">afebrile</div></div>
+        <div class="vm-card"><div class="vm-label">SpO₂</div><div class="vm-val" style="color:var(--success);">98</div><div class="vm-unit">%</div><div class="vm-trend" style="color:var(--success);">normal</div></div>
+        <div class="vm-card"><div class="vm-label">Pain Score</div><div class="vm-val" style="color:var(--warn);">4/10</div><div class="vm-unit">NRS</div><div class="vm-trend" style="color:var(--success);">↓ from 6</div></div>
+        <div class="vm-card"><div class="vm-label">BGL</div><div class="vm-val" style="color:var(--warn);">142</div><div class="vm-unit">mg/dL</div><div class="vm-trend" style="color:var(--warn);">mild ↑</div></div>
+      </div>
+
+      <!-- CARE TEAM -->
+      <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px;">Care Team</div>
+      <div id="care-team"></div>
+
+      <!-- ACTIVE ALERTS -->
+      <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px;">Active Alerts</div>
+      <div style="background:var(--warn-lt);border:1px solid #FCD34D;border-radius:var(--radius);padding:9px 12px;margin-bottom:7px;cursor:pointer;" onclick="showToast('Medication due alert acknowledged','💊')">
+        <div style="font-size:12px;font-weight:600;color:var(--warn-dark);">💊 Medication Due</div>
+        <div style="font-size:11px;color:var(--text-2);">Cefazolin 1g IV — 18:00 (3h 28m)</div>
+      </div>
+      <div style="background:var(--brand-light);border:1px solid #BFDBFE;border-radius:var(--radius);padding:9px 12px;margin-bottom:7px;cursor:pointer;" onclick="showToast('Physio session scheduled','🏃')">
+        <div style="font-size:12px;font-weight:600;color:var(--brand);">🏃 Physiotherapy</div>
+        <div style="font-size:11px;color:var(--text-2);">Evening session at 16:00 with Mr. Vijay</div>
+      </div>
+      <div style="background:var(--success-lt);border:1px solid #6EE7B7;border-radius:var(--radius);padding:9px 12px;margin-bottom:7px;cursor:pointer;" onclick="openModal('discharge')">
+        <div style="font-size:12px;font-weight:600;color:var(--success-dark);">🚪 Planned Discharge</div>
+        <div style="font-size:11px;color:var(--text-2);">Discharge criteria met — Day 9 (16 Mar)</div>
+      </div>
+
+      <!-- PENDING TASKS -->
+      <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px;">Pending Tasks</div>
+      <div id="pending-tasks"></div>
+
+    </div>
+  </div>
+
+</div><!-- /three-col -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- ADMISSION MODAL -->
+<div class="modal-backdrop" id="modal-admit">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🛏 New Patient Admission</div>
+      <button class="modal-close" onclick="closeModal('admit')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="fg2" style="gap:12px;">
+        <div style="grid-column:1/-1;" class="form-group"><label class="fl">Patient UHID / Name <span class="req">*</span></label><input class="fi" placeholder="Search or enter patient..."/></div>
+        <div class="form-group"><label class="fl">Admission Date <span class="req">*</span></label><input class="fi" type="datetime-local"/></div>
+        <div class="form-group"><label class="fl">Admission Type</label><select class="fs"><option>Elective</option><option>Emergency</option><option>Transfer</option></select></div>
+        <div class="form-group"><label class="fl">Ward <span class="req">*</span></label><select class="fs"><option>Ward A — General</option><option>Ward B — Surgical</option><option>ICU</option><option>Maternity</option><option>Paediatrics</option></select></div>
+        <div class="form-group"><label class="fl">Bed Number <span class="req">*</span></label><select class="fs"><option>A-05 (Free)</option><option>A-09 (Free)</option><option>B-07 (Free)</option><option>B-12 (Free)</option></select></div>
+        <div class="form-group"><label class="fl">Admitting Doctor <span class="req">*</span></label><select class="fs"><option>Dr. Anand Krishnan</option><option>Dr. Meera Suresh</option><option>Dr. Ramesh Iyer</option></select></div>
+        <div class="form-group"><label class="fl">Primary Diagnosis <span class="req">*</span></label><input class="fi" placeholder="Primary diagnosis / ICD-10 code"/></div>
+        <div class="form-group"><label class="fl">Insurance / TPA</label><select class="fs"><option>Self-pay</option><option>Star Health</option><option>PMJAY</option><option>ESI Corp</option></select></div>
+        <div class="form-group"><label class="fl">Diet Order</label><select class="fs"><option>Normal diet</option><option>Diabetic diet</option><option>Soft diet</option><option>NPO</option></select></div>
+        <div class="form-group"><label class="fl">Allergies</label><input class="fi" placeholder="NKDA or specify drugs/substances..."/></div>
+        <div style="grid-column:1/-1;" class="form-group"><label class="fl">Admission Notes</label><textarea class="fi" rows="3" placeholder="Reason for admission, initial clinical assessment..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('admit')">Cancel</button>
+      <button class="btn btn-primary" onclick="closeModal('admit');showToast('Patient admitted — wristband printing...','🛏')">🛏 Admit Patient</button>
+    </div>
+  </div>
+</div>
+
+<!-- DISCHARGE MODAL -->
+<div class="modal-backdrop" id="modal-discharge">
+  <div class="modal" style="width:500px;">
+    <div class="modal-header">
+      <div class="modal-title">🚪 Initiate Discharge</div>
+      <button class="modal-close" onclick="closeModal('discharge')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="fg2" style="gap:12px;">
+        <div class="form-group"><label class="fl">Discharge Date</label><input class="fi" type="date" value="2024-03-16"/></div>
+        <div class="form-group"><label class="fl">Discharge Time</label><input class="fi" type="time" value="11:00"/></div>
+        <div class="form-group"><label class="fl">Discharge Type</label><select class="fs"><option>Recovered — Routine</option><option>LAMA</option><option>Referred</option></select></div>
+        <div class="form-group"><label class="fl">Transport</label><select class="fs"><option>Self — walking</option><option>Wheelchair</option><option>Ambulance</option></select></div>
+        <div style="grid-column:1/-1;">
+          <div style="background:var(--warn-lt);border:1px solid #FCD34D;border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--warn-dark);">
+            ⚠ Discharge Checklist: <b>Final bill pending</b> · Insurance clearance obtained · Discharge summary ready · Pharmacy discharge meds prepared
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('discharge')">Cancel</button>
+      <button class="btn btn-success" onclick="closeModal('discharge');showToast('Discharge confirmed — bed released ✓','🚪')">✅ Confirm Discharge</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span id="toast-icon">✅</span><span id="toast-msg">Done</span></div>
+
+<script>
+// ── PATIENT LIST ──
+const patients=[
+  {init:'DK',name:'Deepak Kumar',ward:'Ward B · B-04',meta:'IPD-4829 · 7 days',diag:'Post-op L-TKR',sev:'high',sevCls:'pb-high',stripCls:'ps-high',active:true,days:'Day 7'},
+  {init:'MK',name:'Mohan Kumar',ward:'ICU · Bay 1',meta:'IPD-4830 · 1 day',diag:'Cardiogenic Shock',sev:'critical',sevCls:'pb-critical',stripCls:'ps-critical',days:'Day 1'},
+  {init:'KR',name:'Karthik Rajan',ward:'Ward B · B-08',meta:'IPD-4828 · 3 days',diag:'Hypertensive urgency',sev:'high',sevCls:'pb-high',stripCls:'ps-high',days:'Day 3'},
+  {init:'RP',name:'Rajan Pillai',ward:'Ward A · A-09',meta:'IPD-4827 · 5 days',diag:'COPD exacerbation',sev:'stable',sevCls:'pb-stable',stripCls:'ps-stable',days:'Day 5'},
+  {init:'AN',name:'Anjali Menon',ward:'Ward A · A-03',meta:'IPD-4826 · 2 days',diag:'Allergic reaction',sev:'stable',sevCls:'pb-stable',stripCls:'ps-stable',days:'Day 2'},
+  {init:'PS',name:'Priya Sundaram',ward:'Maternity · M-02',meta:'IPD-4825 · 1 day',diag:'Normal delivery post',sev:'stable',sevCls:'pb-stable',stripCls:'ps-stable',days:'Day 1'},
+  {init:'SK',name:'Suresh Kumar',ward:'Ward A · A-12',meta:'IPD-4824 · 4 days',diag:'Dengue — severe',sev:'high',sevCls:'pb-high',stripCls:'ps-high',days:'Day 4'},
+  {init:'GS',name:'Gowri Shankar',ward:'Ward B · B-11',meta:'IPD-4823 · 9 days',diag:'Diabetes foot',sev:'discharge',sevCls:'pb-discharge',stripCls:'ps-discharge',days:'↑ Discharge'},
+];
+function renderPatients(filter='all'){
+  const list=document.getElementById('patient-list');
+  list.innerHTML='';
+  patients.forEach((p,i)=>{
+    if(filter!=='all'&&!p.ward.includes(filter)) return;
+    list.innerHTML+=`<div class="pt-item${p.active?' active-pt':''}" onclick="selectPatient(this,'${p.name}')">
+      <div class="pti-stripe ${p.stripCls}"></div>
+      <div class="pti-body">
+        <div class="pti-top">
+          <div style="display:flex;align-items:center;gap:7px;">
+            <div style="width:28px;height:28px;border-radius:50%;background:var(--brand-light);color:var(--brand);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">${p.init}</div>
+            <div class="pti-name">${p.name}</div>
+          </div>
+          <span class="pti-badge ${p.sevCls}">${p.sev.charAt(0).toUpperCase()+p.sev.slice(1)}</span>
+        </div>
+        <div class="pti-ward">${p.ward}</div>
+        <div class="pti-meta">${p.meta}</div>
+        <div class="pti-footer">
+          <span style="font-size:11px;color:var(--text-2);">${p.diag}</span>
+          <span class="pti-days">${p.days}</span>
+        </div>
+      </div>
+    </div>`;
+  });
+}
+renderPatients();
+
+function selectPatient(el,name){
+  document.querySelectorAll('.pt-item').forEach(i=>i.classList.remove('active-pt'));
+  el.classList.add('active-pt');
+  showToast(`Loading ${name} IPD chart...`,'🛏');
+}
+function filterWard(btn,ward){
+  document.querySelectorAll('.wf-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPatients(ward==='all'?'all':ward);
+}
+function searchPatients(v){if(v.length>1) showToast(`Searching: "${v}"...`,'🔍');}
+
+// ── VITALS CHART ──
+const vitalRows=[
+  {label:'Temp (°C)',vals:[{v:'37.2',c:'ok'},{v:'37.0',c:'ok'},{v:'37.4',c:'ok'},{v:'37.1',c:'ok'},{v:'37.1',c:'ok'},{v:'37.1',c:'ok'}]},
+  {label:'BP (mmHg)',vals:[{v:'130/82',c:'norm'},{v:'128/80',c:'norm'},{v:'132/84',c:'norm'},{v:'126/78',c:'ok'},{v:'124/78',c:'ok'},{v:'124/78',c:'ok'}]},
+  {label:'HR (bpm)',vals:[{v:'84',c:'ok'},{v:'82',c:'ok'},{v:'86',c:'ok'},{v:'80',c:'ok'},{v:'80',c:'ok'},{v:'80',c:'ok'}]},
+  {label:'SpO₂ (%)',vals:[{v:'97',c:'ok'},{v:'98',c:'ok'},{v:'98',c:'ok'},{v:'98',c:'ok'},{v:'98',c:'ok'},{v:'98',c:'ok'}]},
+  {label:'RR (/min)',vals:[{v:'18',c:'ok'},{v:'16',c:'ok'},{v:'17',c:'ok'},{v:'16',c:'ok'},{v:'16',c:'ok'},{v:'16',c:'ok'}]},
+  {label:'Pain (NRS)',vals:[{v:'6',c:'hi'},{v:'5',c:'hi'},{v:'5',c:'hi'},{v:'4',c:'lo'},{v:'4',c:'lo'},{v:'4',c:'lo'}]},
+  {label:'BGL (mg/dL)',vals:[{v:'168',c:'hi'},{v:'144',c:'lo'},{v:'138',c:'norm'},{v:'142',c:'lo'},{v:'142',c:'lo'},{v:'142',c:'lo'}]},
+];
+const vcr=document.getElementById('vitals-chart-rows');
+vitalRows.forEach(row=>{
+  let html=`<div class="vital-row"><div class="vr-label">${row.label}</div>`;
+  row.vals.forEach(v=>{html+=`<div class="vr-cell ${v.c}" onclick="showToast('${row.label}: ${v.v}','📊')">${v.v}</div>`;});
+  html+='</div>';
+  vcr.innerHTML+=html;
+});
+
+// ── MAR ──
+const marDrugs=[
+  {name:'Cefazolin 1g IV',dose:'1g',route:'IV',freq:'8-hourly',sched:[null,null,'given','given',null,'due',null],flag:null,note:'Last: 10:00'},
+  {name:'Tramadol 50mg',dose:'50mg',route:'IV',freq:'PRN',sched:[null,null,null,'given',null,null,null],flag:'flag-prn',note:'PRN for pain >5/10'},
+  {name:'Paracetamol 1g',dose:'1g',route:'Oral',freq:'TDS',sched:[null,'given',null,'given',null,'due',null],flag:null,note:''},
+  {name:'Pantoprazole 40mg',dose:'40mg',route:'Oral',freq:'OD',sched:[null,'given',null,null,null,null,null],flag:null,note:'Morning dose'},
+  {name:'Enoxaparin 40mg',dose:'40mg',route:'SC',freq:'OD',sched:['given',null,null,null,null,null,null],flag:null,note:'06:00 SC abdomen'},
+  {name:'Metformin 500mg',dose:'500mg',route:'Oral',freq:'BD',sched:[null,null,null,'held',null,null,null],flag:null,note:'Held — post-op'},
+  {name:'Vitamin D3 60K',dose:'60000 IU',route:'Oral',freq:'Weekly',sched:[null,null,null,'given',null,null,null],flag:null,note:'Mon dose given'},
+];
+const mb=document.getElementById('mar-body');
+const schedTimes=['06:00','08:00','10:00','12:00','14:00','18:00','22:00'];
+marDrugs.forEach(d=>{
+  let row=`<tr>
+    <td><div style="font-size:12px;font-weight:600;">${d.name}<span class="drug-flag ${d.flag||''}">${d.flag==='flag-prn'?'PRN':''}</span></div>
+      <div style="font-size:11px;color:var(--text-3);">${d.dose} · ${d.route}</div></td>
+    <td><span class="badge bd-blue" style="font-size:10px;">${d.freq}</span></td>`;
+  d.sched.forEach((s,si)=>{
+    if(s===null) row+=`<td><div class="mar-cell mc-na" title="${schedTimes[si]}">—</div></td>`;
+    else if(s==='given') row+=`<td><div class="mar-cell mc-given" title="${schedTimes[si]}" onclick="showToast('${d.name} — ${schedTimes[si]} given ✓','✅')">✓</div></td>`;
+    else if(s==='due') row+=`<td><div class="mar-cell mc-due" title="${schedTimes[si]}" onclick="showToast('Marking ${d.name} as given at ${schedTimes[si]}...','💊')">DUE</div></td>`;
+    else if(s==='held') row+=`<td><div class="mar-cell mc-held" title="${schedTimes[si]}" onclick="showToast('${d.name} held — see note','⚠')">HOLD</div></td>`;
+  });
+  row+=`<td style="font-size:11px;color:var(--text-3);">${d.note}</td></tr>`;
+  mb.innerHTML+=row;
+});
+
+// ── NOTES TIMELINE ──
+const prevNotes=[
+  {date:'13 Mar — 10:20',text:'Post-op Day 6 — wound healing well, drain output reduced, ambulating 20m.',by:'Dr. Ramesh Iyer',col:'var(--brand)'},
+  {date:'12 Mar — 09:45',text:'Post-op Day 5 — physiotherapy review, ROM 0–70°. Pain 5/10.',by:'Dr. Ramesh Iyer',col:'var(--brand)'},
+  {date:'11 Mar — 11:00',text:'Post-op Day 4 — drain output 15mL, plan to remove tomorrow.',by:'Dr. Priya Nair',col:'var(--purple)'},
+  {date:'10 Mar — 09:30',text:'Post-op Day 3 — afebrile, vitals stable. Oral feeds tolerated.',by:'Dr. Ramesh Iyer',col:'var(--success)'},
+];
+const nt=document.getElementById('notes-timeline');
+prevNotes.forEach(n=>{
+  nt.innerHTML+=`<div class="timeline-item">
+    <div class="tl-dot" style="background:${n.col};"></div>
+    <div><div class="tl-time">${n.date}</div>
+    <div class="tl-text">${n.text}</div>
+    <div class="tl-by">${n.by}</div></div>
+  </div>`;
+});
+
+// ── CARE TEAM ──
+const careTeam=[
+  {init:'RI',name:'Dr. Ramesh Iyer',role:'Orthopaedic Surgeon',col:'var(--brand)'},
+  {init:'AK',name:'Dr. Anand Krishnan',role:'General Physician',col:'var(--purple)'},
+  {init:'SV',name:'Dr. Sharma V.',role:'Anaesthesiologist',col:'var(--teal,#0891B2)'},
+  {init:'SW',name:'Suma W.',role:'Primary Nurse — Shift B',col:'var(--success)'},
+  {init:'VJ',name:'Mr. Vijay J.',role:'Physiotherapist',col:'var(--warn)'},
+];
+const ct=document.getElementById('care-team');
+careTeam.forEach(m=>{
+  ct.innerHTML+=`<div class="ct-member">
+    <div class="ct-av" style="background:${m.col};">${m.init}</div>
+    <div><div class="ct-name">${m.name}</div><div class="ct-role">${m.role}</div></div>
+  </div>`;
+});
+
+// ── PENDING TASKS ──
+const tasks=[
+  {icon:'🩸',text:'CBC + CRP pending — send sample',col:'var(--danger)'},
+  {icon:'📋',text:'Discharge summary signature pending',col:'var(--warn)'},
+  {icon:'🏃',text:'Physio PM session to be recorded',col:'var(--brand)'},
+  {icon:'💊',text:'Discharge medications to be dispensed',col:'var(--success)'},
+];
+const pt=document.getElementById('pending-tasks');
+tasks.forEach(t=>{
+  pt.innerHTML+=`<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer;font-size:12px;" onclick="showToast('${t.text}','${t.icon}')">
+    <span>${t.icon}</span>
+    <span style="flex:1;color:var(--text-2);">${t.text}</span>
+    <span style="width:8px;height:8px;border-radius:50%;background:${t.col};flex-shrink:0;"></span>
+  </div>`;
+});
+
+// ── BED MAP ──
+const bedData=[
+  {n:'B-01',st:'occupied',pt:'Karthik'},{n:'B-02',st:'occupied',pt:'Suresh'},{n:'B-03',st:'cleaning',pt:''},
+  {n:'B-04',st:'occupied',pt:'Deepak',selected:true},{n:'B-05',st:'free',pt:''},{n:'B-06',st:'free',pt:''},
+  {n:'B-07',st:'occupied',pt:'Anjali'},{n:'B-08',st:'critical',pt:'Rajan P.'},{n:'B-09',st:'reserved',pt:'Incoming'},
+  {n:'B-10',st:'occupied',pt:'Priya'},{n:'B-11',st:'occupied',pt:'Gowri'},{n:'B-12',st:'free',pt:''},
+  {n:'B-13',st:'free',pt:''},{n:'B-14',st:'occupied',pt:'Arjun'},{n:'B-15',st:'reserved',pt:'Pre-op'},
+  {n:'B-16',st:'occupied',pt:'Saras.'},{n:'B-17',st:'free',pt:''},{n:'B-18',st:'occupied',pt:'Vijay'},
+  {n:'B-19',st:'free',pt:''},{n:'B-20',st:'occupied',pt:'Meena'},
+];
+const bm=document.getElementById('bed-map');
+bedData.forEach(b=>{
+  bm.innerHTML+=`<div class="bed-cell ${b.st}${b.selected?' selected-bed':''}" onclick="showToast('${b.n} — ${b.st==='free'?'Available':b.pt}','🛏')" title="${b.n}">
+    <span class="bc-num">${b.n}</span>
+    <span class="bc-pt">${b.pt||'—'}</span>
+  </div>`;
+});
+
+// ── TABS ──
+function switchCTab(id,btn){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ct-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pane-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── MODAL ──
+function openModal(id){document.getElementById('modal-'+id).classList.add('show');}
+function closeModal(id){document.getElementById('modal-'+id).classList.remove('show');}
+
+// ── TOAST ──
+let tt;
+function showToast(msg,icon='✅'){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').innerHTML=msg;
+  document.getElementById('toast-icon').textContent=icon;
+  t.classList.add('show');clearTimeout(tt);
+  tt=setTimeout(()=>t.classList.remove('show'),3200);
+}
+</script>
+</body>
+</html>

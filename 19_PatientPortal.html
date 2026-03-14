@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Diagnotica HMS — Patient Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --brand:#1A5EAB;--brand-dark:#0F3F78;--brand-light:#E8F1FB;
+  --accent:#00C0A3;--accent-lt:#E0F9F5;--accent-dark:#007A68;
+  --warn:#F59E0B;--warn-lt:#FEF3C7;--warn-dark:#92400E;
+  --danger:#EF4444;--danger-lt:#FEE2E2;
+  --success:#10B981;--success-lt:#D1FAE5;--success-dark:#065F46;
+  --purple:#7C3AED;--purple-lt:#EDE9FE;
+  --text-1:#0F1C2E;--text-2:#3A4D63;--text-3:#7A8FA6;
+  --border:#DDE6F0;--bg:#E8EDF5;--surface:#FFFFFF;--surface-2:#F7FAFD;
+  --radius:14px;--radius-lg:20px;--radius-xl:28px;
+  --shadow:0 2px 8px rgba(26,94,171,.10),0 6px 24px rgba(26,94,171,.07);
+  --shadow-lg:0 8px 36px rgba(26,94,171,.16);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-1);min-height:100vh;font-size:14px;}
+
+/* TOPBAR */
+.topbar{background:var(--brand-dark);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:52px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.18);}
+.logo-wrap{display:flex;align-items:center;gap:10px;}
+.logo-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#00C0A3,#2E7DD6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;}
+.logo-text{color:#fff;font-size:15px;font-weight:700;}
+.logo-sub{color:#8BAFD4;font-size:11px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.t-chip{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#D4E8FF;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;font-family:inherit;}
+.t-chip:hover{background:rgba(255,255,255,.18);}
+
+/* LAYOUT */
+.shell{display:flex;height:calc(100vh - 52px);gap:0;}
+
+/* DESKTOP SIDEBAR */
+.desktop-sidebar{width:260px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+.ds-patient-card{background:linear-gradient(135deg,var(--brand-dark),#1A6BC4);padding:20px;color:#fff;}
+.dp-av{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;margin-bottom:10px;}
+.dp-name{font-size:16px;font-weight:700;margin-bottom:2px;}
+.dp-uhid{font-family:'DM Mono',monospace;font-size:11px;color:rgba(255,255,255,.65);}
+.dp-chips{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+.dp-chip{background:rgba(255,255,255,.15);border-radius:20px;padding:3px 10px;font-size:10px;font-weight:600;}
+.ds-nav{flex:1;padding:12px 0;overflow-y:auto;}
+.ds-nav-label{font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;padding:8px 18px 4px;}
+.ds-nav-item{display:flex;align-items:center;gap:10px;padding:10px 18px;cursor:pointer;color:var(--text-2);font-size:13px;transition:all .15s;position:relative;border-left:3px solid transparent;}
+.ds-nav-item:hover{background:var(--brand-light);color:var(--brand);}
+.ds-nav-item.active{background:var(--brand-light);color:var(--brand);font-weight:600;border-left-color:var(--brand);}
+.ds-nav-badge{margin-left:auto;font-size:10px;font-weight:700;background:var(--danger);color:#fff;border-radius:10px;padding:1px 7px;}
+.ds-nav-badge.g{background:var(--success);}
+.ds-nav-badge.b{background:var(--brand);}
+.ds-nav-badge.w{background:var(--warn);color:var(--warn-dark);}
+
+/* MAIN AREA */
+.portal-main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* MOBILE PHONE FRAME */
+.phone-preview-area{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:20px;gap:32px;overflow-y:auto;}
+.phone-frame{width:375px;min-height:780px;background:#fff;border-radius:44px;box-shadow:0 20px 80px rgba(0,0,0,.22),0 0 0 10px #1A1A2E,0 0 0 12px #2A2A4E;position:relative;overflow:hidden;flex-shrink:0;}
+.phone-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:130px;height:28px;background:#1A1A2E;border-radius:0 0 18px 18px;z-index:10;display:flex;align-items:center;justify-content:center;}
+.phone-notch-dot{width:8px;height:8px;background:#333;border-radius:50%;margin:0 3px;}
+.phone-camera{width:10px;height:10px;background:#222;border-radius:50%;border:1px solid #444;}
+.phone-screen{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;}
+.phone-status-bar{height:44px;background:var(--brand-dark);display:flex;align-items:flex-end;justify-content:space-between;padding:0 20px 8px;flex-shrink:0;}
+.psb-time{font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:#fff;}
+.psb-icons{font-size:12px;color:#fff;display:flex;gap:4px;align-items:center;}
+
+/* PHONE CONTENT */
+.phone-content{flex:1;overflow-y:auto;background:var(--bg);}
+.phone-content::-webkit-scrollbar{width:0;}
+
+/* MOBILE SCREENS */
+.m-screen{display:none;}
+.m-screen.active{display:block;}
+
+/* MOBILE HOME */
+.m-hero{background:linear-gradient(160deg,var(--brand-dark) 0%,#1A6BC4 60%,var(--accent-dark) 100%);padding:24px 20px 36px;color:#fff;position:relative;overflow:hidden;}
+.m-hero::before{content:'';position:absolute;right:-30px;top:-30px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.05);}
+.m-hero::after{content:'';position:absolute;left:-20px;bottom:-40px;width:140px;height:140px;border-radius:50%;background:rgba(0,192,163,.1);}
+.mh-greeting{font-size:13px;color:rgba(255,255,255,.7);margin-bottom:3px;}
+.mh-name{font-size:20px;font-weight:800;margin-bottom:12px;}
+.mh-abha{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.mh-abha-id{font-family:'DM Mono',monospace;font-size:12px;color:#fff;letter-spacing:.06em;}
+.mh-abha-label{font-size:10px;color:rgba(255,255,255,.6);}
+.mh-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.mh-stat{background:rgba(255,255,255,.1);border-radius:12px;padding:10px;text-align:center;}
+.mh-stat-val{font-size:18px;font-weight:800;color:#fff;line-height:1;}
+.mh-stat-label{font-size:9px;color:rgba(255,255,255,.65);margin-top:2px;text-transform:uppercase;letter-spacing:.04em;}
+
+/* MOBILE SECTION */
+.m-section{padding:16px 16px 0;}
+.m-section-title{font-size:13px;font-weight:700;color:var(--text-1);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+.m-see-all{font-size:11px;color:var(--brand);font-weight:600;cursor:pointer;}
+
+/* QUICK ACTIONS */
+.m-quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 16px 16px;}
+.mq-item{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;}
+.mq-icon{width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:22px;transition:transform .15s;}
+.mq-item:hover .mq-icon{transform:scale(1.08);}
+.mq-label{font-size:10px;font-weight:600;color:var(--text-2);text-align:center;line-height:1.2;}
+
+/* UPCOMING APPT CARD */
+.m-appt-card{background:linear-gradient(135deg,var(--brand),#2E7DD6);border-radius:18px;padding:16px;margin:0 16px 14px;color:#fff;cursor:pointer;transition:all .15s;}
+.m-appt-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(26,94,171,.3);}
+.mac-label{font-size:10px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+.mac-doctor{font-size:16px;font-weight:700;margin-bottom:2px;}
+.mac-detail{font-size:12px;color:rgba(255,255,255,.8);}
+.mac-footer{display:flex;align-items:center;justify-content:space-between;margin-top:12px;}
+.mac-time-chip{background:rgba(255,255,255,.2);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;}
+.mac-join-btn{background:#fff;color:var(--brand);border-radius:20px;padding:6px 16px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:inherit;transition:all .15s;}
+.mac-join-btn:hover{background:var(--brand-light);}
+
+/* RECENT REPORTS */
+.m-report-item{background:var(--surface);border-radius:14px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s;border:1px solid var(--border);}
+.m-report-item:hover{border-color:var(--brand);background:var(--brand-light);}
+.mri-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.mri-name{font-size:13px;font-weight:600;}
+.mri-date{font-size:11px;color:var(--text-3);}
+.mri-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;}
+.mb-new{background:var(--success-lt);color:var(--success-dark);}
+.mb-ready{background:var(--brand-light);color:var(--brand);}
+
+/* MOBILE NAV BAR */
+.phone-nav{height:68px;background:#fff;border-top:1px solid var(--border);display:flex;align-items:center;flex-shrink:0;padding-bottom:8px;}
+.pn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;padding:8px 0;transition:all .15s;}
+.pn-icon{font-size:22px;line-height:1;}
+.pn-label{font-size:9px;font-weight:600;color:var(--text-3);}
+.pn-item.active .pn-label{color:var(--brand);}
+.pn-item.active .pn-icon{filter:saturate(1.5);}
+
+/* DESKTOP CONTENT PANEL */
+.desktop-panel{flex:1;padding:20px 24px;overflow-y:auto;display:flex;flex-direction:column;gap:18px;}
+
+/* CARD */
+.d-card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;}
+.d-card-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);}
+.d-card-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.d-card-body{padding:16px 20px;}
+
+/* BOOKING FORM */
+.booking-step-bar{display:flex;gap:0;margin-bottom:20px;}
+.bsb-step{flex:1;display:flex;align-items:center;}
+.bsb-circle{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);background:var(--surface-2);color:var(--text-3);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;cursor:pointer;}
+.bsb-step.done .bsb-circle{background:var(--brand);border-color:var(--brand);color:#fff;}
+.bsb-step.active .bsb-circle{background:var(--brand-light);border-color:var(--brand);color:var(--brand);box-shadow:0 0 0 4px rgba(26,94,171,.12);}
+.bsb-line{flex:1;height:2px;background:var(--border);margin:0 4px;}
+.bsb-step.done .bsb-line{background:var(--brand);}
+.bsb-label{font-size:10px;font-weight:600;margin-top:4px;text-align:center;color:var(--text-3);}
+.bsb-step.active .bsb-label,.bsb-step.done .bsb-label{color:var(--brand);}
+.bs-step-wrap{display:flex;flex-direction:column;align-items:center;}
+
+/* DOCTOR SELECT */
+.doc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+.doc-pick{border-radius:var(--radius);border:2px solid var(--border);padding:12px;text-align:center;cursor:pointer;transition:all .15s;}
+.doc-pick:hover{border-color:var(--brand);background:var(--brand-light);}
+.doc-pick.sel{border-color:var(--brand);background:var(--brand-light);}
+.dp-av-sm{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;margin:0 auto 8px;}
+.dp-name-sm{font-size:12px;font-weight:700;}
+.dp-spec-sm{font-size:10px;color:var(--text-3);margin-top:1px;}
+.dp-slots{font-size:11px;font-weight:600;margin-top:6px;}
+
+/* TIME SLOTS */
+.ts-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:14px;}
+.ts-slot{padding:9px 6px;border-radius:10px;border:1.5px solid var(--border);font-size:12px;font-weight:600;font-family:'DM Mono',monospace;cursor:pointer;transition:all .15s;text-align:center;background:var(--surface-2);}
+.ts-slot:hover{border-color:var(--brand);background:var(--brand-light);color:var(--brand);}
+.ts-slot.sel{background:var(--brand);color:#fff;border-color:var(--brand);}
+.ts-slot.taken{color:var(--text-3);cursor:not-allowed;text-decoration:line-through;background:var(--surface-2);}
+
+/* RECORDS PANEL */
+.rec-cat-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+.rct{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);font-size:12px;font-weight:600;cursor:pointer;transition:all .13s;color:var(--text-2);}
+.rct:hover{border-color:var(--brand);color:var(--brand);}
+.rct.active{background:var(--brand);color:#fff;border-color:var(--brand);}
+.rec-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--radius);border:1.5px solid var(--border);margin-bottom:8px;cursor:pointer;transition:all .15s;}
+.rec-item:hover{border-color:var(--brand);background:var(--brand-light);}
+.ri-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.ri-title{font-size:13px;font-weight:600;}
+.ri-meta{font-size:11px;color:var(--text-3);}
+.ri-status{font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;}
+
+/* TELEMED */
+.tele-card{background:linear-gradient(135deg,var(--brand-dark),#1A5EAB);border-radius:var(--radius-lg);padding:24px;color:#fff;text-align:center;cursor:pointer;transition:all .15s;}
+.tele-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);}
+.tele-icon{font-size:48px;margin-bottom:12px;}
+.tele-title{font-size:18px;font-weight:800;margin-bottom:4px;}
+.tele-sub{font-size:13px;color:rgba(255,255,255,.7);margin-bottom:18px;}
+.tele-join-btn{display:inline-block;background:#fff;color:var(--brand);font-weight:700;font-size:14px;padding:10px 32px;border-radius:20px;cursor:pointer;border:none;font-family:inherit;transition:all .15s;}
+.tele-join-btn:hover{background:var(--brand-light);}
+.tele-meta{font-size:12px;color:rgba(255,255,255,.55);margin-top:14px;}
+
+/* TELEMED SIMULATED VIDEO */
+.video-sim{background:#0A0F1E;border-radius:var(--radius-lg);overflow:hidden;position:relative;margin-top:16px;}
+.vs-main{width:100%;height:240px;background:linear-gradient(180deg,#0A0F1E,#0F1828);display:flex;align-items:center;justify-content:center;flex-direction:column;position:relative;}
+.vs-doc-av{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#1A5EAB,#00C0A3);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;border:3px solid rgba(255,255,255,.2);animation:videoGlow 2.5s infinite;}
+@keyframes videoGlow{0%,100%{box-shadow:0 0 0 0 rgba(0,192,163,.4);}50%{box-shadow:0 0 0 12px rgba(0,192,163,0);}}
+.vs-doc-name{font-size:13px;font-weight:600;color:#fff;margin-top:10px;}
+.vs-connecting{font-size:11px;color:rgba(255,255,255,.5);margin-top:4px;animation:blink 1.4s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.4;}}
+.vs-self{position:absolute;bottom:10px;right:10px;width:90px;height:120px;background:linear-gradient(135deg,#0F3F78,#1A5EAB);border-radius:10px;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.2);}
+.vs-self-av{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;}
+.vs-controls{display:flex;align-items:center;justify-content:center;gap:12px;padding:14px;background:#0D1524;}
+.vs-ctrl-btn{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;transition:all .15s;border:none;font-family:inherit;}
+.vs-ctrl-btn.active{background:rgba(255,255,255,.1);}
+.vs-ctrl-btn.danger{background:var(--danger);}
+.vs-ctrl-btn:hover{transform:scale(1.08);}
+
+/* FORM ELEMENTS */
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-group.full{grid-column:1/-1;}
+.fl{font-size:11px;font-weight:600;color:var(--text-2);}
+.fi,.fs{padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;color:var(--text-1);background:var(--surface-2);outline:none;transition:border-color .15s;width:100%;}
+.fi:focus,.fs:focus{border-color:var(--brand);background:#fff;}
+
+/* BTN */
+.btn{padding:9px 18px;border-radius:var(--radius);border:none;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all .15s;}
+.btn-primary{background:var(--brand);color:#fff;box-shadow:0 2px 10px rgba(26,94,171,.28);}
+.btn-primary:hover{background:var(--brand-dark);}
+.btn-success{background:var(--success);color:#fff;}
+.btn-outline{background:var(--surface);color:var(--brand);border:1.5px solid var(--brand);}
+.btn-outline:hover{background:var(--brand-light);}
+.btn-sm{padding:6px 13px;font-size:12px;}
+.btn-tele{background:linear-gradient(135deg,var(--accent),var(--brand));color:#fff;box-shadow:0 4px 14px rgba(0,192,163,.3);}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600;}
+.bd-blue{background:var(--brand-light);color:var(--brand);}
+.bd-green{background:var(--success-lt);color:var(--success);}
+.bd-warn{background:var(--warn-lt);color:var(--warn-dark);}
+.bd-red{background:var(--danger-lt);color:var(--danger);}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--brand-dark);color:#fff;padding:12px 20px;border-radius:var(--radius);font-size:13px;font-weight:500;z-index:999;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* PROG */
+.prog-bar{height:5px;background:var(--border);border-radius:4px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:4px;transition:width .5s;}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo-wrap">
+    <div class="logo-mark">Dx</div>
+    <div><div class="logo-text">Diagnotica Patient Portal</div><div class="logo-sub">MyHealth — Web &amp; Mobile App</div></div>
+  </div>
+  <div class="topbar-right">
+    <div class="t-chip" onclick="showToast('Language changed to Tamil','🌐')">🌐 Language</div>
+    <div class="t-chip" onclick="showToast('Help center opened','❓')">❓ Help</div>
+    <div class="t-chip" onclick="showToast('Logging out...','🔓')">🔓 Logout</div>
+    <div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border-radius:20px;padding:4px 12px 4px 4px;">
+      <div style="width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;">RK</div>
+      <span style="color:#D4E8FF;font-size:12px;">Ravi Kumar</span>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+
+  <!-- DESKTOP SIDEBAR -->
+  <div class="desktop-sidebar">
+    <div class="ds-patient-card">
+      <div class="dp-av">RK</div>
+      <div class="dp-name">Ravi Kumar</div>
+      <div class="dp-uhid">UHID: DX-2024-004821</div>
+      <div class="dp-chips">
+        <span class="dp-chip">42Y · Male · O+</span>
+        <span class="dp-chip">🔗 ABHA Linked</span>
+      </div>
+    </div>
+    <div class="ds-nav">
+      <div class="ds-nav-label">My Health</div>
+      <div class="ds-nav-item active" onclick="showDesktopPanel('home',this)">🏠 Dashboard</div>
+      <div class="ds-nav-item" onclick="showDesktopPanel('book',this)">📅 Book Appointment <div class="ds-nav-badge b">New</div></div>
+      <div class="ds-nav-item" onclick="showDesktopPanel('records',this)">📋 Medical Records</div>
+      <div class="ds-nav-item" onclick="showDesktopPanel('reports',this)">🧪 Test Reports <div class="ds-nav-badge">3</div></div>
+      <div class="ds-nav-item" onclick="showDesktopPanel('tele',this)">📹 Telemedicine <div class="ds-nav-badge g">Scheduled</div></div>
+      <div class="ds-nav-item" onclick="showDesktopPanel('prescriptions',this)">💊 Prescriptions</div>
+      <div class="ds-nav-item" onclick="showDesktopPanel('bills',this)">💳 Bills &amp; Payments</div>
+      <div class="ds-nav-label">Account</div>
+      <div class="ds-nav-item" onclick="showToast('Opening profile settings','⚙')">👤 Profile</div>
+      <div class="ds-nav-item" onclick="showToast('Family members panel opened','👨‍👩‍👧')">👨‍👩‍👧 Family Members</div>
+      <div class="ds-nav-item" onclick="showToast('Notifications preferences','🔔')">🔔 Notifications <div class="ds-nav-badge w">5</div></div>
+    </div>
+  </div>
+
+  <!-- MAIN AREA -->
+  <div class="portal-main">
+    <div class="phone-preview-area">
+
+      <!-- PHONE FRAME -->
+      <div class="phone-frame">
+        <div class="phone-notch">
+          <div class="phone-notch-dot"></div>
+          <div class="phone-camera"></div>
+          <div class="phone-notch-dot"></div>
+        </div>
+        <div class="phone-screen">
+          <div class="phone-status-bar">
+            <div class="psb-time" id="phone-time">--:--</div>
+            <div class="psb-icons">
+              <span>●●●●</span>
+              <span>WiFi</span>
+              <span>🔋</span>
+            </div>
+          </div>
+
+          <div class="phone-content" id="phone-content">
+
+            <!-- SCREEN: HOME -->
+            <div class="m-screen active" id="mscreen-home">
+              <div class="m-hero">
+                <div class="mh-greeting">Good afternoon,</div>
+                <div class="mh-name">Ravi Kumar 👋</div>
+                <div class="mh-abha">
+                  <span style="font-size:20px;">🔗</span>
+                  <div>
+                    <div class="mh-abha-label">ABHA Health ID</div>
+                    <div class="mh-abha-id">98-1234-5678-0042</div>
+                  </div>
+                  <span style="margin-left:auto;font-size:10px;background:rgba(0,192,163,.3);border-radius:10px;padding:2px 8px;color:#6EF0DC;font-weight:700;">Verified ✓</span>
+                </div>
+                <div class="mh-stats">
+                  <div class="mh-stat"><div class="mh-stat-val">3</div><div class="mh-stat-label">Upcoming</div></div>
+                  <div class="mh-stat"><div class="mh-stat-val">8</div><div class="mh-stat-label">Reports</div></div>
+                  <div class="mh-stat"><div class="mh-stat-val">4</div><div class="mh-stat-label">Prescriptions</div></div>
+                </div>
+              </div>
+
+              <!-- UPCOMING APPOINTMENT -->
+              <div style="padding:16px 16px 0;">
+                <div class="m-section-title">Upcoming Appointment <span class="m-see-all" onclick="switchMobileScreen('appointments')">See all →</span></div>
+              </div>
+              <div class="m-appt-card" onclick="switchMobileScreen('tele')">
+                <div class="mac-label">NEXT APPOINTMENT — TOMORROW</div>
+                <div class="mac-doctor">Dr. Anand Krishnan</div>
+                <div class="mac-detail">General Medicine · 15 Mar 2024 · 10:30 AM</div>
+                <div class="mac-footer">
+                  <span class="mac-time-chip">📹 Telemedicine</span>
+                  <button class="mac-join-btn" onclick="event.stopPropagation();switchMobileScreen('tele')">Join Call</button>
+                </div>
+              </div>
+
+              <!-- QUICK ACTIONS -->
+              <div style="padding:0 16px 4px;"><div class="m-section-title">Quick Actions</div></div>
+              <div class="m-quick-grid">
+                <div class="mq-item" onclick="switchMobileScreen('book')">
+                  <div class="mq-icon" style="background:var(--brand-light);">📅</div>
+                  <div class="mq-label">Book Appt.</div>
+                </div>
+                <div class="mq-item" onclick="switchMobileScreen('reports')">
+                  <div class="mq-icon" style="background:var(--success-lt);">🧪</div>
+                  <div class="mq-label">Test Reports</div>
+                </div>
+                <div class="mq-item" onclick="switchMobileScreen('records')">
+                  <div class="mq-icon" style="background:var(--purple-lt);">📋</div>
+                  <div class="mq-label">Health Records</div>
+                </div>
+                <div class="mq-item" onclick="switchMobileScreen('tele')">
+                  <div class="mq-icon" style="background:var(--accent-lt);">📹</div>
+                  <div class="mq-label">Video Consult</div>
+                </div>
+                <div class="mq-item" onclick="showToast('Opening prescriptions','💊')">
+                  <div class="mq-icon" style="background:var(--warn-lt);">💊</div>
+                  <div class="mq-label">Prescriptions</div>
+                </div>
+                <div class="mq-item" onclick="showToast('Opening bills & payments','💳')">
+                  <div class="mq-icon" style="background:#EEF2FF;">💳</div>
+                  <div class="mq-label">Pay Bill</div>
+                </div>
+                <div class="mq-item" onclick="showToast('Vitals entry form opened','❤')">
+                  <div class="mq-icon" style="background:var(--danger-lt);">❤️</div>
+                  <div class="mq-label">Log Vitals</div>
+                </div>
+                <div class="mq-item" onclick="showToast('Emergency helpline: 044-2435-6789','🚨')">
+                  <div class="mq-icon" style="background:var(--danger-lt);">🚨</div>
+                  <div class="mq-label">Emergency</div>
+                </div>
+              </div>
+
+              <!-- RECENT REPORTS -->
+              <div class="m-section">
+                <div class="m-section-title">Recent Reports <span class="m-see-all" onclick="switchMobileScreen('reports')">See all →</span></div>
+                <div class="m-report-item" onclick="showToast('Opening CBC report','🧪')">
+                  <div class="mri-icon" style="background:var(--success-lt);">🩸</div>
+                  <div style="flex:1;"><div class="mri-name">Complete Blood Count (CBC)</div><div class="mri-date">14 Mar 2024 · Dr. Anand</div></div>
+                  <span class="mri-badge mb-new">NEW</span>
+                </div>
+                <div class="m-report-item" onclick="showToast('Opening Lipid Profile report','🧪')">
+                  <div class="mri-icon" style="background:var(--warn-lt);">💛</div>
+                  <div style="flex:1;"><div class="mri-name">Lipid Profile</div><div class="mri-date">12 Mar 2024 · Dr. Anand</div></div>
+                  <span class="mri-badge mb-ready">Ready</span>
+                </div>
+                <div style="height:16px;"></div>
+              </div>
+            </div>
+
+            <!-- SCREEN: BOOK -->
+            <div class="m-screen" id="mscreen-book">
+              <div style="background:var(--brand-dark);padding:44px 16px 16px;color:#fff;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                  <button onclick="switchMobileScreen('home')" style="background:rgba(255,255,255,.15);border:none;color:#fff;font-size:18px;cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;">‹</button>
+                  <div style="font-size:16px;font-weight:700;">Book Appointment</div>
+                </div>
+              </div>
+              <div style="padding:16px;">
+                <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:10px;">Select Doctor</div>
+                <div style="display:flex;flex-direction:column;gap:8px;" id="m-doc-list"></div>
+                <div style="font-size:12px;font-weight:600;color:var(--text-2);margin:14px 0 8px;">Select Date</div>
+                <input type="date" value="2024-03-15" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;background:var(--surface-2);outline:none;"/>
+                <div style="font-size:12px;font-weight:600;color:var(--text-2);margin:14px 0 8px;">Available Slots — Dr. Anand · 15 Mar</div>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px;">
+                  <div onclick="selectMSlot(this)" style="padding:8px;border-radius:10px;border:1.5px solid var(--border);text-align:center;font-size:12px;font-weight:600;cursor:pointer;background:var(--surface-2);color:var(--text-3);text-decoration:line-through;">09:00</div>
+                  <div onclick="selectMSlot(this)" style="padding:8px;border-radius:10px;border:1.5px solid var(--border);text-align:center;font-size:12px;font-weight:600;cursor:pointer;background:var(--surface-2);">10:00</div>
+                  <div onclick="selectMSlot(this)" style="padding:8px;border-radius:10px;border:1.5px solid var(--success);text-align:center;font-size:12px;font-weight:700;cursor:pointer;background:var(--brand);color:#fff;">10:30 ✓</div>
+                  <div onclick="selectMSlot(this)" style="padding:8px;border-radius:10px;border:1.5px solid var(--border);text-align:center;font-size:12px;font-weight:600;cursor:pointer;background:var(--surface-2);">11:00</div>
+                  <div onclick="selectMSlot(this)" style="padding:8px;border-radius:10px;border:1.5px solid var(--border);text-align:center;font-size:12px;font-weight:600;cursor:pointer;background:var(--surface-2);">14:00</div>
+                  <div onclick="selectMSlot(this)" style="padding:8px;border-radius:10px;border:1.5px solid var(--border);text-align:center;font-size:12px;font-weight:600;cursor:pointer;background:var(--surface-2);">14:30</div>
+                </div>
+                <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;">Reason for Visit</div>
+                <input placeholder="Chief complaint..." style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;background:var(--surface-2);outline:none;margin-bottom:14px;"/>
+                <button onclick="showToast('Appointment confirmed! SMS will be sent ✓','📅')" style="width:100%;padding:12px;background:var(--brand);color:#fff;border:none;border-radius:var(--radius);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;">📅 Confirm Booking</button>
+              </div>
+            </div>
+
+            <!-- SCREEN: REPORTS -->
+            <div class="m-screen" id="mscreen-reports">
+              <div style="background:var(--brand-dark);padding:44px 16px 16px;color:#fff;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+                  <button onclick="switchMobileScreen('home')" style="background:rgba(255,255,255,.15);border:none;color:#fff;font-size:18px;cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;">‹</button>
+                  <div style="font-size:16px;font-weight:700;">Test Reports</div>
+                </div>
+                <div style="font-size:12px;color:rgba(255,255,255,.6);">Download your lab &amp; radiology reports</div>
+              </div>
+              <div style="padding:16px;" id="m-reports-list"></div>
+            </div>
+
+            <!-- SCREEN: RECORDS -->
+            <div class="m-screen" id="mscreen-records">
+              <div style="background:var(--brand-dark);padding:44px 16px 16px;color:#fff;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+                  <button onclick="switchMobileScreen('home')" style="background:rgba(255,255,255,.15);border:none;color:#fff;font-size:18px;cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;">‹</button>
+                  <div style="font-size:16px;font-weight:700;">Medical Records</div>
+                </div>
+              </div>
+              <div style="padding:16px;" id="m-records-list"></div>
+            </div>
+
+            <!-- SCREEN: TELE -->
+            <div class="m-screen" id="mscreen-tele">
+              <div style="background:#0A0F1E;padding:44px 16px 16px;color:#fff;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+                  <button onclick="switchMobileScreen('home')" style="background:rgba(255,255,255,.15);border:none;color:#fff;font-size:18px;cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;">‹</button>
+                  <div style="font-size:16px;font-weight:700;">Video Consultation</div>
+                </div>
+              </div>
+              <!-- SIMULATED VIDEO CALL -->
+              <div style="background:#0A0F1E;padding:12px;">
+                <div style="background:rgba(255,255,255,.06);border-radius:16px;overflow:hidden;">
+                  <!-- MAIN VIDEO (Doctor) -->
+                  <div style="width:100%;height:220px;background:linear-gradient(180deg,#0A0F1E,#0F1828);display:flex;align-items:center;justify-content:center;flex-direction:column;position:relative;">
+                    <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#1A5EAB,#00C0A3);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#fff;border:3px solid rgba(255,255,255,.2);animation:videoGlow 2.5s infinite;">AK</div>
+                    <div style="font-size:14px;font-weight:600;color:#fff;margin-top:10px;">Dr. Anand Krishnan</div>
+                    <div style="font-size:11px;color:rgba(255,255,255,.5);animation:blink 1.4s infinite;">● Connecting...</div>
+                    <!-- Patient PiP -->
+                    <div style="position:absolute;bottom:10px;right:10px;width:80px;height:100px;background:linear-gradient(135deg,#0F3F78,#1A5EAB);border-radius:10px;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.2);">
+                      <div style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;">RK</div>
+                    </div>
+                    <!-- LIVE DOT -->
+                    <div style="position:absolute;top:10px;left:12px;display:flex;align-items:center;gap:5px;background:rgba(16,185,129,.2);border:1px solid rgba(16,185,129,.4);border-radius:20px;padding:3px 10px;">
+                      <div style="width:6px;height:6px;border-radius:50%;background:#10B981;animation:videoGlow 1.4s infinite;"></div>
+                      <span style="font-size:10px;font-weight:700;color:#6EF0DC;">LIVE</span>
+                    </div>
+                    <!-- TIMER -->
+                    <div style="position:absolute;top:10px;right:12px;font-family:'DM Mono',monospace;font-size:11px;color:rgba(255,255,255,.6);" id="m-timer">00:00</div>
+                  </div>
+                  <!-- CONTROLS -->
+                  <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:12px;background:#0D1524;">
+                    <div onclick="toggleControl(this,'🎙️','🔇')" style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;border:none;transition:all .15s;">🎙️</div>
+                    <div onclick="toggleControl(this,'📷','🚫')" style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;border:none;transition:all .15s;">📷</div>
+                    <div onclick="showToast('Ending call...','📴')" style="width:52px;height:52px;border-radius:50%;background:var(--danger);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;border:none;">📴</div>
+                    <div style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;border:none;" onclick="showToast('Chat opened','💬')">💬</div>
+                    <div style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;border:none;" onclick="showToast('More options','⋯')">⋯</div>
+                  </div>
+                </div>
+                <!-- CONSULT DETAILS -->
+                <div style="background:rgba(255,255,255,.06);border-radius:12px;padding:12px;margin-top:10px;">
+                  <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:6px;">Consultation Notes</div>
+                  <textarea placeholder="Type symptoms, questions..." style="width:100%;padding:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;color:#fff;font-family:inherit;font-size:12px;outline:none;resize:none;min-height:60px;"></textarea>
+                  <button onclick="showToast('Note shared with doctor','📝')" style="width:100%;margin-top:8px;padding:9px;background:rgba(0,192,163,.2);border:1px solid rgba(0,192,163,.4);border-radius:8px;color:#6EF0DC;font-weight:600;font-size:12px;cursor:pointer;font-family:inherit;">Share Notes with Doctor</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- SCREEN: APPOINTMENTS -->
+            <div class="m-screen" id="mscreen-appointments">
+              <div style="background:var(--brand-dark);padding:44px 16px 16px;color:#fff;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+                  <button onclick="switchMobileScreen('home')" style="background:rgba(255,255,255,.15);border:none;color:#fff;font-size:18px;cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;">‹</button>
+                  <div style="font-size:16px;font-weight:700;">My Appointments</div>
+                </div>
+              </div>
+              <div style="padding:16px;" id="m-appts-list"></div>
+            </div>
+
+          </div><!-- /phone-content -->
+
+          <!-- PHONE NAV -->
+          <div class="phone-nav">
+            <div class="pn-item active" onclick="switchMobileScreen('home');setActiveNav(this)">
+              <div class="pn-icon">🏠</div>
+              <div class="pn-label">Home</div>
+            </div>
+            <div class="pn-item" onclick="switchMobileScreen('appointments');setActiveNav(this)">
+              <div class="pn-icon">📅</div>
+              <div class="pn-label">Appointments</div>
+            </div>
+            <div class="pn-item" onclick="switchMobileScreen('reports');setActiveNav(this)">
+              <div class="pn-icon">🧪</div>
+              <div class="pn-label">Reports</div>
+            </div>
+            <div class="pn-item" onclick="switchMobileScreen('records');setActiveNav(this)">
+              <div class="pn-icon">📋</div>
+              <div class="pn-label">Records</div>
+            </div>
+            <div class="pn-item" onclick="switchMobileScreen('tele');setActiveNav(this)">
+              <div class="pn-icon">📹</div>
+              <div class="pn-label">Consult</div>
+            </div>
+          </div>
+        </div><!-- /phone-screen -->
+      </div><!-- /phone-frame -->
+
+      <!-- DESKTOP PANEL -->
+      <div class="desktop-panel" id="desktop-panel">
+
+        <!-- HOME PANEL -->
+        <div id="dp-home">
+          <div class="d-card">
+            <div class="d-card-header">
+              <div class="d-card-title">📊 My Health Summary</div>
+              <span class="badge bd-blue">14 Mar 2024</span>
+            </div>
+            <div class="d-card-body">
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
+                <div style="background:var(--brand-light);border-radius:var(--radius);padding:12px;text-align:center;cursor:pointer;" onclick="showToast('3 upcoming appointments','📅')">
+                  <div style="font-size:24px;font-weight:800;color:var(--brand);">3</div>
+                  <div style="font-size:11px;color:var(--text-3);">Upcoming Appts.</div>
+                </div>
+                <div style="background:var(--success-lt);border-radius:var(--radius);padding:12px;text-align:center;cursor:pointer;" onclick="showToast('8 test reports available','🧪')">
+                  <div style="font-size:24px;font-weight:800;color:var(--success-dark);">8</div>
+                  <div style="font-size:11px;color:var(--text-3);">Test Reports</div>
+                </div>
+                <div style="background:var(--warn-lt);border-radius:var(--radius);padding:12px;text-align:center;cursor:pointer;" onclick="showToast('4 active prescriptions','💊')">
+                  <div style="font-size:24px;font-weight:800;color:var(--warn-dark);">4</div>
+                  <div style="font-size:11px;color:var(--text-3);">Prescriptions</div>
+                </div>
+                <div style="background:var(--danger-lt);border-radius:var(--radius);padding:12px;text-align:center;cursor:pointer;" onclick="showToast('₹4,200 outstanding bill','💳')">
+                  <div style="font-size:24px;font-weight:800;color:var(--danger);">₹4.2K</div>
+                  <div style="font-size:11px;color:var(--text-3);">Outstanding Bill</div>
+                </div>
+              </div>
+              <div style="background:var(--brand-light);border-radius:var(--radius);padding:14px;display:flex;align-items:center;gap:14px;">
+                <span style="font-size:28px;">📹</span>
+                <div style="flex:1;">
+                  <div style="font-size:13px;font-weight:700;color:var(--brand);">Telemedicine — Dr. Anand Krishnan</div>
+                  <div style="font-size:12px;color:var(--text-2);">Tomorrow · 15 Mar 2024 · 10:30 AM · General Medicine</div>
+                </div>
+                <button class="btn btn-tele btn-sm" onclick="showDesktopPanel('tele',null)">📹 Join Call</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- VITALS STRIP -->
+          <div class="d-card">
+            <div class="d-card-header">
+              <div class="d-card-title">❤️ Logged Vitals</div>
+              <button class="btn btn-outline btn-sm" onclick="showToast('Vitals entry form opened','❤')">＋ Log Vitals</button>
+            </div>
+            <div class="d-card-body">
+              <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;">
+                <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center;">
+                  <div style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;margin-bottom:6px;">BP</div>
+                  <div style="font-size:18px;font-weight:800;color:var(--warn-dark);">148/92</div>
+                  <div style="font-size:10px;color:var(--text-3);">mmHg</div>
+                  <div style="font-size:10px;color:var(--warn-dark);font-weight:600;margin-top:3px;">↑ High</div>
+                </div>
+                <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center;">
+                  <div style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;margin-bottom:6px;">HR</div>
+                  <div style="font-size:18px;font-weight:800;color:var(--success-dark);">82</div>
+                  <div style="font-size:10px;color:var(--text-3);">bpm</div>
+                  <div style="font-size:10px;color:var(--success-dark);font-weight:600;margin-top:3px;">Normal</div>
+                </div>
+                <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center;">
+                  <div style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;margin-bottom:6px;">BGL</div>
+                  <div style="font-size:18px;font-weight:800;color:var(--warn-dark);">168</div>
+                  <div style="font-size:10px;color:var(--text-3);">mg/dL</div>
+                  <div style="font-size:10px;color:var(--warn-dark);font-weight:600;margin-top:3px;">↑ Elevated</div>
+                </div>
+                <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center;">
+                  <div style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;margin-bottom:6px;">Weight</div>
+                  <div style="font-size:18px;font-weight:800;color:var(--brand);">78</div>
+                  <div style="font-size:10px;color:var(--text-3);">kg</div>
+                  <div style="font-size:10px;color:var(--brand);font-weight:600;margin-top:3px;">Stable</div>
+                </div>
+                <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center;">
+                  <div style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;margin-bottom:6px;">SpO₂</div>
+                  <div style="font-size:18px;font-weight:800;color:var(--success-dark);">98%</div>
+                  <div style="font-size:10px;color:var(--text-3);">oxygen</div>
+                  <div style="font-size:10px;color:var(--success-dark);font-weight:600;margin-top:3px;">Normal</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BOOK PANEL -->
+        <div id="dp-book" style="display:none;">
+          <div class="d-card">
+            <div class="d-card-header">
+              <div class="d-card-title">📅 Book Appointment</div>
+              <span class="badge bd-blue">Online Booking</span>
+            </div>
+            <div class="d-card-body">
+              <!-- STEPPER -->
+              <div class="booking-step-bar" id="booking-steps"></div>
+              <div id="booking-step-content"></div>
+              <div style="display:flex;justify-content:space-between;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+                <button class="btn btn-outline" id="book-prev" onclick="changeBookStep(-1)">← Back</button>
+                <button class="btn btn-primary" id="book-next" onclick="changeBookStep(1)">Next →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RECORDS PANEL -->
+        <div id="dp-records" style="display:none;">
+          <div class="d-card">
+            <div class="d-card-header">
+              <div class="d-card-title">📋 Medical Records</div>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-outline btn-sm" onclick="showToast('Records shared via ABDM','🔗')">🔗 Share via ABDM</button>
+                <button class="btn btn-primary btn-sm" onclick="showToast('All records downloaded','⬇')">⬇ Download All</button>
+              </div>
+            </div>
+            <div class="d-card-body">
+              <div class="rec-cat-tabs">
+                <div class="rct active" onclick="setRecTab(this,'all')">All</div>
+                <div class="rct" onclick="setRecTab(this,'opd')">OPD Visits</div>
+                <div class="rct" onclick="setRecTab(this,'ipd')">Hospitalisations</div>
+                <div class="rct" onclick="setRecTab(this,'lab')">Lab Reports</div>
+                <div class="rct" onclick="setRecTab(this,'radiology')">Radiology</div>
+                <div class="rct" onclick="setRecTab(this,'prescriptions')">Prescriptions</div>
+              </div>
+              <div id="desktop-records-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- REPORTS PANEL -->
+        <div id="dp-reports" style="display:none;">
+          <div class="d-card">
+            <div class="d-card-header">
+              <div class="d-card-title">🧪 Test Report Downloads</div>
+              <div style="display:flex;gap:6px;">
+                <span class="badge bd-red">3 New</span>
+                <button class="btn btn-outline btn-sm" onclick="showToast('All reports downloaded','⬇')">⬇ Download All</button>
+              </div>
+            </div>
+            <div class="d-card-body" id="desktop-reports-list"></div>
+          </div>
+        </div>
+
+        <!-- TELEMED PANEL -->
+        <div id="dp-tele" style="display:none;">
+          <div class="d-card">
+            <div class="d-card-header">
+              <div class="d-card-title">📹 Telemedicine Consultation</div>
+              <span class="badge bd-green">Scheduled</span>
+            </div>
+            <div class="d-card-body">
+              <div class="tele-card" onclick="showToast('Launching video call with Dr. Anand...','📹')">
+                <div class="tele-icon">📹</div>
+                <div class="tele-title">Dr. Anand Krishnan</div>
+                <div class="tele-sub">General Medicine · 15 Mar 2024 · 10:30 AM<br>Your appointment is tomorrow — call opens 10 min early</div>
+                <button class="tele-join-btn" onclick="event.stopPropagation();switchMobileScreen('tele');showToast('Launching telemedicine call...','📹')">📹 Join Telemedicine Call</button>
+                <div class="tele-meta">Secure video · End-to-end encrypted · Recorded with consent</div>
+              </div>
+
+              <!-- SIMULATED VIDEO -->
+              <div class="video-sim" style="margin-top:16px;">
+                <div class="vs-main">
+                  <div class="vs-doc-av">AK</div>
+                  <div class="vs-doc-name">Dr. Anand Krishnan — General Medicine</div>
+                  <div class="vs-connecting">● Connecting — please wait...</div>
+                  <div class="vs-self">
+                    <div class="vs-self-av">RK</div>
+                  </div>
+                  <div style="position:absolute;top:12px;left:14px;display:flex;align-items:center;gap:5px;background:rgba(16,185,129,.2);border:1px solid rgba(16,185,129,.4);border-radius:20px;padding:3px 10px;">
+                    <div style="width:6px;height:6px;border-radius:50%;background:#10B981;animation:videoGlow 1.4s infinite;"></div>
+                    <span style="font-size:10px;font-weight:700;color:#6EF0DC;">LIVE</span>
+                  </div>
+                  <div style="position:absolute;top:12px;right:14px;font-family:'DM Mono',monospace;font-size:11px;color:rgba(255,255,255,.6);" id="d-timer">00:00</div>
+                </div>
+                <div class="vs-controls">
+                  <div onclick="toggleControl(this,'🎙️','🔇')" class="vs-ctrl-btn active">🎙️</div>
+                  <div onclick="toggleControl(this,'📷','🚫')" class="vs-ctrl-btn active">📷</div>
+                  <div onclick="showToast('Call ended','📴')" class="vs-ctrl-btn danger">📴</div>
+                  <div onclick="showToast('Chat opened','💬')" class="vs-ctrl-btn active">💬</div>
+                  <div onclick="showToast('Screen share started','🖥')" class="vs-ctrl-btn active">🖥</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PAST CONSULTS -->
+          <div class="d-card">
+            <div class="d-card-header"><div class="d-card-title">📋 Past Telemedicine Consults</div></div>
+            <div class="d-card-body" id="past-consults"></div>
+          </div>
+        </div>
+
+        <!-- PRESCRIPTIONS PANEL -->
+        <div id="dp-prescriptions" style="display:none;">
+          <div class="d-card">
+            <div class="d-card-header"><div class="d-card-title">💊 My Prescriptions</div><button class="btn btn-outline btn-sm" onclick="showToast('All prescriptions downloaded','⬇')">⬇ Download</button></div>
+            <div class="d-card-body" id="prescriptions-list"></div>
+          </div>
+        </div>
+
+        <!-- BILLS PANEL -->
+        <div id="dp-bills" style="display:none;">
+          <div class="d-card">
+            <div class="d-card-header"><div class="d-card-title">💳 Bills & Payments</div><span class="badge bd-red">₹4,200 Outstanding</span></div>
+            <div class="d-card-body" id="bills-list"></div>
+          </div>
+        </div>
+
+      </div><!-- /desktop-panel -->
+
+    </div><!-- /phone-preview-area -->
+  </div><!-- /portal-main -->
+</div><!-- /shell -->
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span id="toast-icon">✅</span><span id="toast-msg">Done</span></div>
+
+<script>
+// ── CLOCK ──
+function updateClock(){
+  const n=new Date();
+  document.getElementById('phone-time').textContent=n.getHours()+':'+String(n.getMinutes()).padStart(2,'0');
+}
+setInterval(updateClock,1000); updateClock();
+
+// ── CALL TIMER ──
+let callSeconds=0;
+setInterval(()=>{
+  callSeconds++;
+  const m=String(Math.floor(callSeconds/60)).padStart(2,'0');
+  const s=String(callSeconds%60).padStart(2,'0');
+  const t=`${m}:${s}`;
+  const el=document.getElementById('m-timer');
+  const el2=document.getElementById('d-timer');
+  if(el) el.textContent=t;
+  if(el2) el2.textContent=t;
+},1000);
+
+// ── MOBILE SCREENS ──
+function switchMobileScreen(id){
+  document.querySelectorAll('.m-screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('mscreen-'+id).classList.add('active');
+  document.getElementById('phone-content').scrollTop=0;
+}
+function setActiveNav(el){
+  document.querySelectorAll('.pn-item').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+}
+function toggleControl(el,on,off){el.textContent=el.textContent===on?off:on;}
+function selectMSlot(el){
+  el.parentElement.querySelectorAll('div').forEach(d=>{
+    d.style.background='var(--surface-2)';d.style.color='var(--text-1)';
+    d.style.borderColor='var(--border)';d.style.fontWeight='600';
+  });
+  el.style.background='var(--brand)';el.style.color='#fff';
+  el.style.borderColor='var(--brand)';el.textContent=el.textContent.replace(' ✓','')+' ✓';
+  showToast('Slot selected: '+el.textContent.replace(' ✓',''),'✅');
+}
+
+// ── MOBILE DOC LIST ──
+const mDocs=[
+  {init:'AK',col:'#1A5EAB',name:'Dr. Anand Krishnan',spec:'General Medicine',slots:14,selected:true},
+  {init:'MS',col:'#7C3AED',name:'Dr. Meera Suresh',spec:'Cardiology',slots:9},
+  {init:'PN',col:'#059669',name:'Dr. Priya Nair',spec:'Gynaecology',slots:12},
+];
+const mdl=document.getElementById('m-doc-list');
+mDocs.forEach(d=>{
+  mdl.innerHTML+=`<div style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:var(--radius);border:2px solid ${d.selected?'var(--brand)':'var(--border)'};background:${d.selected?'var(--brand-light)':'var(--surface)'};cursor:pointer;transition:all .15s;" onclick="showToast('Selected ${d.name}','👨‍⚕️')">
+    <div style="width:40px;height:40px;border-radius:50%;background:${d.col};color:#fff;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;">${d.init}</div>
+    <div style="flex:1;"><div style="font-size:13px;font-weight:600;">${d.name}</div><div style="font-size:11px;color:var(--text-3);">${d.spec}</div></div>
+    <div style="text-align:right;"><div style="font-size:11px;font-weight:600;color:var(--success-dark);">${d.slots} slots</div>${d.selected?'<div style="font-size:10px;color:var(--brand);">Selected ✓</div>':''}</div>
+  </div>`;
+});
+
+// ── MOBILE + DESKTOP REPORTS ──
+const reports=[
+  {icon:'🩸',bg:var('success-lt'),name:'Complete Blood Count (CBC)',date:'14 Mar 2024',doc:'Dr. Anand Krishnan',status:'new',sCls:'mb-new',type:'Lab Report'},
+  {icon:'💛',bg:var('warn-lt'),name:'Lipid Profile Panel',date:'12 Mar 2024',doc:'Dr. Anand Krishnan',status:'new',sCls:'mb-new',type:'Lab Report'},
+  {icon:'🧬',bg:'var(--purple-lt)',name:'HbA1c (Glycated Haemoglobin)',date:'12 Mar 2024',doc:'Dr. Anand Krishnan',status:'new',sCls:'mb-new',type:'Lab Report'},
+  {icon:'🫀',bg:'var(--danger-lt)',name:'ECG Report — 12 Lead',date:'08 Mar 2024',doc:'Dr. Meera Suresh',status:'ready',sCls:'mb-ready',type:'Cardiac'},
+  {icon:'🩻',bg:'var(--brand-light)',name:'Chest X-Ray (PA View)',date:'05 Mar 2024',doc:'Radiology Dept.',status:'ready',sCls:'mb-ready',type:'Radiology'},
+  {icon:'🔬',bg:'var(--success-lt)',name:'Urine Routine & Microscopy',date:'02 Mar 2024',doc:'Dr. Anand Krishnan',status:'ready',sCls:'mb-ready',type:'Lab Report'},
+  {icon:'🧪',bg:'var(--accent-lt)',name:'Liver Function Tests (LFT)',date:'28 Feb 2024',doc:'Dr. Anand Krishnan',status:'ready',sCls:'mb-ready',type:'Lab Report'},
+  {icon:'🩺',bg:'var(--brand-light)',name:'Kidney Function Tests (KFT)',date:'28 Feb 2024',doc:'Dr. Anand Krishnan',status:'ready',sCls:'mb-ready',type:'Lab Report'},
+];
+function var_(v){return `var(--${v})`;}
+function var_(v){return `var(--${v})`;}
+
+// Mobile reports
+const mrl=document.getElementById('m-reports-list');
+reports.forEach(r=>{
+  const isNew=r.status==='new';
+  mrl.innerHTML+=`<div class="m-report-item" onclick="showToast('Downloading ${r.name}','⬇')">
+    <div class="mri-icon" style="background:${r.bg};">${r.icon}</div>
+    <div style="flex:1;"><div class="mri-name">${r.name}</div><div class="mri-date">${r.date} · ${r.doc}</div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+      <span class="mri-badge ${r.sCls}">${isNew?'NEW':'Ready'}</span>
+      <span style="font-size:16px;cursor:pointer;" onclick="event.stopPropagation();showToast('Downloading ${r.name}','⬇')">⬇</span>
+    </div>
+  </div>`;
+});
+
+// Desktop reports
+const drl=document.getElementById('desktop-reports-list');
+reports.forEach(r=>{
+  const isNew=r.status==='new';
+  drl.innerHTML+=`<div class="rec-item" onclick="showToast('Viewing ${r.name}','📄')">
+    <div class="ri-icon" style="background:${r.bg};">${r.icon}</div>
+    <div style="flex:1;">
+      <div class="ri-title">${r.name}</div>
+      <div class="ri-meta">${r.type} · ${r.date} · Ordered by ${r.doc}</div>
+    </div>
+    ${isNew?'<span class="badge bd-red">New</span>':''}
+    <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();showToast('Downloading ${r.name}...','⬇')">⬇ Download PDF</button>
+    <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();showToast('Viewing ${r.name}','👁')">View</button>
+  </div>`;
+});
+
+// ── MOBILE RECORDS ──
+const mRecords=[
+  {icon:'📋',bg:'var(--brand-light)',name:'OPD Visit — Dr. Anand K.',date:'14 Mar 2024',type:'Consultation'},
+  {icon:'💊',bg:'var(--warn-lt)',name:'Prescription — Amlodipine, Losartan, Metformin',date:'14 Mar 2024',type:'Prescription'},
+  {icon:'🏥',bg:'var(--purple-lt)',name:'IPD Admission — Knee Replacement',date:'07–16 Mar 2024',type:'Hospitalisation'},
+  {icon:'🩻',bg:'var(--accent-lt)',name:'MRI Knee — Left Joint',date:'04 Mar 2024',type:'Radiology'},
+];
+const mrecs=document.getElementById('m-records-list');
+mRecords.forEach(r=>{
+  mrecs.innerHTML+=`<div class="m-report-item" onclick="showToast('Opening ${r.name}','📋')">
+    <div class="mri-icon" style="background:${r.bg};">${r.icon}</div>
+    <div style="flex:1;"><div class="mri-name">${r.name}</div><div class="mri-date">${r.date} · ${r.type}</div></div>
+    <span style="font-size:18px;">›</span>
+  </div>`;
+});
+
+// ── MOBILE APPOINTMENTS ──
+const mAppts=[
+  {icon:'📹',bg:'var(--brand-light)',doc:'Dr. Anand Krishnan',spec:'General Medicine',date:'15 Mar 2024 · 10:30 AM',type:'Telemedicine',status:'Upcoming',col:'var(--brand)'},
+  {icon:'🦴',bg:'var(--success-lt)',doc:'Dr. Ramesh Iyer',spec:'Orthopaedics',date:'22 Mar 2024 · 11:00 AM',type:'In-person',status:'Scheduled',col:'var(--success-dark)'},
+  {icon:'❤️',bg:'var(--danger-lt)',doc:'Dr. Meera Suresh',spec:'Cardiology',date:'28 Mar 2024 · 09:30 AM',type:'In-person',status:'Scheduled',col:'var(--danger)'},
+  {icon:'📋',bg:'var(--surface-2)',doc:'Dr. Anand Krishnan',spec:'General Medicine',date:'14 Mar 2024 · 10:30 AM',type:'In-person',status:'Completed',col:'var(--text-3)'},
+];
+const mappts=document.getElementById('m-appts-list');
+mAppts.forEach(a=>{
+  mappts.innerHTML+=`<div class="m-report-item" onclick="showToast('${a.doc} — ${a.date}','📅')">
+    <div class="mri-icon" style="background:${a.bg};">${a.icon}</div>
+    <div style="flex:1;"><div class="mri-name">${a.doc}</div><div class="mri-date">${a.spec} · ${a.date}</div></div>
+    <span class="mri-badge" style="background:${a.bg};color:${a.col};">${a.status}</span>
+  </div>`;
+});
+
+// ── DESKTOP RECORDS ──
+const desktopRecords=[
+  {icon:'📋',bg:'var(--brand-light)',name:'OPD Consultation Notes — Dr. Anand K.',date:'14 Mar 2024',type:'Consultation',cat:'opd'},
+  {icon:'💊',bg:'var(--warn-lt)',name:'e-Prescription — Hypertension & Diabetes',date:'14 Mar 2024',type:'Prescription',cat:'prescriptions'},
+  {icon:'🏥',bg:'var(--purple-lt)',name:'IPD Discharge Summary — L-TKR Surgery',date:'16 Mar 2024',type:'Hospitalisation',cat:'ipd'},
+  {icon:'🩸',bg:'var(--success-lt)',name:'CBC + Differential Count Results',date:'14 Mar 2024',type:'Lab Report',cat:'lab'},
+  {icon:'🩻',bg:'var(--brand-light)',name:'Chest X-Ray (PA View) — Normal',date:'05 Mar 2024',type:'Radiology',cat:'radiology'},
+  {icon:'📋',bg:'var(--surface-2)',name:'OPD Consultation — Follow-up Visit',date:'28 Feb 2024',type:'Consultation',cat:'opd'},
+  {icon:'💊',bg:'var(--warn-lt)',name:'e-Prescription — Metformin, Atorvastatin',date:'28 Feb 2024',type:'Prescription',cat:'prescriptions'},
+  {icon:'🔬',bg:'var(--accent-lt)',name:'LFT + KFT Panel Results',date:'28 Feb 2024',type:'Lab Report',cat:'lab'},
+];
+const statusColors={Consultation:'var(--brand)',Prescription:'var(--warn-dark)',Hospitalisation:'var(--purple)',Radiology:'var(--brand)','Lab Report':'var(--success-dark)'};
+const dRecList=document.getElementById('desktop-records-list');
+function renderRecords(cat='all'){
+  dRecList.innerHTML='';
+  desktopRecords.filter(r=>cat==='all'||r.cat===cat).forEach(r=>{
+    dRecList.innerHTML+=`<div class="rec-item" onclick="showToast('Opening ${r.name}','📋')">
+      <div class="ri-icon" style="background:${r.bg};">${r.icon}</div>
+      <div style="flex:1;"><div class="ri-title">${r.name}</div><div class="ri-meta">${r.type} · ${r.date}</div></div>
+      <span style="font-size:11px;font-weight:600;padding:3px 9px;border-radius:10px;background:${r.bg};color:${statusColors[r.type]||'var(--text-2)'};">${r.type}</span>
+      <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();showToast('Downloading ${r.name}','⬇')">⬇</button>
+      <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();showToast('Opening ${r.name}','📋')">View</button>
+    </div>`;
+  });
+}
+renderRecords();
+function setRecTab(el,cat){
+  document.querySelectorAll('.rct').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderRecords(cat);
+}
+
+// ── PAST CONSULTS ──
+const pastConsults=[
+  {doc:'Dr. Anand Krishnan',date:'28 Feb 2024 · 10:00 AM',duration:'18 min',notes:'BP reviewed. Medication adjusted.'},
+  {doc:'Dr. Meera Suresh',date:'15 Jan 2024 · 09:30 AM',duration:'22 min',notes:'Cardiology review. ECG ordered.'},
+];
+const pcEl=document.getElementById('past-consults');
+pastConsults.forEach(c=>{
+  pcEl.innerHTML+=`<div class="rec-item" onclick="showToast('Consultation on ${c.date}','📹')">
+    <div class="ri-icon" style="background:var(--brand-light);">📹</div>
+    <div style="flex:1;"><div class="ri-title">${c.doc}</div><div class="ri-meta">${c.date} · ${c.duration} · ${c.notes}</div></div>
+    <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();showToast('Downloading consultation summary','⬇')">⬇ Summary</button>
+  </div>`;
+});
+
+// ── PRESCRIPTIONS ──
+const prescriptions=[
+  {drug:'Amlodipine 10mg',dose:'1 tablet Once Daily',duration:'90 days',remaining:76,doc:'Dr. Anand Krishnan',date:'14 Mar 2024',refill:true},
+  {drug:'Losartan 50mg',dose:'1 tablet Once Daily',duration:'90 days',remaining:76,doc:'Dr. Anand Krishnan',date:'14 Mar 2024',refill:true},
+  {drug:'Metformin 500mg',dose:'1 tablet Twice Daily',duration:'90 days',remaining:152,doc:'Dr. Anand Krishnan',date:'14 Mar 2024',refill:false},
+  {drug:'Atorvastatin 20mg',dose:'1 tablet at Night',duration:'90 days',remaining:76,doc:'Dr. Anand Krishnan',date:'28 Feb 2024',refill:false},
+];
+const plEl=document.getElementById('prescriptions-list');
+prescriptions.forEach(p=>{
+  const pct=Math.round((p.remaining/(p.duration==='90 days'?90:30))*100);
+  plEl.innerHTML+=`<div class="rec-item" onclick="showToast('${p.drug} — ${p.dose}','💊')">
+    <div class="ri-icon" style="background:var(--warn-lt);">💊</div>
+    <div style="flex:1;">
+      <div class="ri-title">${p.drug}</div>
+      <div class="ri-meta">${p.dose} · ${p.duration} · ${p.doc} · ${p.date}</div>
+      <div class="prog-bar" style="margin-top:6px;"><div class="prog-fill" style="width:${pct}%;background:var(--warn);"></div></div>
+      <div style="font-size:10px;color:var(--text-3);margin-top:2px;">${p.remaining} tablets remaining</div>
+    </div>
+    ${p.refill?`<button class="btn btn-success btn-sm" onclick="event.stopPropagation();showToast('Refill requested — pharmacy notified','💊')">Request Refill</button>`:''}
+  </div>`;
+});
+
+// ── BILLS ──
+const billsEl=document.getElementById('bills-list');
+billsEl.innerHTML=`
+<div style="background:var(--danger-lt);border:1px solid #FCA5A5;border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:12px;">
+  <span style="font-size:24px;">💳</span>
+  <div style="flex:1;"><div style="font-size:14px;font-weight:700;color:var(--danger);">Outstanding Balance: ₹4,200</div>
+  <div style="font-size:12px;color:var(--danger-dark);">OPD Visit — 14 Mar 2024 · Due: 28 Mar 2024</div></div>
+  <button class="btn btn-primary" onclick="showToast('Payment gateway opened — ₹4,200','💳')">Pay Now</button>
+</div>
+<div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px;">Recent Transactions</div>
+${[{desc:'OPD Consultation — 14 Mar',amt:'₹800',paid:false},{desc:'Lab Tests (CBC, Lipid, HbA1c)',amt:'₹3,400',paid:false},{desc:'OPD Consultation — 28 Feb',amt:'₹800',paid:true},{desc:'Lab Tests (LFT, KFT)',amt:'₹1,800',paid:true}].map(b=>`
+  <div class="rec-item" onclick="showToast('${b.desc}','💳')">
+    <div class="ri-icon" style="background:${b.paid?'var(--success-lt)':'var(--danger-lt)'};">${b.paid?'✅':'💳'}</div>
+    <div style="flex:1;"><div class="ri-title">${b.desc}</div></div>
+    <span style="font-family:'DM Mono',monospace;font-weight:700;color:${b.paid?'var(--success-dark)':'var(--danger)'};">${b.amt}</span>
+    <span class="badge ${b.paid?'bd-green':'bd-red'}">${b.paid?'Paid':'Pending'}</span>
+  </div>`).join('')}`;
+
+// ── DESKTOP PANELS ──
+const panels=['home','book','records','reports','tele','prescriptions','bills'];
+function showDesktopPanel(id,navEl){
+  panels.forEach(p=>document.getElementById('dp-'+p).style.display='none');
+  document.getElementById('dp-'+id).style.display='block';
+  if(navEl){
+    document.querySelectorAll('.ds-nav-item').forEach(i=>i.classList.remove('active'));
+    if(navEl) navEl.classList.add('active');
+  }
+}
+
+// ── BOOKING WIZARD ──
+const bookSteps=[{label:'Doctor'},{label:'Date & Time'},{label:'Your Info'},{label:'Confirm'}];
+let bookStep=1;
+const doctors=[
+  {init:'AK',col:'#1A5EAB',name:'Dr. Anand Krishnan',spec:'General Medicine',slots:14},
+  {init:'MS',col:'#7C3AED',name:'Dr. Meera Suresh',spec:'Cardiology',slots:9},
+  {init:'RI',col:'#059669',name:'Dr. Ramesh Iyer',spec:'Orthopaedics',slots:3},
+  {init:'PN',col:'#0891B2',name:'Dr. Priya Nair',spec:'General Surgery',slots:12},
+  {init:'SK',col:'#DC2626',name:'Dr. Suresh Kumar',spec:'Dermatology',slots:8},
+  {init:'VN',col:'#7C3AED',name:'Dr. Veena Nair',spec:'Gynaecology',slots:10},
+];
+const bookContent=[
+  `<div class="doc-grid">${doctors.map((d,i)=>`<div class="doc-pick${i===0?' sel':''}" onclick="selectDoc(this,'${d.name}')"><div class="dp-av-sm" style="background:${d.col};">${d.init}</div><div class="dp-name-sm">${d.name}</div><div class="dp-spec-sm">${d.spec}</div><div class="dp-slots" style="color:${d.slots<5?'var(--danger)':d.slots<10?'var(--warn-dark)':'var(--success-dark)'};">${d.slots} slots open</div></div>`).join('')}</div>`,
+  `<div class="fg2" style="gap:12px;margin-bottom:14px;"><div class="form-group"><label class="fl">Date</label><input class="fi" type="date" value="2024-03-15"/></div><div class="form-group"><label class="fl">Visit Type</label><select class="fs"><option>In-person</option><option>Telemedicine</option></select></div></div>
+  <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:8px;">Available Time Slots</div>
+  <div class="ts-grid"><div class="ts-slot taken">09:00</div><div class="ts-slot taken">09:15</div><div class="ts-slot taken">09:30</div><div class="ts-slot taken">09:45</div><div class="ts-slot taken">10:00</div><div class="ts-slot sel" onclick="selectTs(this)">10:30 ✓</div><div class="ts-slot" onclick="selectTs(this)">11:00</div><div class="ts-slot" onclick="selectTs(this)">11:15</div><div class="ts-slot taken">11:30</div><div class="ts-slot" onclick="selectTs(this)">14:00</div><div class="ts-slot" onclick="selectTs(this)">14:15</div><div class="ts-slot" onclick="selectTs(this)">14:30</div><div class="ts-slot" onclick="selectTs(this)">14:45</div><div class="ts-slot" onclick="selectTs(this)">15:00</div><div class="ts-slot" onclick="selectTs(this)">15:15</div></div>`,
+  `<div class="fg2" style="gap:12px;"><div class="form-group full"><label class="fl">Patient Name</label><input class="fi" value="Ravi Kumar" readonly/></div><div class="form-group"><label class="fl">Mobile</label><input class="fi" value="+91 98765 43210"/></div><div class="form-group"><label class="fl">Insurance</label><select class="fs"><option>Star Health Insurance</option><option>Self-pay</option></select></div><div class="form-group full"><label class="fl">Reason for Visit</label><input class="fi" placeholder="Chief complaint / reason..."/></div><div class="form-group full"><label class="fl">Reminder</label><select class="fs"><option>SMS + WhatsApp (24h & 2h before)</option><option>SMS only</option><option>None</option></select></div></div>`,
+  `<div style="background:var(--success-lt);border:1.5px solid #6EE7B7;border-radius:var(--radius-lg);padding:20px;text-align:center;"><div style="font-size:36px;margin-bottom:12px;">🎉</div><div style="font-size:16px;font-weight:800;color:var(--success-dark);margin-bottom:6px;">Ready to Confirm!</div><div style="font-size:13px;color:var(--text-2);">Dr. Anand Krishnan · 15 Mar 2024 · 10:30 AM</div><div style="font-size:12px;color:var(--text-3);margin-top:3px;">In-person · Diagnotica Clinic OPD · Room 4</div><div style="font-size:12px;color:var(--success-dark);font-weight:600;margin-top:8px;">✓ SMS + WhatsApp reminder will be sent</div><button onclick="showToast('Appointment confirmed! 🎉 Check your SMS for details','📅')" style="margin-top:16px;padding:11px 32px;background:var(--brand);color:#fff;border:none;border-radius:var(--radius);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;">📅 Confirm Appointment</button></div>`,
+];
+function renderBookStep(){
+  const steps=document.getElementById('booking-steps');
+  steps.innerHTML=bookSteps.map((s,i)=>{
+    const state=i<bookStep?'done':i===bookStep?'active':'pending';
+    const lineD=i<bookSteps.length-1?`<div class="bsb-line${state==='done'?' bsb-line-done':''}"></div>`:'';
+    return `<div class="bsb-step ${state}"><div class="bs-step-wrap"><div class="bsb-circle" onclick="if(${i}<${bookStep})bookStep=${i};renderBookStep();">${state==='done'?'✓':i+1}</div><div class="bsb-label">${s.label}</div></div>${lineD}</div>`;
+  }).join('');
+  document.getElementById('booking-step-content').innerHTML=bookContent[bookStep];
+  document.getElementById('book-prev').style.visibility=bookStep===0?'hidden':'visible';
+  const nb=document.getElementById('book-next');
+  nb.textContent=bookStep===3?'Done ✓':'Next →';
+  nb.className=bookStep===3?'btn btn-success':'btn btn-primary';
+}
+function changeBookStep(d){const n=bookStep+d;if(n<0||n>3)return;bookStep=n;renderBookStep();}
+function selectDoc(el,name){document.querySelectorAll('.doc-pick').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');showToast('Selected: '+name,'👨‍⚕️');}
+function selectTs(el){document.querySelectorAll('.ts-slot:not(.taken)').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');showToast('Slot selected: '+el.textContent,'✅');}
+renderBookStep();
+
+// ── TOAST ──
+let tt;
+function showToast(msg,icon='✅'){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').innerHTML=msg;
+  document.getElementById('toast-icon').textContent=icon;
+  t.classList.add('show');clearTimeout(tt);
+  tt=setTimeout(()=>t.classList.remove('show'),3200);
+}
+</script>
+</body>
+</html>

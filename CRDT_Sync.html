@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Diagnotica HMS — Offline Sync (CRDT)</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --brand:#1A5EAB;--brand-dark:#0F3F78;--brand-light:#E8F1FB;
+  --accent:#00C0A3;--accent-lt:#E0F9F5;--accent-dark:#007A68;
+  --warn:#F59E0B;--warn-lt:#FEF3C7;--warn-dark:#92400E;
+  --danger:#EF4444;--danger-lt:#FEE2E2;
+  --success:#10B981;--success-lt:#D1FAE5;--success-dark:#065F46;
+  --purple:#7C3AED;--purple-lt:#EDE9FE;
+  --text-1:#0F1C2E;--text-2:#3A4D63;--text-3:#7A8FA6;
+  --border:#DDE6F0;--bg:#F0F5FB;--surface:#FFFFFF;--surface-2:#F7FAFD;
+  --radius:10px;--radius-lg:16px;
+  --shadow:0 1px 4px rgba(26,94,171,.08),0 4px 16px rgba(26,94,171,.06);
+  --shadow-lg:0 8px 32px rgba(26,94,171,.14);
+  --offline-bg:#FFFBEB;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-1);min-height:100vh;font-size:14px;}
+
+/* ─── OFFLINE BANNER ─── */
+.offline-banner{
+  background:linear-gradient(135deg,#FEF3C7,#FFFBEB);
+  border-bottom:2px solid #FCD34D;
+  padding:0 24px;
+  height:0;overflow:hidden;
+  display:flex;align-items:center;justify-content:space-between;
+  transition:height .35s cubic-bezier(.34,1.1,.64,1),padding .35s;
+  flex-shrink:0;position:sticky;top:52px;z-index:90;
+}
+.offline-banner.show{height:44px;padding:0 24px;}
+.ob-left{display:flex;align-items:center;gap:10px;}
+.ob-dot{width:10px;height:10px;border-radius:50%;background:var(--warn);animation:warnPulse 1.4s infinite;}
+@keyframes warnPulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.ob-text{font-size:13px;font-weight:600;color:var(--warn-dark);}
+.ob-sub{font-size:11px;color:#92400E;margin-left:8px;}
+.ob-right{display:flex;align-items:center;gap:8px;}
+.ob-retry{padding:5px 13px;border-radius:8px;border:1.5px solid var(--warn);background:#fff;color:var(--warn-dark);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .13s;}
+.ob-retry:hover{background:var(--warn);color:#fff;}
+
+/* ─── TOPBAR ─── */
+.topbar{background:var(--brand-dark);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:52px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+.logo-wrap{display:flex;align-items:center;gap:10px;}
+.logo-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#F59E0B,#1A5EAB);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;}
+.logo-text{color:#fff;font-size:15px;font-weight:700;}
+.logo-sub{color:#8BAFD4;font-size:11px;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.t-chip{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#D4E8FF;border-radius:6px;padding:5px 12px;font-size:12px;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;}
+.t-chip:hover{background:rgba(255,255,255,.18);}
+.t-chip.offline{background:rgba(245,158,11,.2);border-color:rgba(245,158,11,.4);color:#FCD34D;}
+.t-chip.online{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3);color:#6EF0DC;}
+.t-chip.rural{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.3);color:#FCD34D;}
+.user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border-radius:20px;padding:4px 12px 4px 4px;}
+.user-av{width:26px;height:26px;border-radius:50%;background:var(--warn);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+
+/* ─── RURAL MODE TOGGLE PILL ─── */
+.rural-pill{
+  display:flex;align-items:center;gap:8px;
+  background:var(--warn-lt);border:2px solid #FCD34D;
+  border-radius:30px;padding:5px 14px;
+  font-size:12px;font-weight:700;color:var(--warn-dark);
+  cursor:pointer;transition:all .2s;
+}
+.rural-pill.off{background:var(--surface-2);border-color:var(--border);color:var(--text-3);}
+.rural-pill-dot{width:10px;height:10px;border-radius:50%;background:var(--warn);transition:background .2s;}
+.rural-pill.off .rural-pill-dot{background:var(--text-3);}
+
+/* ─── SHELL ─── */
+.shell{display:flex;height:calc(100vh - 52px);overflow:hidden;}
+
+/* ─── SIDEBAR ─── */
+.sidebar{width:196px;background:var(--surface);border-right:1px solid var(--border);padding:14px 0;flex-shrink:0;overflow-y:auto;}
+.sb-label{font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;padding:8px 14px 4px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:var(--radius);margin:0 8px 2px;cursor:pointer;color:var(--text-2);font-size:13px;transition:all .15s;position:relative;}
+.nav-item:hover{background:var(--warn-lt);color:var(--warn-dark);}
+.nav-item.active{background:var(--warn-lt);color:var(--warn-dark);font-weight:600;}
+.nav-item.active::before{content:'';position:absolute;left:-4px;top:6px;bottom:6px;width:3px;background:var(--warn);border-radius:0 3px 3px 0;}
+.nb{margin-left:auto;font-size:10px;font-weight:700;border-radius:10px;padding:1px 6px;color:#fff;}
+.nb.w{background:var(--warn);color:var(--warn-dark);}
+.nb.r{background:var(--danger);}
+.nb.g{background:var(--success);}
+.nb.b{background:var(--brand);}
+
+/* ─── MAIN ─── */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+
+/* ─── STATUS BANNER ─── */
+.status-banner{
+  padding:16px 24px;display:flex;align-items:center;gap:20px;
+  position:relative;overflow:hidden;flex-shrink:0;
+  transition:background .5s;
+}
+.status-banner.offline-mode{background:linear-gradient(135deg,#78350F,#92400E,#B45309);}
+.status-banner.online-mode{background:linear-gradient(135deg,var(--brand-dark),#1A5EAB,var(--accent-dark));}
+.status-banner.rural-mode{background:linear-gradient(135deg,#451A03,#78350F,#92400E);}
+.sb-icon{width:50px;height:50px;border-radius:14px;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.sb-info{flex:1;}
+.sb-title{font-size:17px;font-weight:800;color:#fff;margin-bottom:3px;}
+.sb-sub{font-size:12px;color:rgba(255,255,255,.55);}
+.sb-chips{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+.sb-chip{border-radius:20px;padding:3px 12px;font-size:11px;font-weight:600;border:1px solid;}
+.sb-chip.ok{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3);color:#6EF0DC;}
+.sb-chip.warn{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.3);color:#FCD34D;}
+.sb-chip.info{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff;}
+.sync-score{text-align:center;flex-shrink:0;background:rgba(255,255,255,.07);border-radius:var(--radius-lg);padding:12px 20px;border:1px solid rgba(255,255,255,.1);}
+.ss-val{font-size:30px;font-weight:800;color:#FCD34D;line-height:1;}
+.ss-label{font-size:10px;color:rgba(255,255,255,.5);margin-top:3px;text-transform:uppercase;letter-spacing:.05em;}
+.ss-sub{font-size:11px;font-weight:600;color:#FCD34D;margin-top:2px;}
+
+/* ─── CONTENT ─── */
+.content{padding:16px 20px;display:flex;flex-direction:column;gap:16px;flex:1;}
+
+/* ─── CARD ─── */
+.card{background:var(--surface);border-radius:var(--radius-lg);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;}
+.card-header{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);}
+.card-title{font-size:14px;font-weight:700;color:var(--text-1);display:flex;align-items:center;gap:8px;}
+
+/* ─── SYNC PROGRESS ─── */
+.sync-progress-wrap{padding:18px 20px;}
+.sp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.sp-title{font-size:13px;font-weight:600;}
+.sp-count{font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:var(--brand);}
+.sp-bar-outer{height:18px;background:var(--surface-2);border-radius:9px;overflow:hidden;border:1px solid var(--border);margin-bottom:10px;position:relative;}
+.sp-bar-fill{
+  height:100%;border-radius:9px;
+  background:linear-gradient(90deg,var(--brand),var(--accent));
+  transition:width .6s cubic-bezier(.34,1.1,.64,1);
+  position:relative;
+}
+.sp-bar-fill::after{
+  content:'';position:absolute;top:0;right:0;bottom:0;width:20px;
+  background:rgba(255,255,255,.25);
+  animation:shimmer 1.4s linear infinite;
+}
+@keyframes shimmer{0%{opacity:0}50%{opacity:1}100%{opacity:0}}
+.sp-label-row{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text-1);pointer-events:none;mix-blend-mode:multiply;}
+.sp-phases{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+.phase-item{border-radius:8px;padding:9px 10px;border:1.5px solid var(--border);text-align:center;transition:all .2s;cursor:pointer;}
+.phase-item:hover{border-color:var(--brand);}
+.phase-item.done{border-color:#6EE7B7;background:var(--success-lt);}
+.phase-item.active{border-color:var(--brand);background:var(--brand-light);}
+.phase-item.pending{border-color:var(--border);background:var(--surface-2);}
+.phase-item.error{border-color:#FCA5A5;background:var(--danger-lt);}
+.pi-icon{font-size:18px;margin-bottom:3px;}
+.pi-name{font-size:10px;font-weight:600;color:var(--text-2);}
+.pi-count{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;}
+.pi-status{font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;margin-top:2px;display:inline-block;}
+.pis-done{background:var(--success-lt);color:var(--success-dark);}
+.pis-active{background:var(--brand-light);color:var(--brand);animation:activePulse 1.4s infinite;}
+@keyframes activePulse{0%,100%{opacity:1;}50%{opacity:.6;}}
+.pis-pending{background:var(--surface-2);color:var(--text-3);}
+.pis-error{background:var(--danger-lt);color:var(--danger);}
+
+/* ─── DIFF VISUALIZER ─── */
+.diff-layout{display:grid;grid-template-columns:1fr 60px 1fr;gap:0;padding:16px;}
+.diff-pane{border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.diff-pane-header{padding:9px 14px;background:var(--surface-2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;}
+.diff-pane-body{overflow-y:auto;max-height:340px;}
+.diff-pane-body::-webkit-scrollbar{width:3px;}
+.diff-pane-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+.diff-row{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:12px;cursor:pointer;transition:background .12s;position:relative;}
+.diff-row:last-child{border-bottom:none;}
+.diff-row:hover{background:var(--brand-light);}
+.diff-row.added{background:rgba(16,185,129,.06);border-left:3px solid var(--success);}
+.diff-row.modified{background:rgba(245,158,11,.06);border-left:3px solid var(--warn);}
+.diff-row.deleted{background:rgba(239,68,68,.06);border-left:3px solid var(--danger);text-decoration:line-through;opacity:.7;}
+.diff-row.conflict{background:rgba(124,58,237,.08);border-left:3px solid var(--purple);}
+.diff-row.synced{border-left:3px solid var(--success);}
+.dr-id{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-3);min-width:80px;flex-shrink:0;}
+.dr-label{flex:1;}
+.dr-time{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-3);}
+.dr-badge{font-size:9px;font-weight:700;padding:1px 6px;border-radius:5px;flex-shrink:0;}
+.drb-local{background:#FEF3C7;color:#92400E;}
+.drb-cloud{background:var(--brand-light);color:var(--brand);}
+.drb-conflict{background:var(--purple-lt);color:var(--purple);}
+.drb-synced{background:var(--success-lt);color:var(--success-dark);}
+/* Middle arrows */
+.diff-arrows{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:0 4px;}
+.da-row{width:48px;height:28px;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text-3);}
+
+/* ─── CONFLICT LOG ─── */
+.conflict-item{border-radius:var(--radius);border:1.5px solid var(--border);margin-bottom:8px;overflow:hidden;cursor:pointer;transition:all .15s;}
+.conflict-item:hover{border-color:var(--purple);box-shadow:var(--shadow);}
+.conflict-item.resolved{border-color:#6EE7B7;opacity:.75;}
+.conflict-item.unresolved{border-color:#C4B5FD;background:var(--purple-lt);}
+.conflict-item.auto-merged{border-color:#BFDBFE;background:var(--brand-light);}
+.ci-header{padding:10px 14px;display:flex;align-items:center;gap:10px;}
+.ci-icon{font-size:20px;flex-shrink:0;}
+.ci-title{font-size:13px;font-weight:600;flex:1;}
+.ci-meta{font-size:11px;color:var(--text-3);}
+.ci-badge{font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;}
+.cib-unresolved{background:var(--purple-lt);color:var(--purple);}
+.cib-resolved{background:var(--success-lt);color:var(--success-dark);}
+.cib-auto{background:var(--brand-light);color:var(--brand);}
+.ci-detail{padding:0 14px 12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.cid-pane{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:11px;}
+.cid-label{font-weight:700;color:var(--text-2);margin-bottom:4px;font-size:10px;text-transform:uppercase;letter-spacing:.04em;}
+.cid-val{font-family:'DM Mono',monospace;color:var(--text-1);line-height:1.6;}
+.ci-actions{padding:0 14px 10px;display:flex;gap:6px;}
+
+/* ─── RURAL MODE PANEL ─── */
+.rural-panel{border-radius:var(--radius-lg);border:2px solid #FCD34D;background:linear-gradient(135deg,#FFFBEB,#FEF9E7);padding:18px;position:relative;overflow:hidden;}
+.rural-panel::before{content:'🌾';position:absolute;right:-10px;bottom:-10px;font-size:80px;opacity:.08;}
+.rp-title{font-size:15px;font-weight:800;color:#78350F;margin-bottom:4px;}
+.rp-sub{font-size:12px;color:#92400E;margin-bottom:14px;}
+.rp-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+.rps-item{background:#fff;border:1px solid #FCD34D;border-radius:var(--radius);padding:10px;text-align:center;}
+.rps-val{font-size:18px;font-weight:800;color:#78350F;line-height:1;}
+.rps-label{font-size:10px;color:#92400E;margin-top:2px;}
+.rp-feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.rp-feature{display:flex;align-items:flex-start;gap:8px;padding:9px 11px;border-radius:8px;border:1px solid #FCD34D;background:#fff;cursor:pointer;transition:all .13s;}
+.rp-feature:hover{border-color:var(--warn);background:var(--warn-lt);}
+.rf-icon{font-size:18px;flex-shrink:0;}
+.rf-title{font-size:12px;font-weight:700;color:#78350F;}
+.rf-desc{font-size:10px;color:#92400E;margin-top:1px;}
+.rf-toggle{margin-left:auto;flex-shrink:0;}
+/* toggle switch */
+.toggle-sw{width:34px;height:20px;border-radius:10px;background:var(--border);position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.toggle-sw.on{background:var(--success);}
+.toggle-sw.warn-on{background:var(--warn);}
+.toggle-knob{width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.toggle-sw.on .toggle-knob,.toggle-sw.warn-on .toggle-knob{transform:translateX(14px);}
+
+/* ─── TWO COL ─── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+
+/* ─── PROGRESS BAR ─── */
+.prog-bar{height:5px;background:var(--border);border-radius:4px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:4px;transition:width .5s;}
+
+/* ─── FORM ─── */
+.fi{padding:8px 11px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;color:var(--text-1);background:var(--surface-2);outline:none;transition:border-color .15s;}
+.fi:focus{border-color:var(--brand);background:#fff;}
+
+/* ─── BTN ─── */
+.btn{padding:8px 16px;border-radius:var(--radius);border:none;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+.btn-primary{background:var(--brand);color:#fff;}
+.btn-primary:hover{background:var(--brand-dark);}
+.btn-warn{background:var(--warn);color:var(--warn-dark);}
+.btn-warn:hover{background:#D97706;}
+.btn-success{background:var(--success);color:#fff;}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-outline{background:var(--surface);color:var(--brand);border:1.5px solid var(--brand);}
+.btn-outline:hover{background:var(--brand-light);}
+.btn-sm{padding:5px 11px;font-size:12px;}
+.btn-purple{background:var(--purple);color:#fff;}
+
+/* ─── BADGE ─── */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600;}
+.bd-blue{background:var(--brand-light);color:var(--brand);}
+.bd-green{background:var(--success-lt);color:var(--success);}
+.bd-warn{background:var(--warn-lt);color:var(--warn-dark);}
+.bd-red{background:var(--danger-lt);color:var(--danger);}
+.bd-purple{background:var(--purple-lt);color:var(--purple);}
+.bd-gray{background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+/* ─── TOAST ─── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--brand-dark);color:#fff;padding:11px 20px;border-radius:var(--radius);font-size:13px;font-weight:500;z-index:999;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px;opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- ─── OFFLINE BANNER ─── -->
+<div class="offline-banner" id="offline-banner">
+  <div class="ob-left">
+    <div class="ob-dot"></div>
+    <span class="ob-text">You are offline</span>
+    <span class="ob-sub">Changes are saved locally (IndexedDB) and will sync when connection is restored.</span>
+  </div>
+  <div class="ob-right">
+    <span style="font-size:12px;color:#92400E;">Last synced: <b>14 Mar 2024 · 14:48</b></span>
+    <button class="ob-retry" onclick="retryConnection()">↺ Retry Connection</button>
+  </div>
+</div>
+
+<!-- ─── TOPBAR ─── -->
+<div class="topbar">
+  <div class="logo-wrap">
+    <div class="logo-mark">⟳</div>
+    <div><div class="logo-text">Diagnotica HMS</div><div class="logo-sub">Offline Sync — CRDT Conflict-free Replicated Data Types</div></div>
+  </div>
+  <div class="topbar-right">
+    <div class="t-chip offline" id="conn-chip">⚠ Offline</div>
+    <div class="rural-pill" id="rural-pill" onclick="toggleRural()">
+      <div class="rural-pill-dot"></div>
+      <span>Rural Mode: ON</span>
+    </div>
+    <div class="t-chip" onclick="triggerSync()">⟳ Force Sync</div>
+    <div class="t-chip" onclick="showToast('Clearing local IndexedDB cache...','🗑')">🗑 Clear Cache</div>
+    <div class="user-chip">
+      <div class="user-av">RN</div>
+      <span style="color:#D4E8FF;font-size:12px;">Nurse — Rural Sub-Centre</span>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+<!-- ─── SIDEBAR ─── -->
+<nav class="sidebar">
+  <div class="sb-label">Sync Engine</div>
+  <div class="nav-item active">⟳ Sync Dashboard</div>
+  <div class="nav-item">📦 Local Data Store <span class="nb b">50</span></div>
+  <div class="nav-item">☁ Cloud Diff Viewer</div>
+  <div class="nav-item">⚡ Conflict Resolver <span class="nb r">3</span></div>
+  <div class="nav-item">🌾 Rural Mode Config</div>
+  <div class="nav-item">📋 Sync History</div>
+  <div class="sb-label">Data Types</div>
+  <div class="nav-item">👤 Patient Records <span class="nb w">12</span></div>
+  <div class="nav-item">📋 Clinical Notes <span class="nb w">8</span></div>
+  <div class="nav-item">💊 Prescriptions <span class="nb w">6</span></div>
+  <div class="nav-item">🧪 Lab Requests <span class="nb g">4</span></div>
+  <div class="nav-item">📅 Appointments <span class="nb g">20</span></div>
+  <div class="sb-label">Diagnostics</div>
+  <div class="nav-item">📊 Sync Analytics</div>
+  <div class="nav-item">⚙ CRDT Config</div>
+  <div class="nav-item">📝 Change Log</div>
+</nav>
+
+<div class="main">
+
+<!-- ─── STATUS BANNER ─── -->
+<div class="status-banner offline-mode" id="status-banner">
+  <div class="sb-icon" id="sb-icon">📡</div>
+  <div class="sb-info">
+    <div class="sb-title" id="sb-title">Offline Mode — CRDT Sync Engine Active</div>
+    <div class="sb-sub" id="sb-sub">Rural Sub-Centre, Tamil Nadu · IndexedDB local store · 50 records pending sync · LWW + OR-Set strategy</div>
+    <div class="sb-chips">
+      <span class="sb-chip warn" id="conn-status-chip">⚠ No Internet Connection</span>
+      <span class="sb-chip warn">50 Records Queued</span>
+      <span class="sb-chip info">CRDT: Active</span>
+      <span class="sb-chip info">IndexedDB: 3.2 MB</span>
+      <span class="sb-chip info">Last sync: 14:48</span>
+    </div>
+  </div>
+  <div class="sync-score">
+    <div class="ss-val" id="sync-score-val">0%</div>
+    <div class="ss-label" id="sync-score-label">Sync Progress</div>
+    <div class="ss-sub" id="sync-score-sub">0 / 50 synced</div>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- ─── SYNC PROGRESS ─── -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">⟳ Sync Progress — Pending Upload Queue</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="badge bd-warn" id="progress-badge">0 / 50 records</span>
+        <button class="btn btn-warn btn-sm" id="sync-btn" onclick="triggerSync()">▶ Start Sync</button>
+        <button class="btn btn-outline btn-sm" onclick="resetSync()">↺ Reset</button>
+      </div>
+    </div>
+    <div class="sync-progress-wrap">
+      <div class="sp-header">
+        <div class="sp-title">Upload to Cloud — <span id="sp-status-text" style="color:var(--warn-dark);font-weight:600;">Waiting for connection</span></div>
+        <div class="sp-count" id="sp-count">0 / 50</div>
+      </div>
+      <div class="sp-bar-outer">
+        <div class="sp-bar-fill" id="sp-bar" style="width:0%"></div>
+        <div class="sp-label-row" id="sp-label">0%</div>
+      </div>
+      <!-- PHASE BREAKDOWN -->
+      <div class="sp-phases" id="sp-phases"></div>
+    </div>
+  </div>
+
+  <!-- ─── DIFF VISUALIZER ─── -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">🔬 IndexedDB vs Cloud — Live Diff</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="badge bd-warn" id="diff-badge">12 local-only · 3 conflicts · 35 in sync</span>
+        <select style="padding:5px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:12px;background:var(--surface-2);outline:none;" onchange="filterDiff(this.value)">
+          <option value="all">All Records</option>
+          <option value="local">Local Only</option>
+          <option value="conflict">Conflicts</option>
+          <option value="synced">In Sync</option>
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="showToast('Full diff report exported','📊')">📊 Export Diff</button>
+      </div>
+    </div>
+    <div class="diff-layout">
+      <!-- LOCAL -->
+      <div class="diff-pane">
+        <div class="diff-pane-header" style="background:#FFFBEB;border-bottom-color:#FCD34D;">
+          <span style="font-size:16px;">💾</span>
+          <span style="color:var(--warn-dark);font-weight:700;">Local — IndexedDB</span>
+          <span class="badge bd-warn" style="margin-left:auto;font-size:10px;">50 records</span>
+        </div>
+        <div class="diff-pane-body" id="local-pane"></div>
+      </div>
+      <!-- ARROWS -->
+      <div class="diff-arrows" id="diff-arrows"></div>
+      <!-- CLOUD -->
+      <div class="diff-pane">
+        <div class="diff-pane-header" style="background:var(--brand-light);border-bottom-color:#BFDBFE;">
+          <span style="font-size:16px;">☁</span>
+          <span style="color:var(--brand);font-weight:700;">Cloud — PostgreSQL</span>
+          <span class="badge bd-blue" style="margin-left:auto;font-size:10px;">38 records</span>
+        </div>
+        <div class="diff-pane-body" id="cloud-pane"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── CONFLICT LOG + RURAL PANEL ─── -->
+  <div class="two-col">
+
+    <!-- CONFLICT RESOLUTION LOG -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">⚡ Conflict Resolution Log</div>
+        <div style="display:flex;gap:6px;">
+          <span class="badge bd-purple">3 Unresolved</span>
+          <span class="badge bd-green">8 Auto-merged</span>
+          <span class="badge bd-blue">12 Resolved</span>
+        </div>
+      </div>
+      <div style="padding:14px;" id="conflict-log"></div>
+    </div>
+
+    <!-- RURAL MODE PANEL -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div class="rural-panel" id="rural-panel">
+        <div class="rp-title">🌾 Rural Mode — Low-Bandwidth Configuration</div>
+        <div class="rp-sub">Optimised for 2G/EDGE networks · Compressed payloads · Priority-based sync</div>
+        <div class="rp-stats" id="rural-stats"></div>
+        <div class="rp-feature-grid" id="rural-features"></div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-warn btn-sm" onclick="showToast('Rural mode configuration saved','🌾')">💾 Save Config</button>
+          <button class="btn btn-outline btn-sm" onclick="showToast('Compression test running...','🔬')">🔬 Test Bandwidth</button>
+        </div>
+      </div>
+
+      <!-- QUICK STATS -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">📊 Sync Analytics</div></div>
+        <div style="padding:14px;" id="sync-analytics"></div>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span id="toast-icon">✅</span><span id="toast-msg">Done</span></div>
+
+<script>
+// ─── STATE ───
+let isOffline=true;
+let isRural=true;
+let syncRunning=false;
+let syncProgress=0;
+let syncTimer=null;
+
+// ─── OFFLINE BANNER ───
+function updateOfflineBanner(){
+  const banner=document.getElementById('offline-banner');
+  banner.classList.toggle('show',isOffline);
+}
+updateOfflineBanner();
+
+// ─── RURAL MODE TOGGLE ───
+function toggleRural(){
+  isRural=!isRural;
+  const pill=document.getElementById('rural-pill');
+  pill.querySelector('span').textContent=`Rural Mode: ${isRural?'ON':'OFF'}`;
+  pill.classList.toggle('off',!isRural);
+  updateStatusBanner();
+  showToast(isRural?'Rural mode enabled — compression & priority sync active':'Rural mode disabled — full sync','🌾');
+}
+
+function retryConnection(){
+  showToast('Attempting to reconnect...','📡');
+  setTimeout(()=>{
+    isOffline=false;
+    updateOfflineBanner();
+    const chip=document.getElementById('conn-chip');
+    chip.className='t-chip online';
+    chip.textContent='● Online';
+    document.getElementById('conn-status-chip').textContent='✓ Connected';
+    document.getElementById('conn-status-chip').className='sb-chip ok';
+    updateStatusBanner();
+    showToast('Connection restored! Ready to sync.','✅');
+    setTimeout(triggerSync,600);
+  },2200);
+}
+
+function updateStatusBanner(){
+  const banner=document.getElementById('status-banner');
+  const icon=document.getElementById('sb-icon');
+  const title=document.getElementById('sb-title');
+  const sub=document.getElementById('sb-sub');
+  if(isRural&&isOffline){
+    banner.className='status-banner rural-mode';
+    icon.textContent='🌾';
+    title.textContent='Rural Mode — Offline Sync Engine Active';
+    sub.textContent='Low-bandwidth mode · Compressed CRDT payloads · Priority: Patient records first';
+  } else if(isOffline){
+    banner.className='status-banner offline-mode';
+    icon.textContent='📡';
+    title.textContent='Offline Mode — CRDT Sync Engine Active';
+    sub.textContent='Rural Sub-Centre, Tamil Nadu · IndexedDB local store · 50 records pending sync';
+  } else {
+    banner.className='status-banner online-mode';
+    icon.textContent='☁';
+    title.textContent='Online — Syncing with Cloud';
+    sub.textContent='Connection restored · Uploading pending records · CRDT merge in progress';
+  }
+}
+
+// ─── SYNC PHASES ───
+const phases=[
+  {icon:'👤',name:'Patient Records',count:12,status:'pending'},
+  {icon:'📋',name:'Clinical Notes',count:8,status:'pending'},
+  {icon:'💊',name:'Prescriptions',count:6,status:'pending'},
+  {icon:'🧪',name:'Lab Requests',count:4,status:'pending'},
+  {icon:'📅',name:'Appointments',count:20,status:'pending'},
+];
+let phaseState=[...phases.map(p=>({...p}))];
+
+function renderPhases(){
+  const c=document.getElementById('sp-phases');
+  c.innerHTML='';
+  phaseState.forEach(p=>{
+    const clsMap={done:'done',active:'active',pending:'pending',error:'error'};
+    const stMap={done:'pis-done',active:'pis-active',pending:'pis-pending',error:'pis-error'};
+    const stLabel={done:'✓ Done',active:'Syncing…',pending:'Pending',error:'Error'};
+    c.innerHTML+=`<div class="phase-item ${clsMap[p.status]}" onclick="showToast('${p.name}: ${p.count} records','📦')">
+      <div class="pi-icon">${p.icon}</div>
+      <div class="pi-name">${p.name}</div>
+      <div class="pi-count" style="color:${p.status==='done'?'var(--success-dark)':p.status==='active'?'var(--brand)':'var(--text-3)'};">${p.count}</div>
+      <div class="pi-status ${stMap[p.status]}">${stLabel[p.status]}</div>
+    </div>`;
+  });
+}
+renderPhases();
+
+// ─── SYNC PROGRESS ───
+function updateSyncUI(progress){
+  const pct=Math.round((progress/50)*100);
+  document.getElementById('sp-bar').style.width=pct+'%';
+  document.getElementById('sp-label').textContent=pct+'%';
+  document.getElementById('sp-count').textContent=progress+' / 50';
+  document.getElementById('progress-badge').textContent=progress+' / 50 records';
+  document.getElementById('sync-score-val').textContent=pct+'%';
+  document.getElementById('sync-score-sub').textContent=progress+' / 50 synced';
+  if(pct===100){
+    document.getElementById('sync-score-label').textContent='Sync Complete';
+    document.getElementById('sp-status-text').textContent='Sync complete ✓';
+    document.getElementById('sp-status-text').style.color='var(--success-dark)';
+  }
+}
+
+function triggerSync(){
+  if(syncRunning) return;
+  if(isOffline){showToast('Cannot sync — no connection. Retry connection first.','⚠');return;}
+  syncRunning=true;
+  document.getElementById('sync-btn').textContent='⏸ Syncing…';
+  document.getElementById('sync-btn').style.background='var(--success)';
+  document.getElementById('sync-btn').style.color='#fff';
+  document.getElementById('sp-status-text').textContent='Uploading to cloud…';
+  document.getElementById('sp-status-text').style.color='var(--brand)';
+
+  // Animate through phases
+  let phaseIdx=0;
+  let recordsDone=0;
+  phaseState.forEach(p=>p.status='pending');
+  renderPhases();
+
+  function doPhase(){
+    if(phaseIdx>=phaseState.length){
+      syncRunning=false;
+      document.getElementById('sync-btn').textContent='✓ Synced';
+      updateSyncUI(50);
+      renderPhases();
+      showToast('Sync complete — 50/50 records uploaded ✓','✅');
+      return;
+    }
+    phaseState[phaseIdx].status='active';
+    renderPhases();
+    const records=phaseState[phaseIdx].count;
+    let done=0;
+    const t=setInterval(()=>{
+      done++;recordsDone++;
+      updateSyncUI(recordsDone);
+      updateDiffSynced(recordsDone);
+      if(done>=records){
+        clearInterval(t);
+        phaseState[phaseIdx].status='done';
+        phaseIdx++;
+        renderPhases();
+        setTimeout(doPhase,300);
+      }
+    },isRural?80:40);
+  }
+  setTimeout(doPhase,400);
+}
+
+function resetSync(){
+  syncRunning=false;
+  syncProgress=0;
+  phaseState.forEach(p=>p.status='pending');
+  renderPhases();
+  updateSyncUI(0);
+  document.getElementById('sync-btn').textContent='▶ Start Sync';
+  document.getElementById('sync-btn').style.background='';
+  document.getElementById('sync-btn').style.color='';
+  document.getElementById('sp-status-text').textContent='Waiting for connection';
+  document.getElementById('sp-status-text').style.color='var(--warn-dark)';
+  document.getElementById('sync-score-label').textContent='Sync Progress';
+  showToast('Sync progress reset','↺');
+}
+
+// ─── DIFF DATA ───
+const diffData=[
+  {id:'DX-004821',label:'Ravi Kumar — OPD Note',time:'14:52',local:true,cloud:false,type:'local-only',localTag:'LOCAL',cloudTag:null},
+  {id:'DX-004829',label:'Deepak Kumar — MAR Update',time:'14:48',local:true,cloud:true,type:'conflict',localTag:'MODIFIED',cloudTag:'MODIFIED'},
+  {id:'DX-004831',label:'Rajan Pillai — Vitals',time:'14:44',local:true,cloud:false,type:'local-only',localTag:'LOCAL',cloudTag:null},
+  {id:'DX-004836',label:'Anjali Menon — Prescription',time:'14:38',local:true,cloud:false,type:'local-only',localTag:'LOCAL',cloudTag:null},
+  {id:'DX-004840',label:'Gowri Shankar — Discharge',time:'14:30',local:true,cloud:true,type:'conflict',localTag:'MODIFIED',cloudTag:'MODIFIED'},
+  {id:'DX-004842',label:'Suresh Kumar — Lab Order',time:'14:22',local:true,cloud:true,type:'synced',localTag:'SYNCED',cloudTag:'SYNCED'},
+  {id:'DX-004844',label:'Priya Devi — Ante-natal',time:'14:18',local:true,cloud:true,type:'synced',localTag:'SYNCED',cloudTag:'SYNCED'},
+  {id:'DX-004847',label:'Karthik Rajan — ECG Report',time:'14:10',local:true,cloud:false,type:'local-only',localTag:'LOCAL',cloudTag:null},
+  {id:'DX-004850',label:'Mohan Kumar — Rx Refill',time:'14:05',local:true,cloud:false,type:'local-only',localTag:'LOCAL',cloudTag:null},
+  {id:'DX-004853',label:'Meena Krishna — Immunise',time:'14:00',local:true,cloud:true,type:'conflict',localTag:'MODIFIED',cloudTag:'MODIFIED'},
+  {id:'DX-004855',label:'Vijay Anand — Follow-up',time:'13:55',local:true,cloud:true,type:'synced',localTag:'SYNCED',cloudTag:'SYNCED'},
+  {id:'DX-004860',label:'Lakshmi Priya — ANC Card',time:'13:48',local:true,cloud:true,type:'synced',localTag:'SYNCED',cloudTag:'SYNCED'},
+];
+
+let syncedIds=new Set(['DX-004842','DX-004844','DX-004855','DX-004860']);
+
+function updateDiffSynced(progress){
+  if(progress>10) syncedIds.add('DX-004821');
+  if(progress>18) syncedIds.add('DX-004831');
+  if(progress>24) syncedIds.add('DX-004836');
+  if(progress>28) syncedIds.add('DX-004847');
+  if(progress>34) syncedIds.add('DX-004850');
+  renderDiff('all');
+}
+
+function renderDiff(filter='all'){
+  const lp=document.getElementById('local-pane');
+  const cp=document.getElementById('cloud-pane');
+  const arrows=document.getElementById('diff-arrows');
+  lp.innerHTML='';cp.innerHTML='';arrows.innerHTML='';
+
+  const filtered=filter==='all'?diffData:
+    filter==='local'?diffData.filter(d=>d.type==='local-only'):
+    filter==='conflict'?diffData.filter(d=>d.type==='conflict'):
+    diffData.filter(d=>d.type==='synced');
+
+  const typeColor={
+    'local-only':['modified','#F59E0B'],
+    'conflict':['conflict','#7C3AED'],
+    'synced':['synced','#10B981'],
+  };
+  const badgeCls={'LOCAL':'drb-local','MODIFIED':'drb-local','SYNCED':'drb-synced','CONFLICT':'drb-conflict'};
+
+  filtered.forEach(d=>{
+    const isSynced=syncedIds.has(d.id);
+    const displayType=isSynced?'synced':d.type;
+    const [rowCls,arrowColor]=typeColor[displayType]||typeColor['synced'];
+    const arrowIcon=displayType==='local-only'?'→':displayType==='conflict'?'⚡':'↔';
+
+    // Local row
+    lp.innerHTML+=`<div class="diff-row ${rowCls}" onclick="showToast('${d.id}: ${d.label}','💾')">
+      <div class="dr-id">${d.id}</div>
+      <div class="dr-label">${d.label}</div>
+      <div class="dr-time">${d.time}</div>
+      <span class="dr-badge ${badgeCls[isSynced?'SYNCED':d.localTag]||'drb-local'}">${isSynced?'SYNCED':d.localTag}</span>
+    </div>`;
+
+    // Arrow
+    arrows.innerHTML+=`<div class="da-row" style="color:${arrowColor};font-size:14px;">${arrowIcon}</div>`;
+
+    // Cloud row
+    if(d.cloud||isSynced){
+      const cloudTag=isSynced?'SYNCED':d.cloudTag||'CLOUD';
+      cp.innerHTML+=`<div class="diff-row ${rowCls}" onclick="showToast('Cloud: ${d.id}','☁')">
+        <div class="dr-id">${d.id}</div>
+        <div class="dr-label">${d.label}</div>
+        <div class="dr-time">${isSynced?d.time:'14:30'}</div>
+        <span class="dr-badge ${badgeCls[cloudTag]||'drb-cloud'}">${cloudTag}</span>
+      </div>`;
+    } else {
+      cp.innerHTML+=`<div class="diff-row" style="opacity:.35;cursor:default;padding:8px 12px;border-bottom:1px solid var(--border);">
+        <div class="dr-id" style="color:var(--text-3);">${d.id}</div>
+        <div style="flex:1;font-size:12px;color:var(--text-3);font-style:italic;">Not yet uploaded</div>
+      </div>`;
+    }
+  });
+}
+renderDiff();
+function filterDiff(v){renderDiff(v);}
+
+// ─── CONFLICT LOG ───
+const conflicts=[
+  {
+    icon:'⚡',cls:'unresolved',badge:'cib-unresolved',bLabel:'Unresolved',
+    title:'Vitals Conflict — DX-004829 (Deepak Kumar)',
+    meta:'BP reading differs · Local: 148/92 · Cloud: 124/78 · 14:48 vs 14:30',
+    localVal:'BP: 148/92\nTime: 14:48 (local)\nRecorded by: Nurse A.',
+    cloudVal:'BP: 124/78\nTime: 14:30 (cloud)\nRecorded by: Nurse B.',
+    strategy:'LWW (Last-Write-Wins): Local wins by timestamp',
+  },
+  {
+    icon:'⚡',cls:'unresolved',badge:'cib-unresolved',bLabel:'Unresolved',
+    title:'Discharge Notes Conflict — DX-004840 (Gowri Shankar)',
+    meta:'Summary text differs · Both modified offline by different nurses',
+    localVal:'Discharge: 14 Mar\nCondition: Improved\nAdded: IV line note',
+    cloudVal:'Discharge: 14 Mar\nCondition: Stable\nAdded: Physio note',
+    strategy:'CRDT OR-Set merge: Both additions retained',
+  },
+  {
+    icon:'⚡',cls:'unresolved',badge:'cib-unresolved',bLabel:'Unresolved',
+    title:'Prescription Conflict — DX-004853 (Meena Krishna)',
+    meta:'Drug dose modified locally and centrally during offline period',
+    localVal:'Metformin: 1000mg BD\nModified: 14:52',
+    cloudVal:'Metformin: 500mg BD\nModified: 14:35 (cloud)',
+    strategy:'Clinical review required — cannot auto-merge drug doses',
+  },
+  {
+    icon:'✓',cls:'auto-merged',badge:'cib-auto',bLabel:'Auto-merged',
+    title:'Immunisation Record — DX-004821 (Ravi Kumar)',
+    meta:'Field-level merge · OR-Set CRDT · No data loss',
+    localVal:'BCG: Added locally\nDPT: Added locally',
+    cloudVal:'OPV: Present in cloud\nMeasles: Present in cloud',
+    strategy:'OR-Set union: all 4 vaccines merged into final record',
+  },
+  {
+    icon:'✓',cls:'resolved',badge:'cib-resolved',bLabel:'Resolved',
+    title:'Appointment Timing — DX-004831 (Rajan Pillai)',
+    meta:'Timestamp conflict auto-resolved by LWW strategy',
+    localVal:'Appt: 10:30 AM\nTimestamp: 14:44',
+    cloudVal:'Appt: 09:00 AM\nTimestamp: 13:20 (older)',
+    strategy:'LWW: Local record (newer) applied',
+  },
+];
+const cl=document.getElementById('conflict-log');
+conflicts.forEach((c,i)=>{
+  cl.innerHTML+=`<div class="conflict-item ${c.cls}" id="ci-${i}" onclick="expandConflict(${i})">
+    <div class="ci-header">
+      <div class="ci-icon">${c.icon}</div>
+      <div style="flex:1;">
+        <div class="ci-title">${c.title}</div>
+        <div class="ci-meta">${c.meta}</div>
+        <div class="ci-meta" style="margin-top:3px;color:var(--purple);">Strategy: ${c.strategy}</div>
+      </div>
+      <span class="ci-badge ${c.badge}">${c.bLabel}</span>
+    </div>
+    <div class="ci-detail" id="ci-detail-${i}" style="display:none;">
+      <div class="cid-pane">
+        <div class="cid-label">💾 Local — IndexedDB</div>
+        <div class="cid-val" style="white-space:pre;">${c.localVal}</div>
+      </div>
+      <div class="cid-pane" style="background:var(--brand-light);border-color:#BFDBFE;">
+        <div class="cid-label" style="color:var(--brand);">☁ Cloud — PostgreSQL</div>
+        <div class="cid-val" style="white-space:pre;">${c.cloudVal}</div>
+      </div>
+    </div>
+    ${c.cls==='unresolved'?`<div class="ci-actions" id="ci-actions-${i}" style="display:none;">
+      <button class="btn btn-primary btn-sm" onclick="resolveConflict(${i},'local');event.stopPropagation()">Use Local</button>
+      <button class="btn btn-outline btn-sm" onclick="resolveConflict(${i},'cloud');event.stopPropagation()">Use Cloud</button>
+      <button class="btn btn-purple btn-sm" onclick="resolveConflict(${i},'merge');event.stopPropagation()">CRDT Merge</button>
+      ${i===2?`<button class="btn btn-warn btn-sm" onclick="showToast('Opening clinical review for ${c.title}','🩺');event.stopPropagation()">🩺 Clinical Review</button>`:''}
+    </div>`:''}
+  </div>`;
+});
+function expandConflict(i){
+  const detail=document.getElementById('ci-detail-'+i);
+  const actions=document.getElementById('ci-actions-'+i);
+  const isShown=detail.style.display!=='none';
+  detail.style.display=isShown?'none':'grid';
+  if(actions) actions.style.display=isShown?'none':'flex';
+}
+function resolveConflict(i,strategy){
+  const item=document.getElementById('ci-'+i);
+  item.className='conflict-item resolved';
+  item.querySelector('.ci-badge').className='ci-badge cib-resolved';
+  item.querySelector('.ci-badge').textContent='Resolved';
+  document.getElementById('ci-detail-'+i).style.display='none';
+  const acts=document.getElementById('ci-actions-'+i);
+  if(acts) acts.style.display='none';
+  const msgs={local:'Local record applied — cloud overwritten ✓',cloud:'Cloud record applied — local discarded ✓',merge:'CRDT merge applied — union of both states ✓'};
+  showToast(msgs[strategy],'✅');
+}
+
+// ─── RURAL MODE PANEL ───
+const ruralStats=[
+  {val:'2G',label:'Network Type'},
+  {val:'64KB/s',label:'Bandwidth'},
+  {val:'82%',label:'Compression'},
+  {val:'12hr',label:'Offline Buffer'},
+];
+const rss=document.getElementById('rural-stats');
+ruralStats.forEach(s=>{
+  rss.innerHTML+=`<div class="rps-item"><div class="rps-val">${s.val}</div><div class="rps-label">${s.label}</div></div>`;
+});
+const ruralFeatures=[
+  {icon:'🗜',title:'Gzip Compression',desc:'Reduce payload 80%',on:true,warn:true},
+  {icon:'👤',title:'Patient-first Priority',desc:'Clinical records first',on:true,warn:false},
+  {icon:'🖼',title:'Defer Images',desc:'Skip photos offline',on:true,warn:false},
+  {icon:'📋',title:'Delta-only Sync',desc:'Changed fields only',on:true,warn:false},
+  {icon:'🔋',title:'Battery Saver Mode',desc:'Sync on charge only',on:false,warn:false},
+  {icon:'🔔',title:'SMS Notifications',desc:'Alert on sync done',on:true,warn:false},
+];
+const rf=document.getElementById('rural-features');
+ruralFeatures.forEach((f,i)=>{
+  rf.innerHTML+=`<div class="rp-feature" onclick="toggleRuralFeature(${i},this)">
+    <div class="rf-icon">${f.icon}</div>
+    <div style="flex:1;"><div class="rf-title">${f.title}</div><div class="rf-desc">${f.desc}</div></div>
+    <div class="toggle-sw ${f.on?f.warn?'warn-on':'on':''}" id="rf-toggle-${i}"><div class="toggle-knob"></div></div>
+  </div>`;
+});
+function toggleRuralFeature(i,el){
+  const sw=document.getElementById('rf-toggle-'+i);
+  const isOn=sw.classList.contains('on')||sw.classList.contains('warn-on');
+  sw.className='toggle-sw'+(isOn?'':ruralFeatures[i].warn?' warn-on':' on');
+  showToast(`${ruralFeatures[i].title}: ${isOn?'Disabled':'Enabled'}`,isOn?'🚫':'✅');
+}
+
+// ─── SYNC ANALYTICS ───
+const analytics=[
+  {label:'Records Queued',val:'50',col:'var(--warn-dark)'},
+  {label:'Last Sync Duration',val:'4m 12s',col:'var(--brand)'},
+  {label:'Conflicts Auto-resolved',val:'8 / 11',col:'var(--success-dark)'},
+  {label:'CRDT Strategy Used',val:'LWW + OR-Set',col:'var(--purple)'},
+  {label:'Compression Ratio',val:'82%',col:'var(--accent-dark)'},
+  {label:'Data Size (local)',val:'3.2 MB',col:'var(--brand)'},
+];
+const sa=document.getElementById('sync-analytics');
+analytics.forEach(a=>{
+  sa.innerHTML+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;">
+    <span style="color:var(--text-2);">${a.label}</span>
+    <span style="font-family:'DM Mono',monospace;font-weight:700;color:${a.col};">${a.val}</span>
+  </div>`;
+});
+
+// ─── TOAST ───
+let tt;
+function showToast(msg,icon='✅'){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').innerHTML=msg;
+  document.getElementById('toast-icon').textContent=icon;
+  t.classList.add('show');clearTimeout(tt);
+  tt=setTimeout(()=>t.classList.remove('show'),3200);
+}
+</script>
+</body>
+</html>

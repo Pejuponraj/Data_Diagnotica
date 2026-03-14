@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Diagnotica HMS — Telemedicine</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --brand:#1A5EAB;--brand-dark:#0F3F78;--brand-light:#E8F1FB;
+  --accent:#00C0A3;--accent-lt:#E0F9F5;--accent-dark:#007A68;
+  --warn:#F59E0B;--warn-lt:#FEF3C7;--warn-dark:#92400E;
+  --danger:#EF4444;--danger-lt:#FEE2E2;
+  --success:#10B981;--success-lt:#D1FAE5;--success-dark:#065F46;
+  --purple:#7C3AED;--purple-lt:#EDE9FE;
+  --text-1:#0F1C2E;--text-2:#3A4D63;--text-3:#7A8FA6;
+  --border:#DDE6F0;--bg:#F0F5FB;--surface:#FFFFFF;--surface-2:#F7FAFD;
+  --radius:10px;--radius-lg:16px;
+  --shadow:0 1px 4px rgba(26,94,171,.08),0 4px 16px rgba(26,94,171,.06);
+  --shadow-lg:0 8px 32px rgba(26,94,171,.14);
+  /* Video specific */
+  --vid-bg:#070D1A;--vid-card:#0D1524;--vid-border:rgba(255,255,255,.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--vid-bg);color:#fff;height:100vh;overflow:hidden;font-size:14px;}
+
+/* ═══ TOP HEADER BAR ═══ */
+.tele-topbar{height:52px;background:rgba(0,0,0,.4);border-bottom:1px solid var(--vid-border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.tele-logo{display:flex;align-items:center;gap:10px;}
+.tele-logo-mark{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,#00C0A3,#2E7DD6);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;}
+.tele-logo-text{font-size:14px;font-weight:700;color:#fff;}
+.tele-logo-sub{font-size:10px;color:rgba(255,255,255,.45);}
+.session-info{display:flex;align-items:center;gap:12px;}
+.session-chip{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.07);border:1px solid var(--vid-border);border-radius:6px;padding:5px 12px;font-size:11px;color:rgba(255,255,255,.7);}
+.session-chip.live{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3);color:#6EF0DC;}
+.session-chip.live .live-dot{width:7px;height:7px;border-radius:50%;background:#10B981;animation:livePulse 1.3s infinite;}
+@keyframes livePulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.4);opacity:.7;}}
+.session-id{font-family:'DM Mono',monospace;font-size:11px;color:rgba(255,255,255,.4);}
+.tele-timer{font-family:'DM Mono',monospace;font-size:17px;font-weight:700;color:#fff;letter-spacing:.08em;}
+
+/* ═══ MAIN LAYOUT ═══ */
+.tele-shell{display:flex;height:calc(100vh - 52px);gap:0;}
+
+/* ═══ EMR SIDEBAR (LEFT) ═══ */
+.emr-sidebar{width:280px;background:var(--vid-card);border-right:1px solid var(--vid-border);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;}
+.emr-sb-tabs{display:flex;border-bottom:1px solid var(--vid-border);}
+.emr-tab{flex:1;padding:10px 6px;text-align:center;font-size:11px;font-weight:600;cursor:pointer;color:rgba(255,255,255,.4);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;}
+.emr-tab.active{color:#fff;border-bottom-color:var(--accent);}
+.emr-pane{display:none;overflow-y:auto;flex:1;padding:14px;}
+.emr-pane.active{display:block;}
+.emr-pane::-webkit-scrollbar{width:3px;}
+.emr-pane::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px;}
+
+/* Patient card in EMR */
+.emr-patient-card{background:linear-gradient(135deg,rgba(26,94,171,.3),rgba(0,192,163,.15));border:1px solid rgba(26,94,171,.3);border-radius:var(--radius);padding:12px;margin-bottom:12px;}
+.epc-name{font-size:15px;font-weight:700;margin-bottom:3px;}
+.epc-meta{font-size:11px;color:rgba(255,255,255,.55);}
+.epc-chips{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;}
+.epc-chip{background:rgba(255,255,255,.08);border-radius:20px;padding:2px 9px;font-size:10px;font-weight:600;color:rgba(255,255,255,.7);}
+.epc-chip.alert{background:rgba(239,68,68,.2);color:#FCA5A5;border:1px solid rgba(239,68,68,.3);}
+
+/* Vitals mini strip */
+.vitals-strip{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;}
+.vs-tile{background:rgba(255,255,255,.05);border:1px solid var(--vid-border);border-radius:8px;padding:8px 10px;}
+.vs-val{font-size:16px;font-weight:800;line-height:1;}
+.vs-label{font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;margin-top:2px;letter-spacing:.05em;}
+.vs-tile.hi .vs-val{color:#FCA5A5;}
+.vs-tile.warn .vs-val{color:#FCD34D;}
+.vs-tile.ok .vs-val{color:#6EF0DC;}
+
+/* Meds list in EMR */
+.emr-med-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:7px;background:rgba(255,255,255,.04);border:1px solid var(--vid-border);margin-bottom:5px;font-size:12px;}
+.emr-med-name{flex:1;font-weight:500;}
+.emr-med-dose{font-family:'DM Mono',monospace;font-size:11px;color:rgba(255,255,255,.5);}
+
+/* Diagnosis chips */
+.dx-chip{display:inline-block;background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.3);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;color:#C4B5FD;margin:0 4px 4px 0;}
+
+/* Section header in EMR */
+.emr-section{font-size:10px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+
+/* ═══ VIDEO AREA ═══ */
+.video-area{flex:1;display:flex;flex-direction:column;gap:0;}
+
+/* SPLIT VIDEO PANELS */
+.video-panels{display:grid;grid-template-columns:1fr 1fr;gap:3px;flex:1;position:relative;}
+
+/* INDIVIDUAL VIDEO PANEL */
+.video-panel{background:var(--vid-card);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-direction:column;min-height:0;}
+.video-panel.doctor-panel{background:linear-gradient(180deg,#070D1A,#0A1428);}
+.video-panel.patient-panel{background:linear-gradient(180deg,#070D1A,#0D1A2A);}
+
+/* Animated video feed simulation */
+.vid-feed{width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;position:relative;}
+.vid-avatar{border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:#fff;position:relative;z-index:2;}
+.vid-avatar.doc{width:110px;height:110px;background:linear-gradient(135deg,var(--brand),#00C0A3);box-shadow:0 0 0 4px rgba(0,192,163,.2);}
+.vid-avatar.pat{width:110px;height:110px;background:linear-gradient(135deg,#7C3AED,#1A5EAB);box-shadow:0 0 0 4px rgba(124,58,237,.2);}
+.vid-name-tag{position:absolute;bottom:14px;left:14px;background:rgba(0,0,0,.6);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;}
+.vid-status-tag{position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:5px;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700;}
+.vid-quality{position:absolute;top:12px;right:12px;font-size:10px;color:rgba(255,255,255,.4);font-family:'DM Mono',monospace;}
+
+/* Mic wave animation */
+.mic-wave{display:flex;align-items:center;gap:2px;position:absolute;bottom:50px;}
+.mw-bar{width:3px;border-radius:3px;background:var(--accent);animation:waveAnim 0.8s infinite;}
+.mw-bar:nth-child(1){height:8px;animation-delay:0s;}
+.mw-bar:nth-child(2){height:14px;animation-delay:.1s;}
+.mw-bar:nth-child(3){height:20px;animation-delay:.2s;}
+.mw-bar:nth-child(4){height:14px;animation-delay:.3s;}
+.mw-bar:nth-child(5){height:8px;animation-delay:.4s;}
+@keyframes waveAnim{0%,100%{transform:scaleY(1);opacity:.8;}50%{transform:scaleY(1.6);opacity:1;}}
+
+/* PiP panel */
+.pip-panel{position:absolute;bottom:80px;right:16px;width:140px;height:100px;background:linear-gradient(135deg,var(--brand-dark),var(--brand));border-radius:12px;border:2px solid rgba(255,255,255,.15);overflow:hidden;cursor:pointer;transition:all .18s;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+.pip-panel:hover{transform:scale(1.04);}
+.pip-inner{width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;}
+.pip-av{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;}
+.pip-label{font-size:9px;color:rgba(255,255,255,.6);}
+
+/* Connection overlay */
+.conn-overlay{position:absolute;inset:0;background:rgba(7,13,26,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;transition:opacity .5s;}
+.conn-overlay.connected{opacity:0;pointer-events:none;}
+.conn-spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,.1);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.conn-text{font-size:13px;color:rgba(255,255,255,.6);}
+
+/* Participant label strip */
+.panel-strip{background:rgba(0,0,0,.4);padding:8px 14px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--vid-border);flex-shrink:0;}
+.ps-label{font-size:12px;font-weight:600;}
+.ps-icon{font-size:16px;cursor:pointer;opacity:.7;transition:opacity .13s;}
+.ps-icon:hover{opacity:1;}
+
+/* ═══ CONTROLS BAR ═══ */
+.controls-bar{height:72px;background:rgba(0,0,0,.55);backdrop-filter:blur(16px);border-top:1px solid var(--vid-border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;}
+.controls-center{display:flex;gap:10px;align-items:center;}
+.ctrl-btn{width:48px;height:48px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;transition:all .15s;position:relative;}
+.ctrl-btn:hover{transform:scale(1.08);}
+.ctrl-btn.default{background:rgba(255,255,255,.1);}
+.ctrl-btn.default:hover{background:rgba(255,255,255,.2);}
+.ctrl-btn.active{background:rgba(16,185,129,.2);border:1.5px solid rgba(16,185,129,.4);}
+.ctrl-btn.muted{background:rgba(239,68,68,.15);border:1.5px solid rgba(239,68,68,.35);}
+.ctrl-btn.end-call{width:56px;height:56px;background:var(--danger);box-shadow:0 4px 16px rgba(239,68,68,.4);}
+.ctrl-btn.end-call:hover{background:#C53030;transform:scale(1.1);}
+.ctrl-tooltip{position:absolute;bottom:-28px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#fff;font-size:10px;font-weight:600;padding:3px 8px;border-radius:5px;white-space:nowrap;opacity:0;transition:opacity .15s;pointer-events:none;}
+.ctrl-btn:hover .ctrl-tooltip{opacity:1;}
+.controls-right{display:flex;gap:8px;align-items:center;}
+.ctrl-chip{background:rgba(255,255,255,.08);border:1px solid var(--vid-border);border-radius:20px;padding:7px 14px;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;}
+.ctrl-chip:hover{background:rgba(255,255,255,.15);}
+.ctrl-chip.active{background:rgba(0,192,163,.15);border-color:rgba(0,192,163,.35);color:#6EF0DC;}
+
+/* ═══ RIGHT PANEL (RX + PAYMENT) ═══ */
+.right-panel{width:320px;background:var(--vid-card);border-left:1px solid var(--vid-border);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;}
+.rp-tabs{display:flex;border-bottom:1px solid var(--vid-border);}
+.rp-tab{flex:1;padding:11px 6px;text-align:center;font-size:11px;font-weight:600;cursor:pointer;color:rgba(255,255,255,.4);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;}
+.rp-tab.active{color:#fff;border-bottom-color:var(--accent);}
+.rp-pane{display:none;flex:1;overflow-y:auto;padding:14px;}
+.rp-pane.active{display:flex;flex-direction:column;gap:10px;}
+.rp-pane::-webkit-scrollbar{width:3px;}
+.rp-pane::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px;}
+
+/* RX PAD */
+.rx-header{background:linear-gradient(135deg,rgba(26,94,171,.25),rgba(0,192,163,.1));border:1px solid rgba(26,94,171,.3);border-radius:var(--radius);padding:12px;}
+.rx-doc-info{font-size:13px;font-weight:700;margin-bottom:2px;}
+.rx-doc-meta{font-size:10px;color:rgba(255,255,255,.45);}
+.rx-patient-line{font-size:11px;color:rgba(255,255,255,.6);margin-top:6px;border-top:1px solid var(--vid-border);padding-top:6px;}
+
+/* Drug entry */
+.rx-drug-row{background:rgba(255,255,255,.04);border:1px solid var(--vid-border);border-radius:var(--radius);padding:10px;margin-bottom:6px;position:relative;}
+.rx-drug-name{font-size:13px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;}
+.rx-drug-detail{font-size:11px;color:rgba(255,255,255,.5);font-family:'DM Mono',monospace;}
+.rx-del{background:none;border:none;color:rgba(255,255,255,.3);cursor:pointer;font-size:14px;transition:color .13s;}
+.rx-del:hover{color:var(--danger);}
+.rx-add-form{background:rgba(255,255,255,.03);border:1px solid var(--vid-border);border-radius:var(--radius);padding:10px;}
+.rx-mini-input{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--vid-border);border-radius:7px;padding:7px 10px;font-family:inherit;font-size:12px;color:#fff;outline:none;transition:border-color .15s;margin-bottom:6px;}
+.rx-mini-input:focus{border-color:var(--accent);}
+.rx-mini-select{width:100%;background:#0D1524;border:1px solid var(--vid-border);border-radius:7px;padding:7px 10px;font-family:inherit;font-size:12px;color:#fff;outline:none;margin-bottom:6px;}
+.rx-grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+
+/* CHAT */
+.chat-area{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-bottom:8px;}
+.chat-area::-webkit-scrollbar{width:3px;}
+.chat-area::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px;}
+.chat-msg{max-width:85%;display:flex;flex-direction:column;gap:2px;}
+.chat-msg.them{align-self:flex-start;}
+.chat-msg.me{align-self:flex-end;}
+.chat-bubble{padding:8px 12px;border-radius:12px;font-size:12px;line-height:1.5;}
+.chat-msg.them .chat-bubble{background:rgba(255,255,255,.08);border:1px solid var(--vid-border);border-bottom-left-radius:3px;}
+.chat-msg.me .chat-bubble{background:rgba(26,94,171,.4);border:1px solid rgba(26,94,171,.4);border-bottom-right-radius:3px;}
+.chat-time{font-size:9px;color:rgba(255,255,255,.3);align-self:flex-start;}
+.chat-msg.me .chat-time{align-self:flex-end;}
+.chat-input-row{display:flex;gap:6px;padding-top:8px;border-top:1px solid var(--vid-border);}
+.chat-input{flex:1;background:rgba(255,255,255,.06);border:1px solid var(--vid-border);border-radius:20px;padding:8px 14px;font-family:inherit;font-size:12px;color:#fff;outline:none;}
+.chat-input:focus{border-color:var(--accent);}
+.chat-send{width:34px;height:34px;border-radius:50%;background:var(--accent);border:none;color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.chat-send:hover{background:var(--accent-dark);}
+
+/* PAYMENT */
+.pay-invoice{background:rgba(255,255,255,.04);border:1px solid var(--vid-border);border-radius:var(--radius);overflow:hidden;}
+.pi-header{background:linear-gradient(135deg,rgba(26,94,171,.3),rgba(0,192,163,.15));padding:12px 14px;border-bottom:1px solid var(--vid-border);}
+.pi-title{font-size:13px;font-weight:700;}
+.pi-sub{font-size:10px;color:rgba(255,255,255,.45);margin-top:2px;}
+.pi-line{display:flex;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--vid-border);font-size:12px;}
+.pi-line:last-child{border-bottom:none;}
+.pi-label{color:rgba(255,255,255,.6);}
+.pi-val{font-family:'DM Mono',monospace;font-weight:600;}
+.pi-total{display:flex;justify-content:space-between;padding:12px 14px;background:rgba(26,94,171,.15);font-size:14px;font-weight:700;}
+.pi-total-val{font-family:'DM Mono',monospace;color:#6EF0DC;font-size:17px;}
+.pay-methods{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;}
+.pay-method-btn{background:rgba(255,255,255,.05);border:1.5px solid var(--vid-border);border-radius:var(--radius);padding:10px;text-align:center;cursor:pointer;transition:all .15s;}
+.pay-method-btn:hover{border-color:var(--accent);background:rgba(0,192,163,.08);}
+.pay-method-btn.selected{border-color:var(--accent);background:rgba(0,192,163,.12);}
+.pmb-icon{font-size:22px;margin-bottom:4px;}
+.pmb-label{font-size:11px;font-weight:600;}
+.pay-btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--accent),var(--brand));border:none;border-radius:var(--radius);color:#fff;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.pay-btn:hover{opacity:.9;transform:translateY(-1px);}
+.pay-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+/* BTN */
+.btn{padding:8px 16px;border-radius:var(--radius);border:none;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+.btn-accent{background:var(--accent);color:#fff;}
+.btn-accent:hover{background:var(--accent-dark);}
+.btn-brand{background:var(--brand);color:#fff;}
+.btn-brand:hover{background:var(--brand-dark);}
+.btn-ghost{background:rgba(255,255,255,.08);color:#fff;border:1px solid var(--vid-border);}
+.btn-ghost:hover{background:rgba(255,255,255,.15);}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-sm{padding:5px 12px;font-size:12px;}
+
+/* NOTIFICATION TOASTS */
+.notif-stack{position:fixed;top:62px;right:330px;display:flex;flex-direction:column;gap:6px;z-index:100;}
+.notif{background:rgba(13,21,36,.92);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);padding:10px 14px;font-size:12px;display:flex;align-items:center;gap:8px;transform:translateX(40px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);min-width:240px;}
+.notif.show{transform:translateX(0);opacity:1;}
+.notif.notif-accent{border-color:rgba(0,192,163,.3);background:rgba(0,31,24,.9);}
+.notif.notif-warn{border-color:rgba(245,158,11,.3);background:rgba(31,24,0,.9);}
+.notif-icon{font-size:18px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%) translateY(40px);background:rgba(0,0,0,.85);backdrop-filter:blur(12px);color:#fff;padding:11px 20px;border-radius:var(--radius);font-size:13px;font-weight:500;z-index:999;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px;opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);border:1px solid var(--vid-border);}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px;}
+</style>
+</head>
+<body>
+
+<!-- ═══ TOP HEADER ═══ -->
+<div class="tele-topbar">
+  <div class="tele-logo">
+    <div class="tele-logo-mark">Dx</div>
+    <div><div class="tele-logo-text">Diagnotica Telemedicine</div><div class="tele-logo-sub">Secure Video Consultation Platform</div></div>
+  </div>
+  <div class="session-info">
+    <div class="session-chip live"><div class="live-dot"></div>LIVE</div>
+    <div class="session-chip">📶 HD Quality</div>
+    <div class="session-chip">🔒 E2E Encrypted</div>
+    <div class="session-id">Session: TLM-2024-0148</div>
+  </div>
+  <div class="tele-timer" id="main-timer">00:00:00</div>
+</div>
+
+<div class="tele-shell">
+
+  <!-- ═══ EMR LEFT SIDEBAR ═══ -->
+  <div class="emr-sidebar">
+    <div class="emr-sb-tabs">
+      <div class="emr-tab active" onclick="switchEmrTab('patient',this)">Patient</div>
+      <div class="emr-tab" onclick="switchEmrTab('vitals',this)">Vitals</div>
+      <div class="emr-tab" onclick="switchEmrTab('history',this)">History</div>
+      <div class="emr-tab" onclick="switchEmrTab('allergies',this)">Allergy</div>
+    </div>
+
+    <!-- PATIENT TAB -->
+    <div class="emr-pane active" id="emr-patient">
+      <div class="emr-patient-card">
+        <div class="epc-name">Ravi Kumar</div>
+        <div class="epc-meta">UHID: DX-2024-004821 · 42Y · Male · O+</div>
+        <div class="epc-chips">
+          <span class="epc-chip">🔗 ABHA Linked</span>
+          <span class="epc-chip alert">⚠ HTN</span>
+          <span class="epc-chip alert">⚠ T2DM</span>
+        </div>
+      </div>
+      <div class="emr-section">Active Diagnoses</div>
+      <div style="margin-bottom:12px;">
+        <div class="dx-chip">I10 — Hypertension</div>
+        <div class="dx-chip">E11.9 — Type 2 DM</div>
+        <div class="dx-chip">E78.5 — Hyperlipidaemia</div>
+      </div>
+      <div class="emr-section">Current Medications</div>
+      <div id="emr-meds"></div>
+      <div class="emr-section" style="margin-top:10px;">Last Visit</div>
+      <div style="background:rgba(255,255,255,.04);border:1px solid var(--vid-border);border-radius:8px;padding:10px;font-size:12px;">
+        <div style="font-weight:600;margin-bottom:4px;">Dr. Anand Krishnan</div>
+        <div style="color:rgba(255,255,255,.5);">28 Feb 2024 — OPD</div>
+        <div style="color:rgba(255,255,255,.5);margin-top:4px;">BP review · Meds refilled · HbA1c ordered</div>
+      </div>
+      <div class="emr-section" style="margin-top:10px;">Pending Investigations</div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);border-radius:7px;padding:7px 10px;font-size:11px;color:#FCD34D;">🧪 Lipid Profile — Pending review</div>
+        <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);border-radius:7px;padding:7px 10px;font-size:11px;color:#FCD34D;">🩸 HbA1c — Result: 7.4% ↑</div>
+        <div style="background:rgba(26,94,171,.15);border:1px solid rgba(26,94,171,.3);border-radius:7px;padding:7px 10px;font-size:11px;color:#93C5FD;">💊 Rx refill requested</div>
+      </div>
+    </div>
+
+    <!-- VITALS TAB -->
+    <div class="emr-pane" id="emr-vitals">
+      <div class="emr-section">Latest Vitals — Patient Logged</div>
+      <div class="vitals-strip">
+        <div class="vs-tile hi"><div class="vs-val">148/92</div><div class="vs-label">BP mmHg</div></div>
+        <div class="vs-tile ok"><div class="vs-val">82</div><div class="vs-label">HR bpm</div></div>
+        <div class="vs-tile warn"><div class="vs-val">168</div><div class="vs-label">BGL mg/dL</div></div>
+        <div class="vs-tile ok"><div class="vs-val">98%</div><div class="vs-label">SpO₂</div></div>
+        <div class="vs-tile warn"><div class="vs-val">78 kg</div><div class="vs-label">Weight</div></div>
+        <div class="vs-tile ok"><div class="vs-val">36.8°</div><div class="vs-label">Temp °C</div></div>
+      </div>
+      <div class="emr-section">BP Trend — Last 7 Readings</div>
+      <div style="background:rgba(255,255,255,.04);border:1px solid var(--vid-border);border-radius:8px;padding:10px;font-size:11px;">
+        <div id="bp-trend-bars"></div>
+      </div>
+      <div style="margin-top:10px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:10px;">
+        <div style="font-size:11px;font-weight:600;color:#FCA5A5;margin-bottom:3px;">⚠ BP Alert</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.55);">Systolic consistently above 140 for 3 readings. Consider dose adjustment.</div>
+      </div>
+    </div>
+
+    <!-- HISTORY TAB -->
+    <div class="emr-pane" id="emr-history">
+      <div class="emr-section">Medical History</div>
+      <div id="med-history"></div>
+      <div class="emr-section" style="margin-top:10px;">Previous Hospitalisations</div>
+      <div id="prev-hosp"></div>
+      <div class="emr-section" style="margin-top:10px;">Family History</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.6);line-height:1.6;">Father: Hypertension, T2DM (deceased)<br>Mother: Hypertension<br>Siblings: No known conditions</div>
+    </div>
+
+    <!-- ALLERGIES TAB -->
+    <div class="emr-pane" id="emr-allergies">
+      <div style="background:rgba(239,68,68,.12);border:1.5px solid rgba(239,68,68,.3);border-radius:var(--radius);padding:12px;margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:700;color:#FCA5A5;margin-bottom:8px;">⚠ Drug Allergies</div>
+        <div id="allergy-list"></div>
+      </div>
+      <div class="emr-section">Food Intolerance</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.6);">None reported</div>
+      <div class="emr-section" style="margin-top:10px;">Environmental</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.6);">Dust allergy — mild rhinitis</div>
+    </div>
+  </div>
+
+  <!-- ═══ VIDEO AREA ═══ -->
+  <div class="video-area">
+
+    <!-- VIDEO PANELS -->
+    <div class="video-panels" id="video-panels">
+
+      <!-- DOCTOR PANEL -->
+      <div class="video-panel doctor-panel">
+        <!-- Ambient animated background -->
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 30% 40%,rgba(26,94,171,.15) 0%,transparent 60%);pointer-events:none;"></div>
+        <div class="vid-feed">
+          <div class="vid-status-tag">
+            <div style="width:6px;height:6px;border-radius:50%;background:var(--accent);animation:livePulse 1.3s infinite;"></div>
+            <span>Speaking</span>
+          </div>
+          <div class="vid-quality">HD · 30fps</div>
+          <div class="vid-avatar doc" id="doc-av">AK</div>
+          <div class="mic-wave" id="doc-wave">
+            <div class="mw-bar"></div><div class="mw-bar"></div><div class="mw-bar"></div><div class="mw-bar"></div><div class="mw-bar"></div>
+          </div>
+          <div class="vid-name-tag">Dr. Anand Krishnan — General Medicine</div>
+        </div>
+        <!-- Connection overlay for doctor -->
+        <div class="conn-overlay" id="doc-overlay">
+          <div class="conn-spinner"></div>
+          <div class="conn-text">Connecting doctor...</div>
+        </div>
+      </div>
+
+      <!-- PATIENT PANEL -->
+      <div class="video-panel patient-panel">
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 70% 60%,rgba(124,58,237,.12) 0%,transparent 60%);pointer-events:none;"></div>
+        <div class="vid-feed">
+          <div class="vid-status-tag" style="opacity:.5;">
+            <div style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4);"></div>
+            <span>Listening</span>
+          </div>
+          <div class="vid-quality">HD · 30fps</div>
+          <div class="vid-avatar pat" id="pat-av">RK</div>
+          <div class="vid-name-tag">Ravi Kumar — Patient</div>
+        </div>
+        <!-- Connection overlay for patient -->
+        <div class="conn-overlay" id="pat-overlay">
+          <div class="conn-spinner"></div>
+          <div class="conn-text">Patient joining...</div>
+        </div>
+      </div>
+
+      <!-- PiP PANEL (optional 3rd participant) -->
+      <div class="pip-panel" id="pip-panel" onclick="showToast('Switching to full view','👁')" style="display:none;">
+        <div class="pip-inner">
+          <div class="pip-av">SW</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.8);font-weight:600;">Nurse Suma W.</div>
+          <div class="pip-label">Observing</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL STRIPS -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;">
+      <div class="panel-strip">
+        <span class="ps-label">👨‍⚕️ Dr. Anand Krishnan</span>
+        <div style="display:flex;gap:10px;">
+          <span class="ps-icon" title="Mic On" id="doc-mic-icon" onclick="toggleDocMic()">🎙️</span>
+          <span class="ps-icon" title="Camera On">📷</span>
+        </div>
+      </div>
+      <div class="panel-strip">
+        <span class="ps-label">👤 Ravi Kumar (Patient)</span>
+        <div style="display:flex;gap:10px;">
+          <span class="ps-icon" title="Mic On">🎙️</span>
+          <span class="ps-icon" title="Camera On">📷</span>
+          <span class="ps-icon" title="Network" style="font-size:13px;color:var(--accent);">📶 HD</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ CONTROLS BAR ═══ -->
+    <div class="controls-bar">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div class="ctrl-chip active" onclick="showToast('Screen sharing started','🖥')">🖥 Share Screen</div>
+        <div class="ctrl-chip" onclick="addNurse()">👤 Invite Nurse</div>
+        <div class="ctrl-chip" onclick="showToast('Whiteboard opened','✏')">✏ Whiteboard</div>
+      </div>
+
+      <div class="controls-center">
+        <div class="ctrl-btn default" id="mic-btn" onclick="toggleMic()">
+          <span id="mic-icon">🎙️</span>
+          <span class="ctrl-tooltip">Mute</span>
+        </div>
+        <div class="ctrl-btn default" id="cam-btn" onclick="toggleCam()">
+          <span id="cam-icon">📷</span>
+          <span class="ctrl-tooltip">Camera Off</span>
+        </div>
+        <div class="ctrl-btn end-call" onclick="endCall()">
+          📴
+          <span class="ctrl-tooltip" style="color:#FCA5A5;">End Call</span>
+        </div>
+        <div class="ctrl-btn default" onclick="switchRpTab('chat',document.querySelector('[data-rp=chat]'))">
+          💬
+          <span id="chat-badge" style="position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--danger);display:none;"></span>
+          <span class="ctrl-tooltip">Chat</span>
+        </div>
+        <div class="ctrl-btn default" onclick="showToast('More options menu opened','⋯')">
+          ⋯
+          <span class="ctrl-tooltip">More</span>
+        </div>
+      </div>
+
+      <div class="controls-right">
+        <div class="ctrl-chip" onclick="switchRpTab('rx',document.querySelector('[data-rp=rx]'))">💊 Prescribe</div>
+        <div class="ctrl-chip" onclick="switchRpTab('payment',document.querySelector('[data-rp=payment]'))">💳 Payment</div>
+        <div class="ctrl-chip" onclick="showToast('Recording started — patient consent required','🔴')">🔴 Record</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ RIGHT PANEL ═══ -->
+  <div class="right-panel">
+    <div class="rp-tabs">
+      <div class="rp-tab active" data-rp="rx" onclick="switchRpTab('rx',this)">💊 Rx Pad</div>
+      <div class="rp-tab" data-rp="chat" onclick="switchRpTab('chat',this)">💬 Chat</div>
+      <div class="rp-tab" data-rp="notes" onclick="switchRpTab('notes',this)">📝 Notes</div>
+      <div class="rp-tab" data-rp="payment" onclick="switchRpTab('payment',this)">💳 Pay</div>
+    </div>
+
+    <!-- RX PAD PANE -->
+    <div class="rp-pane active" id="rp-rx">
+      <div class="rx-header">
+        <div class="rx-doc-info">Dr. Anand Krishnan</div>
+        <div class="rx-doc-meta">MBBS, MD — General Medicine · Reg: TN-12345</div>
+        <div class="rx-doc-meta">Diagnotica HMS · Chennai · +91-044-2435-6789</div>
+        <div class="rx-patient-line">Pt: Ravi Kumar · 42Y M · DX-2024-004821 · 14 Mar 2024</div>
+      </div>
+
+      <!-- PRESCRIBED DRUGS -->
+      <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Prescribed Medications</div>
+      <div id="rx-drugs"></div>
+
+      <!-- ADD DRUG FORM -->
+      <div class="rx-add-form">
+        <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.35);margin-bottom:7px;text-transform:uppercase;letter-spacing:.07em;">Add Medication</div>
+        <input class="rx-mini-input" id="rx-drug-name" placeholder="Drug name (e.g. Amlodipine 10mg)"/>
+        <div class="rx-grid2">
+          <select class="rx-mini-select" id="rx-freq">
+            <option>Once daily (OD)</option>
+            <option>Twice daily (BD)</option>
+            <option>Thrice daily (TDS)</option>
+            <option>At bedtime (ON)</option>
+            <option>SOS (as needed)</option>
+          </select>
+          <input class="rx-mini-input" id="rx-duration" placeholder="Duration (e.g. 30 days)"/>
+        </div>
+        <input class="rx-mini-input" id="rx-instruction" placeholder="Instructions (e.g. with food, after meals...)"/>
+        <button class="btn btn-accent btn-sm" style="width:100%;justify-content:center;margin-top:2px;" onclick="addDrug()">＋ Add to Prescription</button>
+      </div>
+
+      <!-- RX ACTIONS -->
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:2px;">
+        <button class="btn btn-brand btn-sm" style="justify-content:center;" onclick="sendRx()">📤 Send e-Prescription to Patient</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          <button class="btn btn-ghost btn-sm" style="justify-content:center;font-size:11px;" onclick="showToast('Prescription sent to pharmacy','🏪')">🏪 Send to Pharmacy</button>
+          <button class="btn btn-ghost btn-sm" style="justify-content:center;font-size:11px;" onclick="showToast('Prescription printed','🖨')">🖨 Print</button>
+        </div>
+      </div>
+
+      <!-- ADVICE SECTION -->
+      <div style="border-top:1px solid var(--vid-border);padding-top:10px;">
+        <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Doctor's Advice</div>
+        <textarea class="rx-mini-input" rows="3" placeholder="Lifestyle advice, diet instructions, follow-up notes..." style="resize:none;">1. Low sodium diet — target &lt;2g/day
+2. Daily 30 min brisk walk
+3. Monitor BP at home twice daily
+4. Follow-up in 4 weeks or earlier if BP &gt;160</textarea>
+      </div>
+    </div>
+
+    <!-- CHAT PANE -->
+    <div class="rp-pane" id="rp-chat">
+      <div class="chat-area" id="chat-messages"></div>
+      <div class="chat-input-row">
+        <input class="chat-input" id="chat-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendChat()"/>
+        <button class="chat-send" onclick="sendChat()">➤</button>
+      </div>
+    </div>
+
+    <!-- NOTES PANE -->
+    <div class="rp-pane" id="rp-notes">
+      <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Consultation Notes — Ravi Kumar</div>
+      <div style="display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" style="font-size:10px;" onclick="insertTemplate('SOAP')">SOAP Template</button>
+        <button class="btn btn-ghost btn-sm" style="font-size:10px;" onclick="insertTemplate('FU')">Follow-up</button>
+        <button class="btn btn-ghost btn-sm" style="font-size:10px;" onclick="insertTemplate('Referral')">Referral Note</button>
+      </div>
+      <textarea class="rx-mini-input" id="consult-notes" rows="14" placeholder="Enter consultation notes..." style="resize:vertical;min-height:200px;line-height:1.7;">Chief Complaint: BP not controlled. Headache for 3 days.
+
+History: Known hypertensive (5 years) on Amlodipine 5mg. Self-monitoring BP shows 148–160/90–96 range.
+
+Examination: BP 148/92. HR 82. No focal neurological deficits. Fundus not done.
+
+Assessment:
+1. Essential Hypertension — suboptimal control (I10)
+2. T2DM — HbA1c 7.4% — fair control (E11.9)
+3. Hyperlipidaemia — (E78.5)
+
+Plan:
+1. Increase Amlodipine to 10mg OD
+2. Add Losartan 50mg OD
+3. Continue Metformin 500mg BD
+4. Review in 4 weeks</textarea>
+      <div style="display:flex;gap:6px;margin-top:6px;">
+        <button class="btn btn-ghost btn-sm" style="flex:1;justify-content:center;font-size:11px;" onclick="showToast('Notes saved to EMR ✓','💾')">💾 Save to EMR</button>
+        <button class="btn btn-accent btn-sm" style="flex:1;justify-content:center;font-size:11px;" onclick="showToast('Notes shared with patient','📤')">📤 Share Notes</button>
+      </div>
+    </div>
+
+    <!-- PAYMENT PANE -->
+    <div class="rp-pane" id="rp-payment">
+      <div class="pay-invoice">
+        <div class="pi-header">
+          <div class="pi-title">Consultation Invoice</div>
+          <div class="pi-sub">INV-2024-TLM-0148 · 14 Mar 2024</div>
+        </div>
+        <div class="pi-line"><span class="pi-label">Telemedicine Consultation</span><span class="pi-val">₹800</span></div>
+        <div class="pi-line"><span class="pi-label">e-Prescription</span><span class="pi-val">₹0</span></div>
+        <div class="pi-line"><span class="pi-label">Lab Order (HbA1c Review)</span><span class="pi-val">₹450</span></div>
+        <div class="pi-line"><span class="pi-label">Platform Fee</span><span class="pi-val">₹50</span></div>
+        <div class="pi-line" style="background:rgba(0,192,163,.06);"><span class="pi-label">Insurance (Star Health 20%)</span><span class="pi-val" style="color:var(--accent);">— ₹260</span></div>
+        <div class="pi-total"><span>Total Payable</span><span class="pi-total-val">₹1,040</span></div>
+      </div>
+
+      <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.08em;margin:4px 0 8px;">Payment Method</div>
+      <div class="pay-methods" id="pay-methods"></div>
+
+      <button class="pay-btn" id="pay-btn" onclick="processPayment()">
+        💳 Pay ₹1,040 Securely
+      </button>
+
+      <div style="text-align:center;font-size:10px;color:rgba(255,255,255,.3);margin-top:6px;">🔒 PCI-DSS compliant · Powered by Razorpay</div>
+
+      <!-- PAYMENT STATUS (shown after payment) -->
+      <div id="pay-success" style="display:none;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:var(--radius);padding:14px;text-align:center;margin-top:8px;">
+        <div style="font-size:28px;margin-bottom:6px;">✅</div>
+        <div style="font-size:14px;font-weight:700;color:#6EF0DC;">Payment Successful!</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:4px;">₹1,040 · Txn ID: PAY-20240314-9482</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);">Receipt sent to patient via SMS &amp; email</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /tele-shell -->
+
+<!-- NOTIFICATION STACK -->
+<div class="notif-stack" id="notif-stack"></div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span id="toast-icon">✅</span><span id="toast-msg">Done</span></div>
+
+<script>
+// ── TIMER ──
+let seconds=0;
+setInterval(()=>{
+  seconds++;
+  const h=String(Math.floor(seconds/3600)).padStart(2,'0');
+  const m=String(Math.floor((seconds%3600)/60)).padStart(2,'0');
+  const s=String(seconds%60).padStart(2,'0');
+  document.getElementById('main-timer').textContent=`${h}:${m}:${s}`;
+},1000);
+
+// ── AUTO CONNECT OVERLAYS ──
+setTimeout(()=>{document.getElementById('doc-overlay').classList.add('connected');},1800);
+setTimeout(()=>{document.getElementById('pat-overlay').classList.add('connected');},2600);
+setTimeout(()=>{showNotif('Dr. Anand Krishnan has joined the call','🟢','accent');},1900);
+setTimeout(()=>{showNotif('Ravi Kumar (Patient) has joined the call','🟢','accent');},2800);
+setTimeout(()=>{showNotif('⚠ BP Alert: Patient SBP 148 — elevated','⚠','warn');},4000);
+setTimeout(()=>{addChatMsg('Hello Ravi Kumar, I can see you clearly. How are you feeling today?','them');},3200);
+setTimeout(()=>{addChatMsg('Good morning doctor. I have had headaches for 3 days and my BP readings at home have been around 150/95.','me');},5000);
+setTimeout(()=>{addChatMsg('I see. Let me review your recent investigations and BP trend. Can you show me your home readings log?','them');},7000);
+
+// ── EMR MEDS ──
+const meds=[
+  {name:'Amlodipine 5mg',dose:'OD · Morning'},
+  {name:'Metformin 500mg',dose:'BD · With meals'},
+  {name:'Atorvastatin 20mg',dose:'ON · Night'},
+  {name:'Pantoprazole 40mg',dose:'OD · Empty stomach'},
+];
+const medEl=document.getElementById('emr-meds');
+meds.forEach(m=>{
+  medEl.innerHTML+=`<div class="emr-med-item">
+    <span style="font-size:15px;">💊</span>
+    <div class="emr-med-name">${m.name}</div>
+    <div class="emr-med-dose">${m.dose}</div>
+  </div>`;
+});
+
+// ── BP TREND BARS ──
+const bpData=[{s:142,d:88},{s:148,d:90},{s:152,d:92},{s:156,d:94},{s:150,d:92},{s:148,d:92},{s:148,d:92}];
+const bpEl=document.getElementById('bp-trend-bars');
+bpData.forEach((b,i)=>{
+  const col=b.s>150?'#FCA5A5':b.s>140?'#FCD34D':'#6EF0DC';
+  bpEl.innerHTML+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:10px;">
+    <span style="color:rgba(255,255,255,.4);min-width:28px;">-${6-i}d</span>
+    <div style="flex:1;height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;">
+      <div style="width:${(b.s/200)*100}%;height:100%;background:${col};border-radius:4px;"></div>
+    </div>
+    <span style="font-family:'DM Mono',monospace;min-width:54px;color:${col};">${b.s}/${b.d}</span>
+  </div>`;
+});
+
+// ── MEDICAL HISTORY ──
+const history=[
+  {name:'Essential Hypertension',year:'2019',icon:'🫀'},
+  {name:'Type 2 Diabetes Mellitus',year:'2020',icon:'💉'},
+  {name:'Hyperlipidaemia',year:'2021',icon:'🧬'},
+];
+const histEl=document.getElementById('med-history');
+history.forEach(h=>{
+  histEl.innerHTML+=`<div style="display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);border:1px solid var(--vid-border);border-radius:7px;padding:8px 10px;margin-bottom:5px;font-size:12px;">
+    <span>${h.icon}</span>
+    <div style="flex:1;font-weight:500;">${h.name}</div>
+    <span style="color:rgba(255,255,255,.4);font-family:'DM Mono',monospace;">${h.year}</span>
+  </div>`;
+});
+
+// ── PREV HOSPITALISATIONS ──
+const hospEl=document.getElementById('prev-hosp');
+[{desc:'L-TKR Surgery',date:'Mar 2024'},{desc:'Appendectomy',date:'Jan 2022'}].forEach(h=>{
+  hospEl.innerHTML+=`<div style="background:rgba(255,255,255,.04);border:1px solid var(--vid-border);border-radius:7px;padding:8px 10px;margin-bottom:5px;font-size:12px;display:flex;justify-content:space-between;">
+    <span>${h.desc}</span><span style="color:rgba(255,255,255,.4);">${h.date}</span>
+  </div>`;
+});
+
+// ── ALLERGIES ──
+const allergies=[{drug:'Penicillin',reaction:'Anaphylaxis — SEVERE'},{drug:'Sulfonamides',reaction:'Rash — Moderate'}];
+const allergyEl=document.getElementById('allergy-list');
+allergies.forEach(a=>{
+  allergyEl.innerHTML+=`<div style="margin-bottom:6px;">
+    <div style="font-size:12px;font-weight:700;color:#FCA5A5;">⚠ ${a.drug}</div>
+    <div style="font-size:11px;color:rgba(255,255,255,.5);">${a.reaction}</div>
+  </div>`;
+});
+
+// ── RX DRUGS ──
+let rxDrugs=[
+  {name:'Amlodipine 10mg',freq:'Once daily (OD)',duration:'30 days',instr:'Morning · continue existing dose',status:'changed'},
+  {name:'Losartan 50mg',freq:'Once daily (OD)',duration:'30 days',instr:'Morning with breakfast',status:'new'},
+  {name:'Metformin 500mg',freq:'Twice daily (BD)',duration:'90 days',instr:'With meals',status:'continue'},
+  {name:'Atorvastatin 20mg',freq:'At bedtime (ON)',duration:'90 days',instr:'Night dose — continue',status:'continue'},
+];
+function renderRxDrugs(){
+  const container=document.getElementById('rx-drugs');
+  container.innerHTML='';
+  rxDrugs.forEach((d,i)=>{
+    const statusColor=d.status==='new'?'rgba(0,192,163,.25)':d.status==='changed'?'rgba(245,158,11,.15)':'rgba(255,255,255,.04)';
+    const statusBorder=d.status==='new'?'rgba(0,192,163,.3)':d.status==='changed'?'rgba(245,158,11,.25)':'var(--vid-border)';
+    const statusTag=d.status==='new'?'NEW':'changed'===d.status?'REVISED':'';
+    container.innerHTML+=`<div class="rx-drug-row" style="background:${statusColor};border-color:${statusBorder};">
+      <div class="rx-drug-name">
+        <span>${d.name}${statusTag?`<span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px;background:${d.status==='new'?'rgba(0,192,163,.25)':'rgba(245,158,11,.2)'};color:${d.status==='new'?'#6EF0DC':'#FCD34D'};margin-left:6px;">${statusTag}</span>`:''}</span>
+        <button class="rx-del" onclick="removeDrug(${i})">×</button>
+      </div>
+      <div class="rx-drug-detail">${d.freq} · ${d.duration} · ${d.instr}</div>
+    </div>`;
+  });
+}
+renderRxDrugs();
+
+function addDrug(){
+  const name=document.getElementById('rx-drug-name').value.trim();
+  const freq=document.getElementById('rx-freq').value;
+  const duration=document.getElementById('rx-duration').value||'30 days';
+  const instr=document.getElementById('rx-instruction').value||'As directed';
+  if(!name){showToast('Please enter a drug name','⚠');return;}
+  rxDrugs.push({name,freq,duration,instr,status:'new'});
+  renderRxDrugs();
+  document.getElementById('rx-drug-name').value='';
+  document.getElementById('rx-duration').value='';
+  document.getElementById('rx-instruction').value='';
+  showToast(`${name} added to prescription`,'💊');
+}
+function removeDrug(i){rxDrugs.splice(i,1);renderRxDrugs();showToast('Drug removed from prescription','🗑');}
+function sendRx(){
+  showToast('e-Prescription sent to Ravi Kumar via WhatsApp & SMS ✓','📤');
+  showNotif('e-Prescription sent successfully to patient','📋','accent');
+}
+
+// ── CHAT ──
+function addChatMsg(text,side){
+  const chat=document.getElementById('chat-messages');
+  const now=new Date();
+  const time=now.getHours()+':'+String(now.getMinutes()).padStart(2,'0');
+  chat.innerHTML+=`<div class="chat-msg ${side}">
+    <div class="chat-bubble">${text}</div>
+    <div class="chat-time">${side==='them'?'Dr. Anand':'Ravi Kumar'} · ${time}</div>
+  </div>`;
+  chat.scrollTop=chat.scrollHeight;
+}
+function sendChat(){
+  const inp=document.getElementById('chat-input');
+  const txt=inp.value.trim();
+  if(!txt)return;
+  addChatMsg(txt,'me');
+  inp.value='';
+  setTimeout(()=>{
+    addChatMsg('Noted. I\'ll update your prescription accordingly.','them');
+  },1800);
+}
+
+// ── CONSULTATION NOTES TEMPLATES ──
+function insertTemplate(type){
+  const ta=document.getElementById('consult-notes');
+  if(type==='SOAP'){
+    ta.value='SUBJECTIVE: Chief complaint — \n\nOBJECTIVE: BP: / HR: Temp: SpO₂:\n\nASSESSMENT:\n1. \n2. \n\nPLAN:\n1. \n2. ';
+  } else if(type==='FU'){
+    ta.value='Follow-up Visit — Patient Review\n\nCompliance: Medications taken as directed: Yes/No\n\nProgress:\n- \n\nExamination:\n- \n\nAssessment:\n- \n\nPlan:\n- Continue current medications\n- Next review:';
+  } else if(type==='Referral'){
+    ta.value='REFERRAL NOTE\n\nReferred to: Dr. / Dept.\nReason: \n\nClinical Summary:\n- \n\nPlease review and advise.\n\nDr. Anand Krishnan\nGeneral Medicine';
+  }
+  showToast(type+' template loaded','📋');
+}
+
+// ── PAYMENT METHODS ──
+const payMethods=[{icon:'💳',label:'Credit/Debit Card'},{icon:'📱',label:'UPI'},{icon:'🏦',label:'Net Banking'},{icon:'💰',label:'Wallet'}];
+const pmEl=document.getElementById('pay-methods');
+payMethods.forEach((p,i)=>{
+  pmEl.innerHTML+=`<div class="pay-method-btn${i===1?' selected':''}" onclick="selectPayMethod(this)">${p.icon}<br><div class="pmb-label">${p.label}</div></div>`;
+});
+function selectPayMethod(el){
+  document.querySelectorAll('.pay-method-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function processPayment(){
+  const btn=document.getElementById('pay-btn');
+  btn.disabled=true;
+  btn.innerHTML='⏳ Processing...';
+  setTimeout(()=>{
+    btn.style.display='none';
+    document.getElementById('pay-success').style.display='block';
+    showToast('Payment of ₹1,040 successful! Receipt sent ✓','✅');
+    showNotif('Payment received — ₹1,040 · Txn PAY-20240314-9482','💳','accent');
+  },2000);
+}
+
+// ── CONTROLS ──
+let micOn=true,camOn=true;
+function toggleMic(){
+  micOn=!micOn;
+  const btn=document.getElementById('mic-btn');
+  const icon=document.getElementById('mic-icon');
+  icon.textContent=micOn?'🎙️':'🔇';
+  btn.className=`ctrl-btn ${micOn?'default':'muted'}`;
+  document.getElementById('doc-wave').style.display=micOn?'flex':'none';
+  showToast(micOn?'Microphone unmuted':'Microphone muted',micOn?'🎙️':'🔇');
+}
+function toggleCam(){
+  camOn=!camOn;
+  const icon=document.getElementById('cam-icon');
+  icon.textContent=camOn?'📷':'🚫';
+  document.getElementById('doc-av').style.opacity=camOn?'1':'0.4';
+  showToast(camOn?'Camera enabled':'Camera disabled',camOn?'📷':'🚫');
+}
+function toggleDocMic(){
+  const icon=document.getElementById('doc-mic-icon');
+  const isOn=icon.textContent==='🎙️';
+  icon.textContent=isOn?'🔇':'🎙️';
+  document.getElementById('doc-wave').style.display=isOn?'none':'flex';
+  showToast(isOn?'Muted yourself':'Unmuted yourself',isOn?'🔇':'🎙️');
+}
+function addNurse(){
+  document.getElementById('pip-panel').style.display='block';
+  showNotif('Nurse Suma W. has joined as observer','👤','accent');
+  showToast('Nurse Suma W. added to call','👤');
+}
+function endCall(){
+  if(confirm('Are you sure you want to end the call?')){
+    showToast('Call ended — session summary being generated','📴');
+    setTimeout(()=>{showNotif('Consultation summary sent to patient and EMR','📋','accent');},1500);
+  }
+}
+
+// ── TAB SWITCHING ──
+function switchEmrTab(id,btn){
+  document.querySelectorAll('.emr-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.emr-pane').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('emr-'+id).classList.add('active');
+}
+function switchRpTab(id,btn){
+  document.querySelectorAll('.rp-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.rp-pane').forEach(p=>p.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById('rp-'+id).classList.add('active');
+  if(id==='chat') document.getElementById('chat-badge').style.display='none';
+}
+
+// ── NOTIFICATIONS ──
+function showNotif(msg,icon,type=''){
+  const stack=document.getElementById('notif-stack');
+  const notif=document.createElement('div');
+  notif.className=`notif notif-${type}`;
+  notif.innerHTML=`<span class="notif-icon">${icon}</span><span>${msg}</span>`;
+  stack.appendChild(notif);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>notif.classList.add('show')));
+  setTimeout(()=>{notif.classList.remove('show');setTimeout(()=>notif.remove(),400);},4000);
+}
+
+// ── TOAST ──
+let tt;
+function showToast(msg,icon='✅'){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').innerHTML=msg;
+  document.getElementById('toast-icon').textContent=icon;
+  t.classList.add('show');clearTimeout(tt);
+  tt=setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+// ── CHAT BADGE on new message ──
+setTimeout(()=>{document.getElementById('chat-badge').style.display='block';},7200);
+</script>
+</body>
+</html>
